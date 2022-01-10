@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["BasisFn","Structure used to evaluate [ShapeFn]’s and their derivatives over some area"],["BasisFnSampler","Structure used to generate [BasisFn]’s over some area in the Domain"]],"trait":[["ShapeFn","Hierarchical Shape Function along a single direction"]]});

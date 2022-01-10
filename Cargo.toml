@@ -1,0 +1,27 @@
+[package]
+name = "fem_2d"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+# Data Structures -------------
+[dependencies.domain]
+path="./libs/domain/"
+
+[dependencies.sparse_matrix]
+path="./libs/sparse_matrix/"
+
+[dependencies.basis]
+path="./libs/basis/"
+
+
+# Data Transformations --------
+[dependencies.integration]
+path="./libs/integration/"
+
+[dependencies.eigensolver]
+path="./libs/eigensolver/"
+
+
+[dependencies]
