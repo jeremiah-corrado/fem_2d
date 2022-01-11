@@ -2,6 +2,12 @@
 mod vector_space_2d;
 pub use vector_space_2d::{V2D, M2D};
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ParaDir {
+    U,
+    V,
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct Point {
     pub x: f64,

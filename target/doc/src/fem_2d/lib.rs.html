@@ -16,6 +16,8 @@
 <span id="16">16</span>
 <span id="17">17</span>
 <span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
 </pre><pre class="rust"><code><span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">domain</span>;
 <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">sparse_matrix</span>;
 <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">basis</span>;
@@ -23,8 +25,10 @@
 <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">integration</span>;
 <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">eigensolver</span>;
 
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">basis</span>::{<span class="ident">BasisFn</span>, <span class="ident">ShapeFn</span>, <span class="ident">BasisFnSampler</span>};
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">basis</span>::{<span class="ident">BasisFn</span>, <span class="ident">ShapeFn</span>, <span class="ident">BasisFnSampler</span>, <span class="ident">KOLShapeFn</span>, <span class="ident">MaxOrthoShapeFn</span>};
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">domain</span>::{<span class="ident">Elem</span>, <span class="ident">M2D</span>, <span class="ident">V2D</span>, <span class="ident">Point</span>};
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">integration</span>::{<span class="ident">Integral</span>, <span class="ident">IntegralResult</span>, <span class="ident">CurlProduct</span>, <span class="ident">L2InnerProduct</span>};
+
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {

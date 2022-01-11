@@ -1,5 +1,3 @@
-use nalgebra::constraint::ShapeConstraint;
-
 use super::ShapeFn;
 
 //https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6470651
@@ -49,6 +47,7 @@ const Q_WEIGHTS: [&[f64]; 11] = [
     &get_q_weight_vector::<13>(),
 ];
 
+/// An advanced Hierarchical Type Shape Function which maximizes orthogonality between polynomial orders.
 pub struct MaxOrthoShapeFn {
     pub q_fn: QFunction,
     pub l_fn: LegendrePoly,
@@ -89,7 +88,6 @@ pub struct QFunction {
     pub q: Vec<Vec<f64>>,
     pub d1: Vec<Vec<f64>>,
     pub d2: Vec<Vec<f64>>,
-    has_2nd_derivs: bool,
 }
 
 impl QFunction {
@@ -132,7 +130,6 @@ impl QFunction {
             q: values, 
             d1: primes, 
             d2: Vec::new(),
-            has_2nd_derivs: false,
         }
     }
 
@@ -174,7 +171,6 @@ impl QFunction {
             q: values, 
             d1: primes, 
             d2: double_primes,
-            has_2nd_derivs: true,
         }
     }
 

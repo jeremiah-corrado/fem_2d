@@ -1,14 +1,12 @@
 use super::ShapeFn;
 
+/// A simple Hierarchical type Shape Function
 pub struct KOLShapeFn {
     pows: Vec<Vec<f64>>,
     pows_d1: Vec<Vec<f64>>,
     pows_d2: Vec<Vec<f64>>,
     polys: Vec<Vec<f64>>,
     polys_d1: Vec<Vec<f64>>,
-    has_d2: bool,
-    dim: usize,
-    order: usize,
 }
 
 impl KOLShapeFn {
@@ -87,9 +85,6 @@ impl KOLShapeFn {
             pows_d2,
             polys,
             polys_d1,
-            has_d2: true,
-            dim: points.len(),
-            order: n_max,
         }
     }
 
@@ -152,9 +147,6 @@ impl KOLShapeFn {
             pows_d2: Vec::new(),
             polys,
             polys_d1,
-            has_d2: false,
-            dim: points.len(),
-            order: n_max,
         }
     }
 }

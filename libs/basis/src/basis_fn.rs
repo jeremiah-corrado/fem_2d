@@ -10,7 +10,9 @@ use std::marker::PhantomData;
 pub use kol::KOLShapeFn;
 pub use max_ortho::MaxOrthoShapeFn;
 
-/// Hierarchical Shape Function along a single direction
+/// Hierarchical Shape Function along a single direction (defined over (-1.0, +1.0)).
+/// [KOLShapeFn] and [MaxOrthoShapeFn] implement this trait.
+/// Alternate Hierarchical Basis Functions can be used by implementing this trait.
 pub trait ShapeFn {
     fn with(max_order: usize, points: &[f64], compute_d2: bool) -> Self;
 
@@ -23,7 +25,8 @@ pub trait ShapeFn {
     fn poly_d2(&self, n: usize, p: usize) -> f64;
 }
 
-/// Structure used to generate [BasisFn]'s over some area in the Domain
+/// Structure used to generate [BasisFn]'s over [Elem]'s in a Domain.
+/// This structure contains settings for a 
 pub struct BasisFnSampler<SF: ShapeFn> {
     /// Type of [ShapeFn] used in [BasisFn]'s
     shape_type: PhantomData<SF>,
@@ -40,9 +43,6 @@ pub struct BasisFnSampler<SF: ShapeFn> {
 }
 
 impl<SF: ShapeFn> BasisFnSampler<SF> {
-    /// Generates a basis sampler with the given point densities and maximum expansion orders
-    /// if 'compute_2nd_derivs' is true, the [BasisFn]'s endpoints will also be defined (-1.0 and 1.0) resulting in 2 additional points in each direction
-    /// The associated Gauss Legendre Quadrature weights in both directions are also returned
     pub fn with(
         num_u_points: usize,
         num_v_points: usize,
@@ -69,7 +69,7 @@ impl<SF: ShapeFn> BasisFnSampler<SF> {
         )
     }
 
-    /// Generate a [BasisFn] which is defined over an [Elem] which can be sampled over some subset of the Element
+    /// Generate a [BasisFn] defined over an [Elem]. Can be defined over a subset of the Element.
     pub fn sample_basis_fn(
         &self,
         elem: &Elem,
@@ -81,8 +81,11 @@ impl<SF: ShapeFn> BasisFnSampler<SF> {
 
 /// Structure used to evaluate [ShapeFn]'s and their derivatives over some area
 pub struct BasisFn<SF: ShapeFn> {
+    /// Raw transformation matrices at each sample point. Describes transformation from real space to sampled parametric space.
     pub t: Vec<Vec<M2D>>,
+    // Inverse of transformation matrices at each sample point.
     pub ti: Vec<Vec<M2D>>,
+    // Determinants of the "Sampling Jacobian" at each point.
     pub dt: Vec<Vec<f64>>,
     u_glq_scale: f64,
     v_glq_scale: f64,

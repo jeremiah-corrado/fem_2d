@@ -12,11 +12,15 @@
 <span id="12">12</span>
 <span id="13">13</span>
 <span id="14">14</span>
-</pre><pre class="rust"><code><span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">domain</span>;
+<span id="15">15</span>
+<span id="16">16</span>
+</pre><pre class="rust"><code><span class="attribute">#![<span class="ident">feature</span>(<span class="ident">const_fn_floating_point_arithmetic</span>)]</span>
+
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">domain</span>;
 
 <span class="kw">mod</span> <span class="ident">basis_fn</span>;
 
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">basis_fn</span>::<span class="kw-2">*</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">basis_fn</span>::{<span class="ident">KOLShapeFn</span>, <span class="ident">MaxOrthoShapeFn</span>, <span class="ident">BasisFn</span>, <span class="ident">BasisFnSampler</span>, <span class="ident">ShapeFn</span>};
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {

@@ -8,7 +8,17 @@
 <span id="8"> 8</span>
 <span id="9"> 9</span>
 <span id="10">10</span>
-</pre><pre class="rust"><code><span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">basis</span>;
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+</pre><pre class="rust"><code><span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">domain</span>;
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">basis</span>;
+
+<span class="kw">mod</span> <span class="ident">integrals</span>;
+
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">integrals</span>::{<span class="ident">Integral</span>, <span class="ident">IntegralResult</span>, <span class="ident">real_gauss_quad</span>, <span class="ident">real_gauss_quad_edge</span>, <span class="ident">real_gauss_quad_inner</span>, <span class="ident">L2InnerProduct</span>, <span class="ident">CurlProduct</span>};
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
