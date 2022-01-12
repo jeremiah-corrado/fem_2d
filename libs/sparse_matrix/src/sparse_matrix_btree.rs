@@ -1,3 +1,5 @@
+use super::AIJMatrix;
+use core::num;
 use std::collections::BTreeMap;
 
 /// Wrapper around a BTreeMap to store square-symmetric matrices in a sparse data structure
@@ -22,7 +24,8 @@ impl SparseMatrix {
     }
 
     pub fn num_entries(&self) -> usize {
-        self.entries.len()
+        let num_diag = self.entries.keys().filter(|[i, j]| i == j).count();
+        2 * self.entries.len() - num_diag
     }
 
     /// Insert a value into the matrix. Assumes symmetry: row/col order does not matter.
@@ -86,7 +89,7 @@ impl SparseMatrix {
     }
 
     /// construct an [AIJMatrix] representation from the values in this matrix
-    pub fn to_aij_format(&self) -> AIJMatrix {
+    pub fn construct_aij_matrix(&self) -> AIJMatrix {
         // number of entries in each row (indices offset by 1)
         let mut row_counts = vec![0; self.dimension + 1];
 
@@ -130,7 +133,6 @@ impl SparseMatrix {
 
 impl Into<AIJMatrix> for SparseMatrix {
     fn into(mut self) -> AIJMatrix {
-
         // number of entries in each row (indices offset by 1)
         let mut row_counts = vec![0; self.dimension + 1];
 
@@ -170,15 +172,6 @@ impl Into<AIJMatrix> for SparseMatrix {
             dim: self.dimension,
         }
     }
-}
-
-/// AIJ Sparse Matrix Format native to PETSC: 
-/// https://petsc.org/main/docs/manualpages/Mat/MatCreateSeqAIJWithArrays.html#MatCreateSeqAIJWithArrays
-pub struct AIJMatrix {
-    pub a: Vec<f64>,
-    pub i: Vec<i32>,
-    pub j: Vec<i32>,
-    pub dim: usize,
 }
 
 #[cfg(test)]
@@ -244,27 +237,6 @@ mod tests {
 
         assert!(sm_a_entries.get(&[4, 0]).is_none());
         assert!(sm_a_entries.get(&[3, 1]).is_none());
-    }
-
-    const VALS_BY_COL: [f64; 6] = [1.0, 2.0, 2.0, 4.0, 3.0, 4.0];
-
-    #[test]
-    fn build_aij_representation() {
-        let mut sm = SparseMatrix::new(4);
-        sm.insert([0, 0], 1.0);
-        sm.insert([1, 0], 2.0);
-        sm.insert([2, 2], 3.0);
-        sm.insert([3, 1], 4.0);
-
-        let aij_mat: AIJMatrix = sm.into();
-
-        assert_eq!(vec![0, 2, 4, 5, 6], aij_mat.i);
-        assert_eq!(vec![0, 1, 0, 3, 2, 1], aij_mat.j);
-
-        for (v, v_test) in aij_mat.a.iter().zip(VALS_BY_COL.iter()) {
-            assert!((*v_test - *v).abs() < 1e-15);
-        }
-
     }
 
     #[test]
