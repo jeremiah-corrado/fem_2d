@@ -1,9 +1,12 @@
-extern crate domain;
 extern crate basis;
+extern crate domain;
 
 mod integrals;
 
-pub use integrals::{Integral, IntegralResult, real_gauss_quad, real_gauss_quad_edge, real_gauss_quad_inner, L2InnerProduct, CurlProduct};
+pub use integrals::{
+    real_gauss_quad, real_gauss_quad_edge, real_gauss_quad_inner, CurlProduct, Integral,
+    IntegralResult, L2InnerProduct,
+};
 
 #[cfg(test)]
 mod tests {

@@ -1,13 +1,13 @@
-use domain::ParaDir;
 use basis::{BasisFn, ShapeFn};
+use domain::ParaDir;
 
-mod inner_products;
 mod curl_products;
 mod glq_integration;
+mod inner_products;
 
+pub use curl_products::CurlProduct;
 pub use glq_integration::{real_gauss_quad, real_gauss_quad_edge, real_gauss_quad_inner};
 pub use inner_products::L2InnerProduct;
-pub use curl_products::CurlProduct;
 
 /// Return type of an [Integral]
 pub enum IntegralResult {
@@ -33,10 +33,10 @@ pub trait Integral {
     /// Compute an integral between [BasisFn]'s P and Q, where P and Q both have a parametric direction ([ParaDir]) and orders i and j.
     fn integrate<SF: ShapeFn>(
         &self,
-        p_dir: ParaDir, 
-        q_dir: ParaDir, 
-        p_orders: [usize; 2], 
-        q_orders: [usize; 2], 
+        p_dir: ParaDir,
+        q_dir: ParaDir,
+        p_orders: [usize; 2],
+        q_orders: [usize; 2],
         p_basis: &BasisFn<SF>,
         q_basis: &BasisFn<SF>,
     ) -> IntegralResult;
@@ -45,10 +45,10 @@ pub trait Integral {
     /// This function may still return a "Full" [IntegralResult] if the solution is known to be zero along the edges.
     fn integrate_by_parts<SF: ShapeFn>(
         &self,
-        p_dir: ParaDir, 
-        q_dir: ParaDir, 
-        p_orders: [usize; 2], 
-        q_orders: [usize; 2], 
+        p_dir: ParaDir,
+        q_dir: ParaDir,
+        p_orders: [usize; 2],
+        q_orders: [usize; 2],
         p_basis: &BasisFn<SF>,
         q_basis: &BasisFn<SF>,
     ) -> IntegralResult;

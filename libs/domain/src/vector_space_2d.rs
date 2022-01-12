@@ -81,6 +81,19 @@ impl Mul<Self> for V2D {
     }
 }
 
+impl Mul<&Self> for V2D {
+    type Output = Self;
+    fn mul(self, other: &Self) -> Self {
+        Self {
+            inner:
+            [
+                self[0] * other[0],
+                self[1] * other[1],
+            ]
+        }
+    }
+}
+
 /*
     | [x1, y1] |
     | [x2, y2] |

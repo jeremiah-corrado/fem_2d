@@ -1,6 +1,5 @@
-
 /// 2D Gauss Legendre Quadrature integral of some function F defined over an m by n rectangular region.
-/// It is assumed that u_weights.len() == m and v_weights.len() == n. 
+/// It is assumed that u_weights.len() == m and v_weights.len() == n.
 pub fn real_gauss_quad<F>(u_weights: &Vec<f64>, v_weights: &Vec<f64>, integrand: F) -> f64
 where
     F: Fn(usize, usize) -> f64,
@@ -17,7 +16,7 @@ where
 }
 
 /// 2D Gauss Legendre Quadrature integral of some function F defined over an m by n rectangular region.
-/// This is the same as [real_gauss_quad] except, the outer edge is ignored (the first and last elements of 'u_weights' and 'v_weights'). 
+/// This is the same as [real_gauss_quad] except, the outer edge is ignored (the first and last elements of 'u_weights' and 'v_weights').
 pub fn real_gauss_quad_inner<F>(u_weights: &Vec<f64>, v_weights: &Vec<f64>, integrand: F) -> f64
 where
     F: Fn(usize, usize) -> f64,

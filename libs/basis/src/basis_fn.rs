@@ -85,10 +85,10 @@ pub struct BasisFn<SF: ShapeFn> {
     pub t: Vec<Vec<M2D>>,
     // Inverse of transformation matrices at each sample point.
     pub ti: Vec<Vec<M2D>>,
-    // Determinants of the "Sampling Jacobian" at each point.
+    /// Determinants of the "Sampling Jacobian" at each point.
     pub dt: Vec<Vec<f64>>,
-    u_glq_scale: f64,
-    v_glq_scale: f64,
+    /// Parametric scaling factors (used to scale derivatives in parametric space as necessary)
+    pub para_scale: V2D,
     u_shapes: SF,
     v_shapes: SF,
 }
@@ -143,8 +143,7 @@ impl<SF: ShapeFn> BasisFn<SF> {
             t,
             ti,
             dt,
-            u_glq_scale,
-            v_glq_scale,
+            para_scale: V2D::from([v_glq_scale, u_glq_scale]),
             u_shapes: SF::with(i_max, &u_points_scaled, compute_d2),
             v_shapes: SF::with(j_max, &v_points_scaled, compute_d2),
         }
@@ -158,63 +157,68 @@ impl<SF: ShapeFn> BasisFn<SF> {
         self.ti[m][n].v * self.u_shapes.poly(i, m) * self.v_shapes.power(j, n)
     }
 
-    pub fn f_u_d1(&self, [i, j]: [usize; 2], [m, n]: [usize; 2]) -> V2D {
+    pub fn f_u_d1(&self, [i, j]: [usize; 2], [m, n]: [usize; 2], para_scale: &V2D) -> V2D {
         self.ti[m][n].u
             * V2D::from([
                 self.u_shapes.power(i, m) * self.v_shapes.poly_d1(j, n),
                 self.u_shapes.power_d1(i, m) * self.v_shapes.poly(j, n),
-            ])
+            ]) * para_scale
     }
 
-    pub fn f_v_d1(&self, [i, j]: [usize; 2], [m, n]: [usize; 2]) -> V2D {
+    pub fn f_v_d1(&self, [i, j]: [usize; 2], [m, n]: [usize; 2], para_scale: &V2D) -> V2D {
         self.ti[m][n].v
             * V2D::from([
                 self.u_shapes.poly(i, m) * self.v_shapes.power_d1(j, n),
                 self.u_shapes.poly_d1(i, m) * self.v_shapes.power(j, n),
-            ])
+            ]) * para_scale
     }
 
-    pub fn f_u_d2(&self, [i, j]: [usize; 2], [m, n]: [usize; 2]) -> V2D {
+    pub fn f_u_d2(&self, [i, j]: [usize; 2], [m, n]: [usize; 2], para_scale: &V2D) -> V2D {
         self.ti[m][n].u
             * V2D::from([
-                self.u_shapes.power(i, m) * self.v_shapes.poly_d2(j, n),
-                self.u_shapes.power_d2(i, m) * self.v_shapes.poly(j, n),
-            ])
+                self.u_shapes.power(i, m) * self.v_shapes.poly_d2(j, n) * para_scale[1].powi(2),
+                self.u_shapes.power_d2(i, m) * self.v_shapes.poly(j, n) * para_scale[0].powi(2),
+            ]) * para_scale * para_scale
     }
 
-    pub fn f_v_d2(&self, [i, j]: [usize; 2], [m, n]: [usize; 2]) -> V2D {
+    pub fn f_v_d2(&self, [i, j]: [usize; 2], [m, n]: [usize; 2], para_scale: &V2D) -> V2D {
         self.ti[m][n].v
             * V2D::from([
-                self.u_shapes.poly(i, m) * self.v_shapes.power_d2(j, n),
-                self.u_shapes.poly_d2(i, m) * self.v_shapes.power(j, n),
-            ])
+                self.u_shapes.poly(i, m) * self.v_shapes.power_d2(j, n) * para_scale[1].powi(2),
+                self.u_shapes.poly_d2(i, m) * self.v_shapes.power(j, n) * para_scale[0].powi(2),
+            ]) * para_scale * para_scale
     }
 
-    pub fn f_u_dd(&self, [i, j]: [usize; 2], [m, n]: [usize; 2]) -> V2D {
-        self.ti[m][n].u * self.u_shapes.power_d1(i, m) * self.v_shapes.poly_d1(j, n)
+    pub fn f_u_dd(&self, [i, j]: [usize; 2], [m, n]: [usize; 2], para_scale: &V2D) -> V2D {
+        self.ti[m][n].u * self.u_shapes.power_d1(i, m) * self.v_shapes.poly_d1(j, n) * para_scale[0] * self.para_scale[1]
     }
 
-    pub fn f_v_dd(&self, [i, j]: [usize; 2], [m, n]: [usize; 2]) -> V2D {
-        self.ti[m][n].v * self.u_shapes.poly_d1(i, m) * self.v_shapes.power_d1(j, n)
+    pub fn f_v_dd(&self, [i, j]: [usize; 2], [m, n]: [usize; 2], para_scale: &V2D) -> V2D {
+        self.ti[m][n].v * self.u_shapes.poly_d1(i, m) * self.v_shapes.power_d1(j, n) * para_scale[0] * self.para_scale[1]
     }
 
     #[inline]
     pub fn glq_scale(&self) -> f64 {
-        self.u_glq_scale * self.v_glq_scale
+        self.para_scale.dot_with(&V2D::from([1.0, 1.0]))
     }
 
     #[inline]
     pub fn u_glq_scale(&self) -> f64 {
-        self.u_glq_scale
+        self.para_scale[1]
     }
 
     #[inline]
     pub fn v_glq_scale(&self) -> f64 {
-        self.v_glq_scale
+        self.para_scale[0]
     }
 
     #[inline]
     pub fn sample_scale(&self, [m, n]: [usize; 2]) -> f64 {
         self.dt[m][n]
+    }
+
+    #[inline]
+    pub fn deriv_scale(&self) -> &V2D {
+        &self.para_scale
     }
 }
