@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["ParaDir",""]],"struct":[["Elem",""],["M2D",""],["Point",""],["V2D",""]]});

@@ -42,7 +42,7 @@ pub trait Integral {
     ) -> IntegralResult;
 
     /// Compute an integral-by-parts between [BasisFn]'s P and Q, where P and Q both have a parametric direction ([ParaDir]) and orders i and j.
-    /// This function may still return a "Full" integral result if the solution is known to be zero along the edges.
+    /// This function may still return a "Full" [IntegralResult] if the solution is known to be zero along the edges.
     fn integrate_by_parts<SF: ShapeFn>(
         &self,
         p_dir: ParaDir, 

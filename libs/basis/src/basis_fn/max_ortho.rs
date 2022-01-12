@@ -1,7 +1,9 @@
 use super::ShapeFn;
 
 //https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6470651
-const EUC_NORM_COEFFS: [f64; 12] = [0.968246, 2.561738, 0.838525, 4.248161, 0.816397, 5.882766, 0.808509, 1.0, 1.0, 1.0, 1.0, 1.0];
+const EUC_NORM_COEFFS: [f64; 12] = [
+    0.968246, 2.561738, 0.838525, 4.248161, 0.816397, 5.882766, 0.808509, 1.0, 1.0, 1.0, 1.0, 1.0,
+];
 
 const Q_NUMERATORS: [&[i32]; 12] = [
     &[-1, 0, 1],
@@ -18,7 +20,6 @@ const Q_NUMERATORS: [&[i32]; 12] = [
     &[0, -3, 0, -7, 0, -11, 0, -15, 0, -19, 0, -23, 0, 72],
 ];
 const Q_DENOMINATORS: [i32; 12] = [1, 3, 6, 10, 15, 21, 28, 36, 40, 55, 66, 72];
-
 
 const fn get_q_weight_vector<const DIM: usize>() -> [f64; DIM] {
     let mut coeffs = [0.0; DIM];
@@ -91,7 +92,12 @@ pub struct QFunction {
 }
 
 impl QFunction {
-    pub fn with(max_n: u8, points: &[f64], leg_poly: &LegendrePoly, compute_2nd_derivs: bool) -> Self {
+    pub fn with(
+        max_n: u8,
+        points: &[f64],
+        leg_poly: &LegendrePoly,
+        compute_2nd_derivs: bool,
+    ) -> Self {
         if compute_2nd_derivs {
             Self::with_specs_with_2nd_derivs(max_n, points, leg_poly)
         } else {
@@ -126,9 +132,9 @@ impl QFunction {
             }
         }
 
-        Self { 
-            q: values, 
-            d1: primes, 
+        Self {
+            q: values,
+            d1: primes,
             d2: Vec::new(),
         }
     }
@@ -161,19 +167,19 @@ impl QFunction {
                         leg_poly.weighted_prime_sum(&Q_WEIGHTS[i - 2], EUC_NORM_COEFFS[i - 2]),
                     );
                     double_primes.push(
-                        leg_poly.weighted_double_prime_sum(&Q_WEIGHTS[i - 2], EUC_NORM_COEFFS[i - 2]),
+                        leg_poly
+                            .weighted_double_prime_sum(&Q_WEIGHTS[i - 2], EUC_NORM_COEFFS[i - 2]),
                     )
                 }
             }
         }
 
-        Self { 
-            q: values, 
-            d1: primes, 
+        Self {
+            q: values,
+            d1: primes,
             d2: double_primes,
         }
     }
-
 }
 
 #[derive(Clone, Debug)]
@@ -222,7 +228,9 @@ impl LegendrePoly {
                         primes[i].push(1.0);
                     }
                     _ => {
-                        let v = ((2.0 * i_f - 1.0) * point * values[i - 1][p] - (i_f - 1.0) * values[i - 2][p]) / i_f;
+                        let v = ((2.0 * i_f - 1.0) * point * values[i - 1][p]
+                            - (i_f - 1.0) * values[i - 2][p])
+                            / i_f;
                         values[i].push(v);
 
                         let p = i_f * values[i - 1][p] + point * primes[i - 1][p];
@@ -249,24 +257,43 @@ impl LegendrePoly {
         let mut double_primes = Vec::with_capacity(n);
 
         // construct (1 - x^2) without singularities at the endpoints
-        let d2_denom: Vec<f64> = match ((points[0].abs() - 1.0).abs() < 1e-15, (points[num_p - 1].abs() - 1.0).abs() < 1e-15) {
+        let d2_denom: Vec<f64> = match (
+            (points[0].abs() - 1.0).abs() < 1e-15,
+            (points[num_p - 1].abs() - 1.0).abs() < 1e-15,
+        ) {
             (true, true) => {
                 let mut den = vec![1.0];
-                den.extend(points.iter().skip(1).take(num_p - 2).map(|x| 1.0 - x.powi(2)));
-                den.push(1.0);
-                den
-            },
-            (true, false) => {
-                let mut den = vec![1.0];
-                den.extend(points.iter().skip(1).take(num_p - 1).map(|x| 1.0 - x.powi(2)));
-                den
-            },
-            (false, true) => {
-                let mut den : Vec<_> = points.iter().take(num_p - 1).map(|x| 1.0 - x.powi(2)).collect();
+                den.extend(
+                    points
+                        .iter()
+                        .skip(1)
+                        .take(num_p - 2)
+                        .map(|x| 1.0 - x.powi(2)),
+                );
                 den.push(1.0);
                 den
             }
-            (false, false) => points.iter().map(|x| (1.0 - x.powi(2))).collect()
+            (true, false) => {
+                let mut den = vec![1.0];
+                den.extend(
+                    points
+                        .iter()
+                        .skip(1)
+                        .take(num_p - 1)
+                        .map(|x| 1.0 - x.powi(2)),
+                );
+                den
+            }
+            (false, true) => {
+                let mut den: Vec<_> = points
+                    .iter()
+                    .take(num_p - 1)
+                    .map(|x| 1.0 - x.powi(2))
+                    .collect();
+                den.push(1.0);
+                den
+            }
+            (false, false) => points.iter().map(|x| (1.0 - x.powi(2))).collect(),
         };
 
         for i in 0..=n {
@@ -275,43 +302,67 @@ impl LegendrePoly {
                 0 => {
                     values.push(vec![1.0; num_p]);
                     primes.push(vec![0.0; num_p]);
-                    
+
                     double_primes.push(vec![0.0; num_p]);
-                },
+                }
                 1 => {
                     values.push(Vec::from(points));
                     primes.push(vec![1.0; num_p]);
 
                     double_primes.push(vec![0.0; num_p]);
-                },
+                }
                 2 => {
                     values.push(
                         points
                             .iter()
                             .enumerate()
-                            .map(|(p, x)| ((2.0 * i_f - 1.0) * x * values[i - 1][p] - (i_f - 1.0) * values[i - 2][p]) / i_f)
+                            .map(|(p, x)| {
+                                ((2.0 * i_f - 1.0) * x * values[i - 1][p]
+                                    - (i_f - 1.0) * values[i - 2][p])
+                                    / i_f
+                            })
                             .collect(),
                     );
-                    primes.push(points.iter().enumerate().map(|(p, x)| i_f * values[i - 1][p] + x * primes[i - 1][p]).collect());
+                    primes.push(
+                        points
+                            .iter()
+                            .enumerate()
+                            .map(|(p, x)| i_f * values[i - 1][p] + x * primes[i - 1][p])
+                            .collect(),
+                    );
 
                     double_primes.push(vec![3.0; num_p]);
-
-                },
+                }
                 _ => {
                     values.push(
                         points
                             .iter()
                             .enumerate()
-                            .map(|(p, x)| ((2.0 * i_f - 1.0) * x * values[i - 1][p] - (i_f - 1.0) * values[i - 2][p]) / i_f)
+                            .map(|(p, x)| {
+                                ((2.0 * i_f - 1.0) * x * values[i - 1][p]
+                                    - (i_f - 1.0) * values[i - 2][p])
+                                    / i_f
+                            })
                             .collect(),
                     );
-                    primes.push(points.iter().enumerate().map(|(p, x)| i_f * values[i - 1][p] + x * primes[i - 1][p]).collect());
+                    primes.push(
+                        points
+                            .iter()
+                            .enumerate()
+                            .map(|(p, x)| i_f * values[i - 1][p] + x * primes[i - 1][p])
+                            .collect(),
+                    );
 
                     double_primes.push(
-                        primes[i].iter().zip(values[i].iter()).enumerate().map(|(p, (prime, value))| {
-                            (2.0 * points[p] * prime - (i_f * (i_f + 1.0)) * value) / d2_denom[p]
-                        })
-                        .collect()
+                        primes[i]
+                            .iter()
+                            .zip(values[i].iter())
+                            .enumerate()
+                            .map(|(p, (prime, value))| {
+                                (2.0 * points[p] * prime - (i_f * (i_f + 1.0)) * value)
+                                    / d2_denom[p]
+                            })
+                            .collect(),
                     )
                 }
             }
@@ -356,7 +407,10 @@ impl LegendrePoly {
     }
 
     pub fn weighted_double_prime_sum(&self, weights: &[f64], normalization_coeff: f64) -> Vec<f64> {
-        assert!(self.has_2nd_derivs, "2nd Derivatives not evaluated on Legendre Polynomial; cannot compute weighted sum!");
+        assert!(
+            self.has_2nd_derivs,
+            "2nd Derivatives not evaluated on Legendre Polynomial; cannot compute weighted sum!"
+        );
         let mut sum = vec![0.0; self.l[0].len()];
 
         for (order, &weight) in weights.iter().enumerate() {
@@ -371,5 +425,4 @@ impl LegendrePoly {
 
         sum
     }
-
 }

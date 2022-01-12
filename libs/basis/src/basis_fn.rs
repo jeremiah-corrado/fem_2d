@@ -1,10 +1,9 @@
-
 mod glq;
 mod kol;
 mod max_ortho;
 
+use domain::{Elem, Point, M2D, V2D};
 use glq::{gauss_quadrature_points, scale_gauss_quad_points};
-use domain::{Point, V2D, M2D, Elem};
 use std::marker::PhantomData;
 
 pub use kol::KOLShapeFn;
@@ -26,7 +25,7 @@ pub trait ShapeFn {
 }
 
 /// Structure used to generate [BasisFn]'s over [Elem]'s in a Domain.
-/// This structure contains settings for a 
+/// This structure contains settings for a
 pub struct BasisFnSampler<SF: ShapeFn> {
     /// Type of [ShapeFn] used in [BasisFn]'s
     shape_type: PhantomData<SF>,
@@ -62,20 +61,21 @@ impl<SF: ShapeFn> BasisFnSampler<SF> {
                 u_points,
                 v_points,
             },
-            [
-                u_weights,
-                v_weights
-            ]
+            [u_weights, v_weights],
         )
     }
 
     /// Generate a [BasisFn] defined over an [Elem]. Can be defined over a subset of the Element.
-    pub fn sample_basis_fn(
-        &self,
-        elem: &Elem,
-        sampled_space: Option<[Point; 2]>,
-    ) -> BasisFn<SF> {
-        BasisFn::with(self.i_max, self.j_max, self.compute_d2, &self.u_points, &self.v_points, elem, sampled_space)
+    pub fn sample_basis_fn(&self, elem: &Elem, sampled_space: Option<[Point; 2]>) -> BasisFn<SF> {
+        BasisFn::with(
+            self.i_max,
+            self.j_max,
+            self.compute_d2,
+            &self.u_points,
+            &self.v_points,
+            elem,
+            sampled_space,
+        )
     }
 }
 
@@ -103,8 +103,7 @@ impl<SF: ShapeFn> BasisFn<SF> {
         elem: &Elem,
         sampled_space: Option<[Point; 2]>,
     ) -> Self {
-        
-        let [(u_glq_scale, u_points_scaled), (v_glq_scale, v_points_scaled)]= match sampled_space {
+        let [(u_glq_scale, u_points_scaled), (v_glq_scale, v_points_scaled)] = match sampled_space {
             Some([sample_min, sample_max]) => {
                 let para_min = elem.parametric_projection(sample_min);
                 let para_max = elem.parametric_projection(sample_max);
@@ -113,33 +112,29 @@ impl<SF: ShapeFn> BasisFn<SF> {
                     scale_gauss_quad_points(raw_u_points, para_min[0], para_max[0]),
                     scale_gauss_quad_points(raw_u_points, para_min[1], para_max[1]),
                 ]
-            },
-            None => {
-                [
-                    (1.0, raw_u_points.to_vec()),
-                    (1.0, raw_v_points.to_vec()),
-                ]
             }
+            None => [(1.0, raw_u_points.to_vec()), (1.0, raw_v_points.to_vec())],
         };
 
-        let t: Vec<Vec<M2D>> = u_points_scaled.iter().map(|u| {
-            v_points_scaled.iter().map(|v| {
-                elem.parametric_gradient(V2D::from([*u, *v]))
-            }).collect()
-        }).collect();
+        let t: Vec<Vec<M2D>> = u_points_scaled
+            .iter()
+            .map(|u| {
+                v_points_scaled
+                    .iter()
+                    .map(|v| elem.parametric_gradient(V2D::from([*u, *v])))
+                    .collect()
+            })
+            .collect();
 
-        let ti: Vec<Vec<M2D>> = t.iter().map(|row| {
-            row.iter().map(|v| {
-                v.inverse()
-            }).collect()
-        }).collect();
+        let ti: Vec<Vec<M2D>> = t
+            .iter()
+            .map(|row| row.iter().map(|v| v.inverse()).collect())
+            .collect();
 
         let dt = if sampled_space.is_some() {
-            t.iter().map(|row| {
-                row.iter().map(|v| {
-                    v.det()
-                }).collect()
-            }).collect()
+            t.iter()
+                .map(|row| row.iter().map(|v| v.det()).collect())
+                .collect()
         } else {
             vec![vec![1.0; raw_v_points.len()]; raw_u_points.len()]
         };
@@ -152,7 +147,7 @@ impl<SF: ShapeFn> BasisFn<SF> {
             v_glq_scale,
             u_shapes: SF::with(i_max, &u_points_scaled, compute_d2),
             v_shapes: SF::with(j_max, &v_points_scaled, compute_d2),
-        } 
+        }
     }
 
     pub fn f_u(&self, [i, j]: [usize; 2], [m, n]: [usize; 2]) -> V2D {
@@ -196,15 +191,11 @@ impl<SF: ShapeFn> BasisFn<SF> {
     }
 
     pub fn f_u_dd(&self, [i, j]: [usize; 2], [m, n]: [usize; 2]) -> V2D {
-        self.ti[m][n].u
-            * self.u_shapes.power_d1(i, m)
-            * self.v_shapes.poly_d1(j, n)
+        self.ti[m][n].u * self.u_shapes.power_d1(i, m) * self.v_shapes.poly_d1(j, n)
     }
 
     pub fn f_v_dd(&self, [i, j]: [usize; 2], [m, n]: [usize; 2]) -> V2D {
-        self.ti[m][n].v
-            * self.u_shapes.poly_d1(i, m)
-            * self.v_shapes.power_d1(j, n)
+        self.ti[m][n].v * self.u_shapes.poly_d1(i, m) * self.v_shapes.power_d1(j, n)
     }
 
     #[inline]

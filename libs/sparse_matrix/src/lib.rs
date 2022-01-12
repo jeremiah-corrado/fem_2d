@@ -1,6 +1,6 @@
-mod sparse_matrix;
+mod sparse_matrix_btree;
 
-pub use sparse_matrix::SparseMatrix;
+pub use sparse_matrix_btree::SparseMatrix;
 
 #[cfg(test)]
 mod tests {

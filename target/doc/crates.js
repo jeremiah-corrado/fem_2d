@@ -1,1 +1,0 @@
-window.ALL_CRATES = ["approx","basis","bytemuck","domain","eigensolver","fem_2d","integration","matrixmultiply","nalgebra","nalgebra_macros","num_complex","num_integer","num_rational","num_traits","paste","proc_macro2","quote","rawpointer","safe_arch","simba","sparse_matrix","syn","typenum","unicode_xid","wide"];
