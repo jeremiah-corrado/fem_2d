@@ -40,7 +40,7 @@ impl Integral for CurlProduct {
                                 .f_u_d1(q_orders, [m, n], p_basis.deriv_scale())
                                 .dot_with(&CURL_OP);
 
-                            p_curl * q_curl 
+                            p_curl * q_curl
                         })
                     }
                     (ParaDir::U, ParaDir::V) => {
@@ -142,62 +142,76 @@ impl Integral for CurlProduct {
             };
 
         let edge_terms = (0..4)
-            .map(|edge_idx| match (p_dir, q_dir, edge_idx) {
-                (ParaDir::U, ParaDir::U, 0 | 1) => {
-                    real_gauss_quad_edge(&self.u_weights, &self.v_weights, edge_idx, |m, n| {
-                        let p_curl = p_basis
-                            .f_u_d1(p_orders, [m, n], q_basis.deriv_scale())
-                            .dot_with(&CURL_OP);
-                        let q = q_basis
-                            .f_u(q_orders, [m, n])
-                            .dot_with(&EDGE_UNIT_VECTORS[edge_idx]);
+            .map(|edge_idx| {
+                p_basis.edge_glq_scale(edge_idx)
+                    * q_basis.edge_glq_scale(edge_idx)
+                    * match (p_dir, q_dir, edge_idx) {
+                        (ParaDir::U, ParaDir::U, 0 | 1) => real_gauss_quad_edge(
+                            &self.u_weights,
+                            &self.v_weights,
+                            edge_idx,
+                            |m, n| {
+                                let p_curl = p_basis
+                                    .f_u_d1(p_orders, [m, n], q_basis.deriv_scale())
+                                    .dot_with(&CURL_OP);
+                                let q = q_basis
+                                    .f_u(q_orders, [m, n])
+                                    .dot_with(&EDGE_UNIT_VECTORS[edge_idx]);
 
-                        p_curl * q
-                    }) * p_basis.u_glq_scale()
-                        * q_basis.u_glq_scale()
-                }
-                (ParaDir::V, ParaDir::U, 0 | 1) => {
-                    real_gauss_quad_edge(&self.u_weights, &self.v_weights, edge_idx, |m, n| {
-                        let p_curl = p_basis
-                            .f_v_d1(p_orders, [m, n], q_basis.deriv_scale())
-                            .dot_with(&CURL_OP);
-                        let q = q_basis
-                            .f_u(q_orders, [m, n])
-                            .dot_with(&EDGE_UNIT_VECTORS[edge_idx]);
+                                p_curl * q
+                            },
+                        ),
+                        (ParaDir::V, ParaDir::U, 0 | 1) => real_gauss_quad_edge(
+                            &self.u_weights,
+                            &self.v_weights,
+                            edge_idx,
+                            |m, n| {
+                                let p_curl = p_basis
+                                    .f_v_d1(p_orders, [m, n], q_basis.deriv_scale())
+                                    .dot_with(&CURL_OP);
+                                let q = q_basis
+                                    .f_u(q_orders, [m, n])
+                                    .dot_with(&EDGE_UNIT_VECTORS[edge_idx]);
 
-                        p_curl * q
-                    }) * p_basis.u_glq_scale()
-                        * q_basis.u_glq_scale()
-                }
-                (ParaDir::U, ParaDir::V, 2 | 3) => {
-                    real_gauss_quad_edge(&self.u_weights, &self.v_weights, edge_idx, |m, n| {
-                        let p_curl = p_basis
-                            .f_u_d1(p_orders, [m, n], q_basis.deriv_scale())
-                            .dot_with(&CURL_OP);
-                        let q = q_basis
-                            .f_v(q_orders, [m, n])
-                            .dot_with(&EDGE_UNIT_VECTORS[edge_idx]);
+                                p_curl * q
+                            },
+                        ),
+                        (ParaDir::U, ParaDir::V, 2 | 3) => {
+                            real_gauss_quad_edge(
+                                &self.u_weights,
+                                &self.v_weights,
+                                edge_idx,
+                                |m, n| {
+                                    let p_curl = p_basis
+                                        .f_u_d1(p_orders, [m, n], q_basis.deriv_scale())
+                                        .dot_with(&CURL_OP);
+                                    let q = q_basis
+                                        .f_v(q_orders, [m, n])
+                                        .dot_with(&EDGE_UNIT_VECTORS[edge_idx]);
 
-                        p_curl * q
-                    }) * -1.0
-                        * p_basis.v_glq_scale()
-                        * q_basis.v_glq_scale()
-                }
-                (ParaDir::V, ParaDir::V, 2 | 3) => {
-                    real_gauss_quad_edge(&self.u_weights, &self.v_weights, edge_idx, |m, n| {
-                        let p_curl = p_basis
-                            .f_v_d1(p_orders, [m, n], q_basis.deriv_scale())
-                            .dot_with(&CURL_OP);
-                        let q = q_basis
-                            .f_v(q_orders, [m, n])
-                            .dot_with(&EDGE_UNIT_VECTORS[edge_idx]);
+                                    p_curl * q
+                                },
+                            ) * -1.0
+                        }
+                        (ParaDir::V, ParaDir::V, 2 | 3) => {
+                            real_gauss_quad_edge(
+                                &self.u_weights,
+                                &self.v_weights,
+                                edge_idx,
+                                |m, n| {
+                                    let p_curl = p_basis
+                                        .f_v_d1(p_orders, [m, n], q_basis.deriv_scale())
+                                        .dot_with(&CURL_OP);
+                                    let q = q_basis
+                                        .f_v(q_orders, [m, n])
+                                        .dot_with(&EDGE_UNIT_VECTORS[edge_idx]);
 
-                        p_curl * q
-                    }) * -1.0
-                        * p_basis.v_glq_scale()
-                        * q_basis.v_glq_scale()
-                }
-                (_, _, _) => 0.0,
+                                    p_curl * q
+                                },
+                            ) * -1.0
+                        }
+                        (_, _, _) => 0.0,
+                    }
             })
             .collect::<Vec<f64>>()
             .try_into()

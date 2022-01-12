@@ -176,16 +176,16 @@ impl<SF: ShapeFn> BasisFn<SF> {
     pub fn f_u_d2(&self, [i, j]: [usize; 2], [m, n]: [usize; 2], para_scale: &V2D) -> V2D {
         self.ti[m][n].u
             * V2D::from([
-                self.u_shapes.power(i, m) * self.v_shapes.poly_d2(j, n) * para_scale[1].powi(2),
-                self.u_shapes.power_d2(i, m) * self.v_shapes.poly(j, n) * para_scale[0].powi(2),
+                self.u_shapes.power(i, m) * self.v_shapes.poly_d2(j, n),
+                self.u_shapes.power_d2(i, m) * self.v_shapes.poly(j, n),
             ]) * para_scale * para_scale
     }
 
     pub fn f_v_d2(&self, [i, j]: [usize; 2], [m, n]: [usize; 2], para_scale: &V2D) -> V2D {
         self.ti[m][n].v
             * V2D::from([
-                self.u_shapes.poly(i, m) * self.v_shapes.power_d2(j, n) * para_scale[1].powi(2),
-                self.u_shapes.poly_d2(i, m) * self.v_shapes.power(j, n) * para_scale[0].powi(2),
+                self.u_shapes.poly(i, m) * self.v_shapes.power_d2(j, n),
+                self.u_shapes.poly_d2(i, m) * self.v_shapes.power(j, n),
             ]) * para_scale * para_scale
     }
 
@@ -202,6 +202,14 @@ impl<SF: ShapeFn> BasisFn<SF> {
         self.para_scale.dot_with(&V2D::from([1.0, 1.0]))
     }
 
+    #[inline] pub fn edge_glq_scale(&self, edge_idx: usize) -> f64 {
+        match edge_idx {
+            0 | 1 => self.para_scale[1],
+            2 | 3 => self.para_scale[0],
+            _ => panic!("edge_idx must not exceed 3; cannot get glq scaling factor!"),
+        }
+    }
+
     #[inline]
     pub fn u_glq_scale(&self) -> f64 {
         self.para_scale[1]
@@ -213,12 +221,12 @@ impl<SF: ShapeFn> BasisFn<SF> {
     }
 
     #[inline]
-    pub fn sample_scale(&self, [m, n]: [usize; 2]) -> f64 {
-        self.dt[m][n]
+    pub fn deriv_scale(&self) -> &V2D {
+        &self.para_scale
     }
 
     #[inline]
-    pub fn deriv_scale(&self) -> &V2D {
-        &self.para_scale
+    pub fn sample_scale(&self, [m, n]: [usize; 2]) -> f64 {
+        self.dt[m][n]
     }
 }
