@@ -1,3 +1,7 @@
+mod sparse_matrix;
+
+pub use sparse_matrix::SparseMatrix;
+
 #[cfg(test)]
 mod tests {
     #[test]
