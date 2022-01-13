@@ -5,6 +5,7 @@ use std::hash::{Hash, Hasher};
 use std::cmp::Ordering;
 
 #[derive(Clone, Copy, Debug)]
+/// 2D vector in Parametric Space
 pub struct V2D {
     inner: [f64; 2],
 }
@@ -103,6 +104,7 @@ impl Mul<&Self> for V2D {
 */
 
 #[derive(Clone, Copy, Debug)]
+/// 2 by 2 Matrix. Used to represent transformations in/into Parametric space
 pub struct M2D {
     pub u: V2D,
     pub v: V2D,
@@ -175,6 +177,7 @@ impl fmt::Display for M2D {
 
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+/// Parametric Coordinate Directions
 pub enum ParaDir {
     U,
     V,
@@ -183,6 +186,7 @@ pub enum ParaDir {
 const POINT_UNIQUENESS_ACCURACY: f64 = 1e-12;
 
 #[derive(Clone, Copy, Debug)]
+/// Point in 2D Space
 pub struct Point {
     pub x: f64,
     pub y: f64,
@@ -191,7 +195,7 @@ pub struct Point {
 }
 
 impl Point {
-    pub const fn at(x: f64, y: f64) -> Self {
+    pub fn new(x: f64, y: f64) -> Self {
         Self {
             x, 
             y,
@@ -200,7 +204,7 @@ impl Point {
         }
     }
 
-    pub const fn from([x, y]: [f64; 2]) -> Self {
+    pub fn from([x, y]: [f64; 2]) -> Self {
         Self {
             x, 
             y,
@@ -216,10 +220,32 @@ impl Default for Point {
     }
 }
 
-// not correct!
+impl Add for Point {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self::new(self.x + other.x, self.y + other.y)
+    }
+}
+
+impl Div<f64> for Point {
+    type Output = Self;
+
+    fn div(self, divis: f64) -> Self {
+        Self::new(self.x / divis, self.y / divis)
+    }
+}
+
+impl Hash for Point {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.x_cmp.hash(state);
+        self.y_cmp.hash(state);
+    }
+}
+
 impl PartialEq for Point {
     fn eq(&self, other: &Self) -> bool {
-        true
+        self.x_cmp.eq(&other.x_cmp) && self.y_cmp.eq(&other.y_cmp)
     }
 }
 
@@ -230,7 +256,7 @@ struct FloatRep {
 }
 
 impl FloatRep {
-    pub const fn from(value: f64) -> Self {
+    pub fn from(value: f64) -> Self {
         let integer_part = value.abs().trunc();
         let fractional_rounded =
             (value.abs().fract() / POINT_UNIQUENESS_ACCURACY).round() * POINT_UNIQUENESS_ACCURACY;

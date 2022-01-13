@@ -1,4 +1,7 @@
 
+extern crate smallvec;
+extern crate num_complex;
+
 mod domain;
 
 pub use domain::{Elem, Point, ParaDir, M2D, V2D};

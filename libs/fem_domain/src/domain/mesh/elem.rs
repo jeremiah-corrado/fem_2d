@@ -1,36 +1,25 @@
-use super::{Point, V2D, M2D};
+use super::{Point, V2D, M2D, Element, HRef, h_refinement::{HRefLoc, HLevels}};
+use smallvec::SmallVec;
 
-pub struct Elem {
-    id: usize,
-    p_min: Point,
-    p_max: Point,
+#[derive(Debug)]
+pub struct Elem<'e> {
+    pub id: usize,
+    pub nodes: [usize; 4],
+    pub edges: [usize; 4],
+    pub element: &'e Element,
+    children: Option<(SmallVec<[usize; 4]>, HRef)>,
+    parent: Option<HRefLoc>,
+    h_levels: HLevels,
+    poly_orders: PolyOrders,
 }
 
-impl Elem {
+impl<'e> Elem<'e> {
     pub fn parametric_projection(&self, real: Point) -> V2D {
-        assert!(real.x < self.p_max.x && real.x > self.p_min.x, "Real Point is outside Elem {}'s X Bounds; Cannot project to Parametric Space!", self.id);
-        assert!(real.y < self.p_max.y && real.y > self.p_min.y, "Real Point is outside Elem {}'s Y Bounds; Cannot project to Parametric Space!", self.id);
-
-        V2D::from(
-            [
-                map_range(real.x, self.p_min.x, self.p_max.x, -1.0, 1.0),
-                map_range(real.y, self.p_min.y, self.p_max.y, -1.0, 1.0),
-            ]
-        )
+        self.element.parametric_projection(real)
     } 
 
-    pub fn parametric_gradient(&self, _: V2D) -> M2D {
-        let dx_du = (self.p_max.x - self.p_min.x) / 2.0;
-        let dy_dv = (self.p_max.y - self.p_min.y) / 2.0;
-
-
-        M2D::from(
-            [dx_du, 0.0],
-            [0.0, dy_dv]
-        )
+    pub fn parametric_gradient(&self, parametric_coords: V2D) -> M2D {
+        self.element.parametric_gradient(parametric_coords)
     } 
 }
 
-fn map_range(val: f64, in_min: f64, in_max: f64, out_min: f64, out_max: f64) -> f64 {
-    (val - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
-}
