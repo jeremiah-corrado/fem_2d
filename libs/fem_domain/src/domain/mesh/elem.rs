@@ -1,41 +1,4 @@
-
-mod vector_space_2d;
-pub use vector_space_2d::{V2D, M2D};
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum ParaDir {
-    U,
-    V,
-}
-
-#[derive(Clone, Copy, Debug)]
-pub struct Point {
-    pub x: f64,
-    pub y: f64,
-}
-
-impl Point {
-    pub const fn at(x: f64, y: f64) -> Self {
-        Self {x, y}
-    }
-
-    pub const fn from([x, y]: [f64; 2]) -> Self {
-        Self {x, y}
-    }
-}
-
-impl Default for Point {
-    fn default() -> Self {
-        Self { x: 0.0, y: 0.0 }
-    }
-}
-
-// not correct!
-impl PartialEq for Point {
-    fn eq(&self, other: &Self) -> bool {
-        true
-    }
-}
+use super::{Point, V2D, M2D};
 
 pub struct Elem {
     id: usize,
@@ -70,13 +33,4 @@ impl Elem {
 
 fn map_range(val: f64, in_min: f64, in_max: f64, out_min: f64, out_max: f64) -> f64 {
     (val - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
 }

@@ -2,7 +2,7 @@ use super::{
     real_gauss_quad, real_gauss_quad_edge, real_gauss_quad_inner, BasisFn, Integral,
     IntegralResult, ParaDir, ShapeFn,
 };
-use domain::V2D;
+use fem_domain::V2D;
 
 /// The L2 Inner product of the Curl of two Basis Functions
 pub struct CurlProduct {

@@ -2,7 +2,7 @@ mod glq;
 mod kol;
 mod max_ortho;
 
-use domain::{Elem, Point, M2D, V2D};
+use fem_domain::{Elem, Point, M2D, V2D};
 use glq::{gauss_quadrature_points, scale_gauss_quad_points};
 use std::marker::PhantomData;
 

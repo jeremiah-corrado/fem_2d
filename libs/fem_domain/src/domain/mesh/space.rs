@@ -1,5 +1,8 @@
+
 use std::fmt;
 use std::ops::{Add, Div, Index, Mul};
+use std::hash::{Hash, Hasher};
+use std::cmp::Ordering;
 
 #[derive(Clone, Copy, Debug)]
 pub struct V2D {
@@ -167,5 +170,97 @@ impl fmt::Display for M2D {
             "u: [{:.5}, {:.5}]  v: [{:.5}, {:.5}]",
             self.u[0], self.u[1], self.v[0], self.v[1]
         )
+    }
+}
+
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ParaDir {
+    U,
+    V,
+}
+
+const POINT_UNIQUENESS_ACCURACY: f64 = 1e-12;
+
+#[derive(Clone, Copy, Debug)]
+pub struct Point {
+    pub x: f64,
+    pub y: f64,
+    x_cmp: FloatRep,
+    y_cmp: FloatRep,
+}
+
+impl Point {
+    pub const fn at(x: f64, y: f64) -> Self {
+        Self {
+            x, 
+            y,
+            x_cmp: FloatRep::from(x),
+            y_cmp: FloatRep::from(y),
+        }
+    }
+
+    pub const fn from([x, y]: [f64; 2]) -> Self {
+        Self {
+            x, 
+            y,
+            x_cmp: FloatRep::from(x),
+            y_cmp: FloatRep::from(y),
+        }
+    }
+}
+
+impl Default for Point {
+    fn default() -> Self {
+        Self { x: 0.0, y: 0.0, x_cmp: FloatRep::from(0.0), y_cmp: FloatRep::from(0.0) }
+    }
+}
+
+// not correct!
+impl PartialEq for Point {
+    fn eq(&self, other: &Self) -> bool {
+        true
+    }
+}
+
+#[derive(Hash, PartialEq, Eq, Clone, Copy, Debug)]
+struct FloatRep {
+    sign: bool,
+    bits: u64,
+}
+
+impl FloatRep {
+    pub const fn from(value: f64) -> Self {
+        let integer_part = value.abs().trunc();
+        let fractional_rounded =
+            (value.abs().fract() / POINT_UNIQUENESS_ACCURACY).round() * POINT_UNIQUENESS_ACCURACY;
+        let total_rounded = integer_part + fractional_rounded;
+
+        Self {
+            sign: value.is_sign_positive(),
+            bits: total_rounded.to_bits(),
+        }
+    }
+}
+
+impl Ord for FloatRep {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match (self.sign, other.sign) {
+            (true, true) => self.bits.cmp(&other.bits),
+            (false, true) => Ordering::Less,
+            (true, false) => Ordering::Greater,
+            (false, false) => self.bits.cmp(&other.bits).reverse(),
+        }
+    }
+}
+
+impl PartialOrd for FloatRep {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(match (self.sign, other.sign) {
+            (true, true) => self.bits.cmp(&other.bits),
+            (false, true) => Ordering::Less,
+            (true, false) => Ordering::Greater,
+            (false, false) => self.bits.cmp(&other.bits).reverse(),
+        })
     }
 }

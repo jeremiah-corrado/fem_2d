@@ -1,5 +1,5 @@
 extern crate basis;
-extern crate domain;
+extern crate fem_domain;
 
 mod integrals;
 

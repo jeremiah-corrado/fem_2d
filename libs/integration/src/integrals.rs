@@ -1,5 +1,5 @@
 use basis::{BasisFn, ShapeFn};
-use domain::ParaDir;
+use fem_domain::ParaDir;
 
 mod curl_products;
 mod glq_integration;

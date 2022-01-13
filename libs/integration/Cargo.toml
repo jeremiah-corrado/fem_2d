@@ -5,8 +5,8 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies.domain]
-path="../domain/"
+[dependencies.fem_domain]
+path="../fem_domain/"
 
 [dependencies.basis]
 path="../basis/"

@@ -21,7 +21,7 @@ checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
 name = "basis"
 version = "0.1.0"
 dependencies = [
- "domain",
+ "fem_domain",
  "nalgebra",
 ]
 
@@ -32,10 +32,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "439989e6b8c38d1b6570a384ef1e49c8848128f5a97f3914baef02920842712f"
 
 [[package]]
-name = "domain"
-version = "0.1.0"
-
-[[package]]
 name = "eigensolver"
 version = "0.1.0"
 
@@ -44,18 +40,22 @@ name = "fem_2d"
 version = "0.1.0"
 dependencies = [
  "basis",
- "domain",
  "eigensolver",
+ "fem_domain",
  "integration",
  "sparse_matrix",
 ]
+
+[[package]]
+name = "fem_domain"
+version = "0.1.0"
 
 [[package]]
 name = "integration"
 version = "0.1.0"
 dependencies = [
  "basis",
- "domain",
+ "fem_domain",
 ]
 
 [[package]]

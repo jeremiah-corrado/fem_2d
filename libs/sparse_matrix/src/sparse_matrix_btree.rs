@@ -1,5 +1,4 @@
 use super::AIJMatrix;
-use core::num;
 use std::collections::BTreeMap;
 
 /// Wrapper around a BTreeMap to store square-symmetric matrices in a sparse data structure
@@ -88,7 +87,7 @@ impl SparseMatrix {
             .map(|(coords, value)| ([coords[0] as usize, coords[1] as usize], *value))
     }
 
-    /// construct an [AIJMatrix] representation from the values in this matrix
+    /// Construct an [AIJMatrix] representation from the values in this matrix
     pub fn construct_aij_matrix(&self) -> AIJMatrix {
         // number of entries in each row (indices offset by 1)
         let mut row_counts = vec![0; self.dimension + 1];
@@ -251,7 +250,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn oversize_matrix_construction() {
-        let _ = SparseMatrix::new(std::usize::MAX);
+        let _ = SparseMatrix::new((std::u32::MAX as usize) + 1);
     }
 
     #[test]

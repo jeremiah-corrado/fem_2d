@@ -1,6 +1,6 @@
 #![feature(const_fn_floating_point_arithmetic)]
 
-extern crate domain;
+extern crate fem_domain;
 
 mod basis_fn;
 
