@@ -1,4 +1,5 @@
-
+use super::ParaDir;
+use std::fmt;
 
 /// Description of an h-Refinement
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -91,13 +92,51 @@ impl HLevels {
             HRef::V(_) => Self::from(self.u, self.v + 1),
         }
     }
+
+    pub fn edge_ranking(self, edge_dir: ParaDir) -> [u8; 2] {
+        match edge_dir {
+            ParaDir::U => [self.u, self.v],
+            ParaDir::V => [self.v, self.u],
+        }
+    }
 }
 
 impl Default for HLevels {
     fn default() -> Self {
         Self {
-            u: 1,
-            v: 1,
+            u: 0,
+            v: 0,
         }
+    }
+}
+
+#[derive(Debug)]
+pub struct HRefError {
+    message: String,
+}
+
+impl HRefError {
+    pub fn min_edge_length(edge_id: usize) -> Self {
+        Self {
+            message: format!("Minimum length reached on Edge {}; Cannot h-Refine!", edge_id),
+        }
+    }
+
+    pub fn elem_already_has_children(elem_id: usize) -> Self {
+        Self {
+            message: format!("Elem {} already has children; Cannot h-Refine!", elem_id),
+        }
+    } 
+
+    pub fn edge_already_has_children(edge_id: usize) -> Self {
+        Self {
+            message: format!("Edge {} already has children; Cannot h-Refine!", edge_id),
+        }
+    } 
+}
+
+impl fmt::Display for HRefError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.message)
     }
 }

@@ -5,6 +5,7 @@ mod edge;
 mod node;
 mod element;
 mod h_refinement;
+mod p_refinement;
 
 pub use space::{Point, M2D, V2D, ParaDir};
 pub use elem::Elem;

@@ -1,4 +1,4 @@
-use super::{Point, V2D, M2D, Element, HRef, h_refinement::{HRefLoc, HLevels}};
+use super::{Point, V2D, M2D, Element, HRef, h_refinement::{HRefLoc, HLevels}, p_refinement::PolyOrders};
 use smallvec::SmallVec;
 
 #[derive(Debug)]
@@ -14,6 +14,19 @@ pub struct Elem<'e> {
 }
 
 impl<'e> Elem<'e> {
+    pub fn new(id: usize, nodes: [usize; 4], edges: [usize; 4], element: &'e Element) -> Self {
+        Self {
+            id,
+            nodes,
+            edges,
+            element,
+            children: None,
+            parent: None,
+            h_levels: HLevels::default(),
+            poly_orders: PolyOrders::default(),
+        }
+    }
+
     pub fn parametric_projection(&self, real: Point) -> V2D {
         self.element.parametric_projection(real)
     } 
