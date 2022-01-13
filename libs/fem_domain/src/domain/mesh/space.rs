@@ -1,8 +1,7 @@
-
-use std::fmt;
-use std::ops::{Add, Div, Index, Mul};
-use std::hash::{Hash, Hasher};
 use std::cmp::Ordering;
+use std::fmt;
+use std::hash::{Hash, Hasher};
+use std::ops::{Add, Div, Index, Mul};
 
 #[derive(Clone, Copy, Debug)]
 /// 2D vector in Parametric Space
@@ -22,14 +21,11 @@ impl V2D {
     pub fn dot(a: Self, b: Self) -> f64 {
         a[0] * b[0] + a[1] * b[1]
     }
-
 }
 
 impl Default for V2D {
     fn default() -> Self {
-        Self {
-            inner: [0.0; 2]
-        }
+        Self { inner: [0.0; 2] }
     }
 }
 
@@ -89,11 +85,7 @@ impl Mul<&Self> for V2D {
     type Output = Self;
     fn mul(self, other: &Self) -> Self {
         Self {
-            inner:
-            [
-                self[0] * other[0],
-                self[1] * other[1],
-            ]
+            inner: [self[0] * other[0], self[1] * other[1]],
         }
     }
 }
@@ -175,7 +167,6 @@ impl fmt::Display for M2D {
     }
 }
 
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 /// Parametric Coordinate Directions
 pub enum ParaDir {
@@ -197,7 +188,7 @@ pub struct Point {
 impl Point {
     pub fn new(x: f64, y: f64) -> Self {
         Self {
-            x, 
+            x,
             y,
             x_cmp: FloatRep::from(x),
             y_cmp: FloatRep::from(y),
@@ -206,7 +197,7 @@ impl Point {
 
     pub fn from([x, y]: [f64; 2]) -> Self {
         Self {
-            x, 
+            x,
             y,
             x_cmp: FloatRep::from(x),
             y_cmp: FloatRep::from(y),
@@ -216,7 +207,12 @@ impl Point {
 
 impl Default for Point {
     fn default() -> Self {
-        Self { x: 0.0, y: 0.0, x_cmp: FloatRep::from(0.0), y_cmp: FloatRep::from(0.0) }
+        Self {
+            x: 0.0,
+            y: 0.0,
+            x_cmp: FloatRep::from(0.0),
+            y_cmp: FloatRep::from(0.0),
+        }
     }
 }
 

@@ -1,3 +1,5 @@
+use super::MAX_POLYNOMIAL_ORDER;
+use std::fmt;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct PolyOrders {
@@ -10,7 +12,7 @@ impl PolyOrders {
         Self { i, j }
     }
 
-    fn refined(&self, refinement: PRef) -> Result<Self, ()> {
+    fn refined(&self, refinement: PRef) -> Result<Self, PRefError> {
         Ok(Self {
             i: refinement.refine_i(self.i)?,
             j: refinement.refine_j(self.j)?,
@@ -20,10 +22,7 @@ impl PolyOrders {
 
 impl Default for PolyOrders {
     fn default() -> Self {
-        Self {
-            i: 1,
-            j: 1,
-        }
+        Self { i: 1, j: 1 }
     }
 }
 
@@ -35,12 +34,18 @@ enum PRefInt {
 }
 
 impl PRefInt {
-    fn refine(&self, n: u8) -> Result<u8, ()> {
+    fn refine(&self, n: u8) -> Result<u8, PRefError> {
         match self {
-            Self::Increment(delta) => Ok(n + *delta),
+            Self::Increment(delta) => {
+                if n + *delta > MAX_POLYNOMIAL_ORDER {
+                    Err(PRefError::ExceededMaxExpansion)
+                } else {
+                    Ok(n + *delta)
+                }
+            }
             Self::Decrement(delta) => {
                 if *delta >= n {
-                    Err(())
+                    Err(PRefError::NegExpansion)
                 } else {
                     Ok(n - *delta)
                 }
@@ -63,23 +68,37 @@ impl PRef {
                 0 => PRefInt::None,
                 d if d > 0 => PRefInt::Increment(d as u8),
                 d if d < 0 => PRefInt::Decrement((-1 * d) as u8),
-                _ => unreachable!()
+                _ => unreachable!(),
             },
             dj: match j {
                 0 => PRefInt::None,
                 d if d > 0 => PRefInt::Increment(d as u8),
                 d if d < 0 => PRefInt::Decrement((-1 * d) as u8),
-                _ => unreachable!()
-            }
+                _ => unreachable!(),
+            },
         }
     }
 
-    fn refine_i(&self, i_current: u8) -> Result<u8, ()> {
+    fn refine_i(&self, i_current: u8) -> Result<u8, PRefError> {
         self.di.refine(i_current)
     }
 
-    fn refine_j(&self, j_current: u8) -> Result<u8, ()> {
+    fn refine_j(&self, j_current: u8) -> Result<u8, PRefError> {
         self.dj.refine(j_current)
     }
+}
 
+#[derive(Debug)]
+pub enum PRefError {
+    NegExpansion,
+    ExceededMaxExpansion,
+}
+
+impl fmt::Display for PRefError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::NegExpansion => write!(f, "Negative p-Refinement will result in 0 or negative expansion; Cannot p-Refine!"),
+            Self::ExceededMaxExpansion => write!(f, "Positive p-Refinement will result in expansion order over maximum; Cannot p-Refine!"),
+        }
+    }
 }

@@ -1,10 +1,9 @@
-
-extern crate smallvec;
 extern crate num_complex;
+extern crate smallvec;
 
 mod domain;
 
-pub use domain::{Elem, Point, ParaDir, M2D, V2D};
+pub use domain::*;
 
 #[cfg(test)]
 mod tests {

@@ -1,11 +1,12 @@
 use super::Point;
-use smallvec::SmallVec;
 
+/// A point in 2D space. 
+/// Pairs of points describe Edges and Groups of 4 points describe Elems.
 #[derive(Debug)]
 pub struct Node {
-    id: usize,
-    coords: Point,
-    boundary: bool,
+    pub id: usize,
+    pub coords: Point,
+    pub boundary: bool,
 }
 
 impl Node {

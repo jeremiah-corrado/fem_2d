@@ -1,13 +1,10 @@
-
-
-
-mod mesh;
 mod dof;
+mod mesh;
 
-pub use mesh::{Mesh, Elem, M2D, V2D, Point, ParaDir};
 pub use dof::DoF;
+pub use mesh::*;
 
 pub struct Domain<'e> {
-    mesh: Mesh<'e>,
-    dofs: Vec<DoF>,
+    pub mesh: Mesh<'e>,
+    pub dofs: Vec<DoF>,
 }
