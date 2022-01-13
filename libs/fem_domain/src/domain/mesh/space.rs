@@ -203,6 +203,17 @@ impl Point {
             y_cmp: FloatRep::from(y),
         }
     }
+
+    /// Along which axis do these points have the same value (if any).
+    /// Returns None if the points are totally the same or if they share neither x nor y values.
+    pub fn orientation_with(&self, other: &Self) -> Option<ParaDir> {
+        match (self.x_cmp == other.x_cmp, self.y_cmp == other.y_cmp) {
+            (true, true) => None,
+            (true, false) => Some(ParaDir::U),
+            (false, true) => Some(ParaDir::V),
+            (false, false) => None,
+        }
+    }
 }
 
 impl Default for Point {

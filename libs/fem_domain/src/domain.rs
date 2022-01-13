@@ -4,7 +4,7 @@ mod mesh;
 pub use dof::DoF;
 pub use mesh::*;
 
-pub struct Domain<'e> {
-    pub mesh: Mesh<'e>,
+pub struct Domain {
+    pub mesh: Mesh,
     pub dofs: Vec<DoF>,
 }

@@ -18,7 +18,9 @@ pub struct Edge {
 }
 
 impl Edge {
-    pub fn new(id: usize, nodes: [&Node; 2], boundary: bool, dir: ParaDir) -> Self {
+    pub fn new(id: usize, nodes: [&Node; 2], boundary: bool) -> Self {
+        let dir = nodes[0].coords.orientation_with(&nodes[1].coords).expect("Nodes must share either an x or y coordinate; Cannot construct Edge!");
+
         Self {
             id,
             nodes: [nodes[0].id, nodes[1].id],

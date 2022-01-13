@@ -12,6 +12,12 @@ pub struct Element {
 }
 
 impl Element {
+    pub fn new(id: usize, points: [Point; 4], materials: Materials) -> Self {
+        Self {
+            id, points, materials,
+        }
+    }
+
     pub fn parametric_projection(&self, real: Point) -> V2D {
         assert!(
             real.x < self.points[3].x && real.x > self.points[0].x,

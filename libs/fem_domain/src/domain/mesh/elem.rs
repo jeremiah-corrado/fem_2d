@@ -4,29 +4,30 @@ use super::{
     Element, HRef, Point, M2D, V2D,
 };
 use smallvec::SmallVec;
+use std::rc::Rc;
 
 #[derive(Debug)]
 /// Basic unit of the FEM Domain which describes some rectangular area in parametric space. 
 /// Stores associative relationships with neighboring Nodes and Edge as well as h-- and p--refinement information 
-pub struct Elem<'e> {
+pub struct Elem {
     pub id: usize,
     pub nodes: [usize; 4],
     pub edges: [usize; 4],
-    pub element: &'e Element,
+    pub element: Rc<Element>,
     children: Option<(SmallVec<[usize; 4]>, HRef)>,
     parent: Option<(usize, HRefLoc)>,
     h_levels: HLevels,
     poly_orders: PolyOrders,
 }
 
-impl<'e> Elem<'e> {
+impl Elem {
     /// Construct a new Elem from the relevant associative information
-    pub fn new(id: usize, nodes: [usize; 4], edges: [usize; 4], element: &'e Element) -> Self {
+    pub fn new(id: usize, nodes: [usize; 4], edges: [usize; 4], element: Rc<Element>) -> Self {
         Self {
             id,
             nodes,
             edges,
-            element,
+            element: element.clone(),
             children: None,
             parent: None,
             h_levels: HLevels::default(),
@@ -49,7 +50,7 @@ impl<'e> Elem<'e> {
                         elem_id,
                         elem_idx,
                         refinement,
-                        self.element,
+                        self.element.clone(),
                         self.id,
                         &self.h_levels,
                         self.poly_orders,
@@ -87,22 +88,22 @@ impl<'e> Elem<'e> {
 }
 
 /// Intermediate data structure used to represent a child [Elem] during the execution of an [HRef]
-pub struct ElemUninit<'e> {
+pub struct ElemUninit {
     pub id: usize,
     pub nodes: [Option<usize>; 4],
     pub edges: [Option<usize>; 4],
-    pub element: &'e Element,
+    pub element: Rc<Element>,
     parent: (usize, HRefLoc),
     h_levels: HLevels,
     poly_orders: PolyOrders,
 }
 
-impl<'e> ElemUninit<'e> {
+impl ElemUninit {
     pub fn new(
         id: usize,
         idx: usize,
         refinement: HRef,
-        element: &'e Element,
+        element: Rc<Element>,
         parent_id: usize,
         parent_h_levels: &HLevels,
         poly_orders: PolyOrders,
@@ -158,7 +159,7 @@ impl<'e> ElemUninit<'e> {
         self.nodes[edge_idx] = Some(edge_id);
     }
 
-    pub fn get_elem(self) -> Result<Elem<'e>, HRefError> {
+    pub fn get_elem(self) -> Result<Elem, HRefError> {
         let nodes_init = self.nodes.iter().filter(|n| n.is_some()).count() == 4;
         let edges_init = self.edges.iter().filter(|e| e.is_some()).count() == 4;
 

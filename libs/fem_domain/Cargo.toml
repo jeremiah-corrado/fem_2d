@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 smallvec="1.7.0"
 num-complex="0.4.0"
+json="0.12.4"
