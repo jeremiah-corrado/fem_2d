@@ -9,9 +9,9 @@ mod space;
 pub use edge::Edge;
 pub use elem::{Elem, ElemUninit};
 pub use element::{Element, Materials};
-pub use h_refinement::{Bisection, HRef, HRefError, HRefLoc, Quadrant};
+pub use h_refinement::{Bisection, HRef, HRefError, HRefLoc, Quadrant, HLevels};
 pub use node::Node;
-pub use p_refinement::{PRef, PRefError};
+pub use p_refinement::{PRef, PRefError, PolyOrders};
 pub use space::{ParaDir, Point, M2D, V2D};
 
 use json::JsonValue;
@@ -36,43 +36,27 @@ pub struct Mesh {
 }
 
 struct RefinementGeneration {
-    open: bool,
-    elem_id_range: [usize; 2],
-    node_id_range: [usize; 2],
-    edge_id_range: [usize; 2],
+    pub open: bool,
+    pub elem_id_range: [usize; 2],
 }
 
 impl RefinementGeneration {
-    pub fn new(elem_id: usize, node_id: usize, edge_id: usize) -> Self {
+    pub fn new(starting_id: usize, ending_id: usize) -> Self {
         Self {
             open: true,
-            elem_id_range: [elem_id; 2],
-            node_id_range: [node_id; 2],
-            edge_id_range: [edge_id; 2],
+            elem_id_range: [starting_id, ending_id],
         }
     }
 
     pub fn next_elem_id(&mut self) -> usize {
+        assert!(self.open, "Cannot increment elem_id on a closed refinement generation");
         self.elem_id_range[1] += 1;
         self.elem_id_range[1]
     }
 
-    pub fn next_node_id(&mut self) -> usize {
-        self.node_id_range[1] += 1;
-        self.node_id_range[1]
-    }
-
-    pub fn next_edge_id(&mut self) -> usize {
-        self.edge_id_range[1] += 1;
-        self.edge_id_range[1]
-    }
-
     pub fn next_gen(&mut self) -> Self {
-        Self::new(
-            self.elem_id_range[1],
-            self.node_id_range[1],
-            self.edge_id_range[1],
-        )
+        self.open = false;
+        Self::new(self.elem_id_range[1], self.elem_id_range[1])
     }
 }
 
@@ -304,11 +288,7 @@ impl Mesh {
             })
             .collect();
 
-        let ref_gen_0 = RefinementGeneration::new(
-            elems.len() - 1,
-            nodes.len() - 1,
-            edges.len() - 1,
-        );
+        let ref_gen_0 = RefinementGeneration::new(0, elems.len() - 1);
 
         Ok(Self {
             elements,
@@ -319,22 +299,31 @@ impl Mesh {
         })
     }
 
+    // ----------------------------------------------------------------------------------------------------
+    // h-refinement methods
+    // ----------------------------------------------------------------------------------------------------
+
+    /// Execute a series of [HRef]s on [Elem]s specified by their id
     pub fn execute_h_refinements(
         &mut self,
         refinements: impl Iterator<Item = (usize, HRef)>,
     ) -> Result<(), HRefError> {
-        let refinements_map: BTreeMap<usize, HRef> = refinements.collect();
-        let mut refinement_extensions: Vec<(usize, HRef)> = Vec::new();
-
-        self.start_new_refinement_gen();
-
-        for (elem_id, refinement) in refinements_map {
-            if elem_id > num_init_elems {
+        let mut refinements_map: BTreeMap<usize, HRef> = BTreeMap::new();
+        for (elem_id, h_ref) in refinements {
+            if elem_id >= self.elems.len() {
                 return Err(HRefError::ElemDoesntExist(elem_id));
             }
-            
-            let new_uninitialized_elems = self.elems[elem_id].h_refine(refinement, &mut elem_id_tracker)?;
+            if let Some(_) = refinements_map.insert(elem_id, h_ref) {
+                return Err(HRefError::DoubleRefinement(elem_id))
+            }
+        }
+        
+        self.start_new_refinement_gen();
+        let mut refinement_extensions: Vec<(usize, HRef)> = Vec::new();
+        let mut elem_id_tracker = self.elems.len();
 
+        for (elem_id, refinement) in refinements_map {
+            let new_uninitialized_elems = self.elems[elem_id].h_refine(refinement, &mut elem_id_tracker)?;
             let mut new_elems = match refinement {
                 HRef::T => self.execute_t_refinement(new_uninitialized_elems)?,
                 HRef::U(extension) => {
@@ -363,11 +352,10 @@ impl Mesh {
         Ok(())
     }
 
-    fn start_new_refinement_gen(&mut self) {
-        let next_gen = self.refinement_generations.last().unwrap().next_gen();
+    fn start_new_refinement_gen(&mut self)  {
+        let next_gen = self.refinement_generations.last_mut().unwrap().next_gen();
         self.refinement_generations.push(next_gen);
     }
-
 
     fn execute_t_refinement(&mut self, new_elems: Vec<ElemUninit>) -> Result<Vec<Elem>, HRefError> {
         unimplemented!()
@@ -380,11 +368,39 @@ impl Mesh {
     fn execute_v_refinement(&mut self, new_elems: Vec<ElemUninit>) -> Result<Vec<Elem>, HRefError> {
         unimplemented!()
     }
+
+
+    // ----------------------------------------------------------------------------------------------------
+    // p-refinement methods
+    // ----------------------------------------------------------------------------------------------------
+
+    /// Execute a series of [PRef]s on [Elem]s specified by their id
+    pub fn execute_p_refinements(&mut self, refinements: impl Iterator<Item = (usize, PRef)>) -> Result<(), PRefError> {
+        let mut refinements_map: BTreeMap<usize, PRef> = BTreeMap::new();
+        for (elem_id, p_ref) in refinements {
+            if elem_id >= self.elems.len() {
+                return Err(PRefError::ElemDoesntExist(elem_id));
+            }
+            if let Some(_) = refinements_map.insert(elem_id, p_ref) {
+                return Err(PRefError::DoubleRefinement(elem_id));
+            }
+        }
+
+        for (elem_id, refinement) in refinements_map {
+            self.elems[elem_id].poly_orders.refine(refinement)?;
+        }
+        
+        Ok(())
+    }
 }
 
-
+// ----------------------------------------------------------------------------------------------------
+// Helper methods for Mesh construction from JSON file
+// ----------------------------------------------------------------------------------------------------
 
 /*
+    edge - node_pair - side relationships
+
     edge 0 : [node_0, node_1], top
     edge 1 : [node_2, node_3], bottom,
     edge 2 : [node_0, node_2], right,

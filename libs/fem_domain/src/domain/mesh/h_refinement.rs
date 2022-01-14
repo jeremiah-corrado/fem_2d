@@ -74,7 +74,7 @@ impl Quadrant {
     }
 }
 
-/// Location of a child Elem following a U-Type or V-Type h-refinement (from the parent Elem's perspective).
+/// Location of a child Elem or Edge following a U-Type or V-Type h-refinement (from the parent Elem's perspective).
 /// Or the Location of a child Edge following an h-refinement.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Bisection {
@@ -101,7 +101,7 @@ impl Bisection {
     }
 }
 
-/// The location of an [Elem] relative to its parent following an h-refinement
+/// The location of an Elem relative to its parent following an h-refinement
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum HRefLoc {
     T(Quadrant),
@@ -167,6 +167,7 @@ pub enum HRefError {
     EdgeHasChildren(usize),
     UninitializedElem(usize),
     ElemDoesntExist(usize),
+    DoubleRefinement(usize),
 }
 
 impl fmt::Display for HRefError {
@@ -188,7 +189,8 @@ impl fmt::Display for HRefError {
                 "ElemUninit {} was not fully initialized by the conclusion of h-refinement",
                 elem_uninit_id
             ),
-            Self::ElemDoesntExist(elem_id) => write!(f, "Elem {} does not exist; Cannot apply h-Refinement!", elem_id)
+            Self::ElemDoesntExist(elem_id) => write!(f, "Elem {} does not exist; Cannot apply h-Refinement!", elem_id),
+            Self::DoubleRefinement(elem_id) => write!(f, "Multiple h-refinements were specified for Elem {} in the same generation; Cannot apply h-Refinements", elem_id),
         }
     }
 }

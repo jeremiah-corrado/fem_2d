@@ -1,38 +1,51 @@
-use super::MAX_POLYNOMIAL_ORDER;
+use super::{MAX_POLYNOMIAL_ORDER, ParaDir};
 use std::fmt;
-
 use json::JsonValue;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct PolyOrders {
-    pub i: u8,
-    pub j: u8,
+    /// Maximum u-directed polynomial expansion order
+    pub ni: u8,
+    /// Maximum v-directed polynomial expansion order
+    pub nj: u8,
 }
 
 impl PolyOrders {
     fn from(i: u8, j: u8) -> Self {
-        Self { i, j }
+        Self { ni: i, nj: j }
     }
 
-    fn refined(&self, refinement: PRef) -> Result<Self, PRefError> {
-        Ok(Self {
-            i: refinement.refine_i(self.i)?,
-            j: refinement.refine_j(self.j)?,
-        })
+    /// Update the u- and v-directed expansion orders according to a [PRef]
+    pub fn refine(&mut self, refinement: PRef) -> Result<(), PRefError> {
+        self.ni = refinement.refine_i(self.ni)?;
+        self.nj = refinement.refine_j(self.nj)?;
+
+        Ok(())
+    }
+
+    /// Get the permutations of [i, j] for the u- or v-directed shape functions.
+    /// 
+    /// * For u-directed: i ∈ [0, Ni) and j ∈ [0, Nj]
+    /// * For v-directed: i ∈ [0, Ni] and j ∈ [0, Nj)
+    pub fn permutations(&self, dir: ParaDir) -> Box<dyn Iterator<Item = [u8; 2]> + '_> {
+        match dir {
+            ParaDir::U => Box::new((0..self.ni).flat_map(move |i_order| (0..=self.nj).map(move |j_order| [i_order, j_order]))),
+            ParaDir::V => Box::new((0..=self.ni).flat_map(move |i_order| (0..self.nj).map(move |j_order| [i_order, j_order]))),
+        }
     }
 }
 
 impl Default for PolyOrders {
     fn default() -> Self {
-        Self { i: 1, j: 1 }
+        Self { ni: 1, nj: 1 }
     }
 }
 
 impl Into<JsonValue> for PolyOrders {
     fn into(self) -> JsonValue {
         object! {
-            "u": self.i,
-            "v": self.j,
+            "u": self.ni,
+            "v": self.nj,
         }
     }
 }
@@ -103,6 +116,8 @@ impl PRef {
 pub enum PRefError {
     NegExpansion,
     ExceededMaxExpansion,
+    ElemDoesntExist(usize),
+    DoubleRefinement(usize),
 }
 
 impl fmt::Display for PRefError {
@@ -110,6 +125,8 @@ impl fmt::Display for PRefError {
         match self {
             Self::NegExpansion => write!(f, "Negative p-Refinement will result in 0 or negative expansion; Cannot p-Refine!"),
             Self::ExceededMaxExpansion => write!(f, "Positive p-Refinement will result in expansion order over maximum; Cannot p-Refine!"),
+            Self::ElemDoesntExist(elem_id) => write!(f, "Elem {} does not exist; Cannot apply p-Refinement!", elem_id),
+            Self::DoubleRefinement(elem_id) => write!(f, "Multiple p-refinements were specified for Elem {}; Cannot apply p-Refinements", elem_id),
         }
     }
 }
