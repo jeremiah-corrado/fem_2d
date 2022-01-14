@@ -45,7 +45,50 @@ impl Mesh {
         }
     }
 
-    /// Construct a Mesh from a JSON file
+    /// Construct a Mesh from a JSON file with the following format
+    /// 
+    /// The first "Element" and "Node" describe the meaning of each variable 
+    /// 
+    /// The following entries in each array describe this two element mesh:
+    /// ```text
+    ///     3               4               5
+    /// 0.5 *---------------*---------------*
+    ///     |               |               |
+    ///     |      air      |    teflon     |
+    ///     |               |               |
+    /// 0.0 *---------------*---------------*
+    ///  y  0               1               2
+    /// x: 0.0             1.0             2.0
+    /// ```
+    /// 
+    /// mesh.json
+    /// ```JSON
+    /// {
+    ///     "Elements": [
+    ///         {
+    ///             "materials": [eps_rel_re, eps_rel_im, mu_rel_re, mu_rel_im],
+    ///             "node_ids": [node_0_id, node_1_id, node_2_id, node_3_id],
+    ///         },
+    ///         {
+    ///             "materials": [1.0, 0.0, 1.0, 0.0],
+    ///             "node_ids": [1, 2, 4, 5],
+    ///         },
+    ///         {
+    ///             "materials": [1.2, 0.0, 0.9999, 0.0],
+    ///             "node_ids": [2, 3, 5, 6],
+    ///         }
+    ///     ],
+    ///     "Nodes": [
+    ///         [x_coordinate, y_coordinate],
+    ///         [0.0, 0.0],
+    ///         [1.0, 0.0],
+    ///         [2.0, 0.0],
+    ///         [0.0, 0.5],
+    ///         [1.0, 0.5],
+    ///         [2.0, 0.5],
+    ///     ]
+    /// }
+    /// ```
     pub fn from_file(path: impl AsRef<str>) -> std::io::Result<Self> {
         // parse mesh file as JSON
         let mesh_file_contents = read_to_string(path.as_ref())?;
@@ -223,6 +266,18 @@ impl Mesh {
             nodes,
             edges,
         })
+    }
+
+    pub fn execute_h_refinements(
+        &mut self,
+        refinements: impl Iterator<Item = (usize, HRef)>,
+    ) {
+        let mut refinements_map: BTreeMap<usize, HRef> = refinements.collect();
+        let mut refinement_extensions: Vec<(usize, HRef)> = Vec::new();
+
+        let mut next_elem_id = self.elems.len();
+
+        
     }
 }
 

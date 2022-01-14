@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate json;
 extern crate num_complex;
 extern crate smallvec;

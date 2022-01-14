@@ -5,6 +5,8 @@ use std::ops::{Add, Div, Index, Mul};
 
 use std::f64::consts::FRAC_PI_4;
 
+use json::JsonValue;
+
 #[derive(Clone, Copy, Debug)]
 /// 2D vector in Parametric Space
 pub struct V2D {
@@ -176,6 +178,15 @@ pub enum ParaDir {
     V,
 }
 
+impl Into<JsonValue> for ParaDir {
+    fn into(self) -> JsonValue {
+        match self {
+            Self::U => JsonValue::from("U-Dir"),
+            Self::V => JsonValue::from("V-Dir"),
+        }
+    }
+}
+
 const POINT_UNIQUENESS_ACCURACY: f64 = 1e-12;
 
 #[derive(Clone, Copy, Debug)]
@@ -270,6 +281,15 @@ impl Hash for Point {
 impl PartialEq for Point {
     fn eq(&self, other: &Self) -> bool {
         self.x_cmp.eq(&other.x_cmp) && self.y_cmp.eq(&other.y_cmp)
+    }
+}
+
+impl Into<JsonValue> for Point {
+    fn into(self) -> JsonValue {
+        object! {
+            "x": self.x,
+            "y": self.y,
+        }
     }
 }
 

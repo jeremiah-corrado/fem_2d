@@ -1,4 +1,5 @@
 use super::{Point, M2D, V2D};
+use json::JsonValue;
 use num_complex::Complex64;
 use std::fmt;
 
@@ -6,12 +7,13 @@ use std::fmt;
 /// Basic geometric unit of the FEM Domain.
 /// Describes the geometric structure and material properties of a rectangle in real space.
 pub struct Element {
-    id: usize,
-    points: [Point; 4],
-    materials: Materials,
+    pub id: usize,
+    pub points: [Point; 4],
+    pub materials: Materials,
 }
 
 impl Element {
+    /// Create a new element defined by its coordinates in real space and its material properties
     pub fn new(id: usize, points: [Point; 4], materials: Materials) -> Self {
         Self {
             id,
@@ -43,6 +45,17 @@ impl Element {
         let dy_dv = (self.points[3].y - self.points[0].y) / 2.0;
 
         M2D::from([dx_du, 0.0], [0.0, dy_dv])
+    }
+
+    /// Produce a Json Object that describes this Element
+    pub fn to_json(&self) -> JsonValue {
+        object! {
+            "id": self.id,
+            "eps_rel": self.materials.eps_rel.re,
+            "mu_rel": self.materials.mu_rel.re,
+            "eps_rel_im": self.materials.eps_rel.im,
+            "mu_rel_im": self.materials.mu_rel.im,
+        }
     }
 }
 

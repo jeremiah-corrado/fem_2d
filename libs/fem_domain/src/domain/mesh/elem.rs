@@ -3,6 +3,7 @@ use super::{
     p_refinement::PolyOrders,
     Element, HRef, Point, M2D, V2D,
 };
+use json::JsonValue;
 use smallvec::SmallVec;
 use std::rc::Rc;
 
@@ -149,6 +150,29 @@ impl Elem {
     /// Gradients of a parametric point (as a [V2D]) through real space (via this Elem's parent [Element])
     pub fn parametric_gradient(&self, parametric_coords: V2D) -> M2D {
         self.element.parametric_gradient(parametric_coords)
+    }
+
+    /// Returns a vector of child Elem ids. Will return an empty vector if this Elem has no children.
+    pub fn child_ids(&self) -> Vec<usize> {
+        match &self.children {
+            Some((child_elem_ids, _)) => child_elem_ids.to_vec(),
+            None => Vec::new(),
+        }
+    }
+
+    /// Produce a Json Object that describes this Elem
+    pub fn to_json(&self) -> JsonValue {
+        object! {
+            "id": self.id,
+            "element_id": self.element.id,
+            "parent": self.parent_id(),
+            "active": self.children.is_none(),
+            "nodes": array![self.nodes[0], self.nodes[1], self.nodes[2], self.nodes[3]],
+            "edges": array![self.edges[0], self.edges[1], self.edges[2], self.edges[3]],
+            "expansion": self.poly_orders,
+            "h_levels": self.h_levels,
+            "children": JsonValue::from(self.child_ids())
+        }
     }
 }
 

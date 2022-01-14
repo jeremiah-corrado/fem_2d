@@ -1,3 +1,5 @@
+use json::JsonValue;
+
 use super::ParaDir;
 use std::fmt;
 
@@ -146,6 +148,15 @@ impl HLevels {
 impl Default for HLevels {
     fn default() -> Self {
         Self { u: 0, v: 0 }
+    }
+}
+
+impl Into<JsonValue> for HLevels {
+    fn into(self) -> JsonValue {
+        object! {
+            "u": self.u,
+            "v": self.v,
+        }
     }
 }
 

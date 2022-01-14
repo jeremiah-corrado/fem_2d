@@ -1,10 +1,12 @@
 use super::MAX_POLYNOMIAL_ORDER;
 use std::fmt;
 
+use json::JsonValue;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct PolyOrders {
-    i: u8,
-    j: u8,
+    pub i: u8,
+    pub j: u8,
 }
 
 impl PolyOrders {
@@ -23,6 +25,15 @@ impl PolyOrders {
 impl Default for PolyOrders {
     fn default() -> Self {
         Self { i: 1, j: 1 }
+    }
+}
+
+impl Into<JsonValue> for PolyOrders {
+    fn into(self) -> JsonValue {
+        object! {
+            "u": self.i,
+            "v": self.j,
+        }
     }
 }
 
