@@ -32,7 +32,50 @@ pub struct Mesh {
     pub elems: Vec<Elem>,
     pub nodes: Vec<Node>,
     pub edges: Vec<Edge>,
+    refinement_generations: Vec<RefinementGeneration>,
 }
+
+struct RefinementGeneration {
+    open: bool,
+    elem_id_range: [usize; 2],
+    node_id_range: [usize; 2],
+    edge_id_range: [usize; 2],
+}
+
+impl RefinementGeneration {
+    pub fn new(elem_id: usize, node_id: usize, edge_id: usize) -> Self {
+        Self {
+            open: true,
+            elem_id_range: [elem_id; 2],
+            node_id_range: [node_id; 2],
+            edge_id_range: [edge_id; 2],
+        }
+    }
+
+    pub fn next_elem_id(&mut self) -> usize {
+        self.elem_id_range[1] += 1;
+        self.elem_id_range[1]
+    }
+
+    pub fn next_node_id(&mut self) -> usize {
+        self.node_id_range[1] += 1;
+        self.node_id_range[1]
+    }
+
+    pub fn next_edge_id(&mut self) -> usize {
+        self.edge_id_range[1] += 1;
+        self.edge_id_range[1]
+    }
+
+    pub fn next_gen(&mut self) -> Self {
+        Self::new(
+            self.elem_id_range[1],
+            self.node_id_range[1],
+            self.edge_id_range[1],
+        )
+    }
+}
+
 
 impl Mesh {
     /// Construct a completely empty Mesh
@@ -42,6 +85,7 @@ impl Mesh {
             elems: Vec::new(),
             nodes: Vec::new(),
             edges: Vec::new(),
+            refinement_generations: Vec::new(),
         }
     }
 
@@ -58,7 +102,7 @@ impl Mesh {
     ///     |               |               |
     /// 0.0 *---------------*---------------*
     ///  y  0               1               2
-    /// x: 0.0             1.0             2.0
+    ///  x 0.0             1.0             2.0
     /// ```
     /// 
     /// mesh.json
@@ -238,7 +282,7 @@ impl Mesh {
         }
 
         // create a vector of Elems from the above information and connect them to the relevant Edges
-        let elems = element_node_ids
+        let elems: Vec<Elem> = element_node_ids
             .drain(0..)
             .enumerate()
             .map(|(elem_id, node_ids)| {
@@ -260,26 +304,85 @@ impl Mesh {
             })
             .collect();
 
+        let ref_gen_0 = RefinementGeneration::new(
+            elems.len() - 1,
+            nodes.len() - 1,
+            edges.len() - 1,
+        );
+
         Ok(Self {
             elements,
             elems,
             nodes,
             edges,
+            refinement_generations: vec![ref_gen_0]
         })
     }
 
     pub fn execute_h_refinements(
         &mut self,
         refinements: impl Iterator<Item = (usize, HRef)>,
-    ) {
-        let mut refinements_map: BTreeMap<usize, HRef> = refinements.collect();
+    ) -> Result<(), HRefError> {
+        let refinements_map: BTreeMap<usize, HRef> = refinements.collect();
         let mut refinement_extensions: Vec<(usize, HRef)> = Vec::new();
 
-        let mut next_elem_id = self.elems.len();
+        self.start_new_refinement_gen();
 
-        
+        for (elem_id, refinement) in refinements_map {
+            if elem_id > num_init_elems {
+                return Err(HRefError::ElemDoesntExist(elem_id));
+            }
+            
+            let new_uninitialized_elems = self.elems[elem_id].h_refine(refinement, &mut elem_id_tracker)?;
+
+            let mut new_elems = match refinement {
+                HRef::T => self.execute_t_refinement(new_uninitialized_elems)?,
+                HRef::U(extension) => {
+                    let new_u_elems = self.execute_u_refinement(new_uninitialized_elems)?;
+                    if let Some(v_ref) = extension {
+                        refinement_extensions.push((new_u_elems[v_ref.index()].id, HRef::V(None)))
+                    }
+                    new_u_elems
+                },
+                HRef::V(extension) => {
+                    let new_v_elems = self.execute_v_refinement(new_uninitialized_elems)?;
+                    if let Some(u_ref) = extension {
+                        refinement_extensions.push((new_v_elems[u_ref.index()].id, HRef::U(None)))
+                    } 
+                    new_v_elems
+                }
+            };
+
+            self.elems.extend(new_elems.drain(0..));
+        }
+
+        if refinement_extensions.len() > 0 {
+            self.execute_h_refinements(refinement_extensions.into_iter())?;
+        }
+
+        Ok(())
+    }
+
+    fn start_new_refinement_gen(&mut self) {
+        let next_gen = self.refinement_generations.last().unwrap().next_gen();
+        self.refinement_generations.push(next_gen);
+    }
+
+
+    fn execute_t_refinement(&mut self, new_elems: Vec<ElemUninit>) -> Result<Vec<Elem>, HRefError> {
+        unimplemented!()
+    }
+    
+    fn execute_u_refinement(&mut self, new_elems: Vec<ElemUninit>) -> Result<Vec<Elem>, HRefError> {
+        unimplemented!()
+    }
+    
+    fn execute_v_refinement(&mut self, new_elems: Vec<ElemUninit>) -> Result<Vec<Elem>, HRefError> {
+        unimplemented!()
     }
 }
+
+
 
 /*
     edge 0 : [node_0, node_1], top

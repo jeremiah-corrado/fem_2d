@@ -166,6 +166,7 @@ pub enum HRefError {
     ElemHasChildren(usize),
     EdgeHasChildren(usize),
     UninitializedElem(usize),
+    ElemDoesntExist(usize),
 }
 
 impl fmt::Display for HRefError {
@@ -187,6 +188,7 @@ impl fmt::Display for HRefError {
                 "ElemUninit {} was not fully initialized by the conclusion of h-refinement",
                 elem_uninit_id
             ),
+            Self::ElemDoesntExist(elem_id) => write!(f, "Elem {} does not exist; Cannot apply h-Refinement!", elem_id)
         }
     }
 }
