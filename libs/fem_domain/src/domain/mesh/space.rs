@@ -3,6 +3,8 @@ use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::ops::{Add, Div, Index, Mul};
 
+use std::f64::consts::FRAC_PI_4;
+
 #[derive(Clone, Copy, Debug)]
 /// 2D vector in Parametric Space
 pub struct V2D {
@@ -204,15 +206,30 @@ impl Point {
         }
     }
 
-    /// Along which axis do these points have the same value (if any).
-    /// Returns None if the points are totally the same or if they share neither x nor y values.
-    pub fn orientation_with(&self, other: &Self) -> Option<ParaDir> {
-        match (self.x_cmp == other.x_cmp, self.y_cmp == other.y_cmp) {
-            (true, true) => None,
-            (true, false) => Some(ParaDir::U),
-            (false, true) => Some(ParaDir::V),
-            (false, false) => None,
+    /// The orientation of the "edge" composed of these two Points
+    /// panics if the points have the same location
+    pub fn orientation_with(&self, other: &Self) -> ParaDir {
+        assert!(
+            self.x_cmp != other.x_cmp || self.y_cmp != other.y_cmp,
+            "Cannot compute the orientation between two Points at the same location!"
+        );
+
+        let dx = (other.x - self.x).abs();
+        let dy = (other.y - self.y).abs();
+        let theta = (dy / dx).atan();
+
+        if theta < FRAC_PI_4 {
+            ParaDir::U
+        } else {
+            ParaDir::V
         }
+    }
+
+    pub fn dist(&self, other: &Self) -> f64 {
+        let dx = (other.x - self.x).abs();
+        let dy = (other.y - self.y).abs();
+
+        (dx.powi(2) + dy.powi(2)).sqrt()
     }
 }
 

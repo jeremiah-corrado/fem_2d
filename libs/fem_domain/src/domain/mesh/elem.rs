@@ -79,10 +79,10 @@ pub struct Elem {
     pub nodes: [usize; 4],
     pub edges: [usize; 4],
     pub element: Rc<Element>,
+    pub h_levels: HLevels,
+    pub poly_orders: PolyOrders,
     children: Option<(SmallVec<[usize; 4]>, HRef)>,
     parent: Option<(usize, HRefLoc)>,
-    h_levels: HLevels,
-    poly_orders: PolyOrders,
 }
 
 impl Elem {

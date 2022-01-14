@@ -16,7 +16,7 @@ pub use space::{ParaDir, Point, M2D, V2D};
 
 use json::JsonValue;
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 use std::fs::read_to_string;
 use std::rc::Rc;
 
@@ -35,6 +35,7 @@ pub struct Mesh {
 }
 
 impl Mesh {
+    /// Construct a completely empty Mesh
     pub fn blank() -> Self {
         Self {
             elements: Vec::new(),
@@ -44,6 +45,7 @@ impl Mesh {
         }
     }
 
+    /// Construct a Mesh from a JSON file
     pub fn from_file(path: impl AsRef<str>) -> std::io::Result<Self> {
         // parse mesh file as JSON
         let mesh_file_contents = read_to_string(path.as_ref())?;
@@ -84,12 +86,12 @@ impl Mesh {
             }
         }
         // mark nodes with fewer than 4 references as boundary nodes
-        let node_boundary_statuses: Vec<bool> = node_connection_counts
+        let boundary_nodes: Vec<bool> = node_connection_counts
             .iter()
             .map(|count| {
                 assert!(
                     *count <= 4,
-                    "Nodes can only be shared by a maximum of 4 Elements; Cannot construct mesh from file!"
+                    "Nodes can only be shared by a maximum of 4 Elements; Cannot construct Mesh from file!"
                 );
                 *count < 4
             })
@@ -99,7 +101,7 @@ impl Mesh {
         let nodes: Vec<Node> = points
             .iter()
             .enumerate()
-            .map(|(node_id, point)| Node::new(node_id, *point, node_boundary_statuses[node_id]))
+            .map(|(node_id, point)| Node::new(node_id, *point, boundary_nodes[node_id]))
             .collect();
 
         // build a map which describes all the edges and which elements/elems they are adjacent to on each side
@@ -113,6 +115,14 @@ impl Mesh {
                         element_node_ids[edge_index_pair[1]],
                     ])
                     .and_modify(|edges_element_ids| {
+                        assert!(
+                            edges_element_ids[element_side_index].is_none(),
+                            "'Edge': {:?}'s, Elem ({}); has already been set to {:?}; cannot set to {}",
+                            edge_index_pair,
+                            element_side_index,
+                            edges_element_ids[element_side_index],
+                            element_id,
+                        );
                         edges_element_ids[element_side_index] = Some(element_id);
                     })
                     .or_insert(match element_side_index {
@@ -123,15 +133,33 @@ impl Mesh {
             }
         }
 
-        // build a vector of edges defined by the above sets of two nodes. Mark them as boundary edges if they have only one adjacent element
-        let edges: Vec<Edge> = edge_node_pairs
-            .iter()
+        // decide which edges are on the boundary
+        //  - first, if there is only one element attached to the edge
+        let boundary_edges: Vec<bool> = edge_node_pairs
+            .values()
             .enumerate()
-            .map(|(edge_id, (node_ids, adjacent_elements))| {
+            .map(
+                |(edge_id, adj_elem_ids)| match adj_elem_ids.iter().flatten().count() {
+                    0 => panic!(
+                        "Edge {} has no adjacent Elements; cannot construct Mesh from file!",
+                        edge_id
+                    ),
+                    1 => true,
+                    2 => false,
+                    _ => unreachable!(),
+                },
+            )
+            .collect();
+
+        // build a vector of edges defined by the above sets of two nodes. Mark them as boundary edges if they have only one adjacent element
+        let mut edges: Vec<Edge> = edge_node_pairs
+            .keys()
+            .enumerate()
+            .map(|(edge_id, node_ids)| {
                 Edge::new(
                     edge_id,
                     [&nodes[node_ids[0]], &nodes[node_ids[1]]],
-                    adjacent_elements.iter().flatten().count() == 1,
+                    boundary_edges[edge_id],
                 )
             })
             .collect();
@@ -143,34 +171,49 @@ impl Mesh {
                 .iter()
                 .enumerate()
                 .filter(|(_, adj_elem_id)| adj_elem_id.is_some())
+                .map(|(side_idx, ajd_elem_id)| (side_idx, ajd_elem_id.unwrap()))
             {
-                elem_edges[elem_id.unwrap()][match (elem_side_idx, edges[edge_id].dir) {
+                let edge_idx = match (elem_side_idx, edges[edge_id].dir) {
                     (0, ParaDir::U) => 1,
                     (1, ParaDir::U) => 0,
                     (0, ParaDir::V) => 3,
                     (1, ParaDir::V) => 2,
-                    _ => unreachable!()
-                }] = Some(edge_id);
+                    _ => unreachable!(),
+                };
+
+                assert!(
+                    elem_edges[elem_id][edge_idx].is_none(),
+                    "Edge ({}) of Elem {} has already been set to {:?}; cannot set to {}!",
+                    edge_idx,
+                    elem_id,
+                    elem_edges[elem_id][edge_idx],
+                    edge_id,
+                );
+
+                elem_edges[elem_id][edge_idx] = Some(edge_id);
             }
         }
 
-        // create a vector of Elems from the above information
+        // create a vector of Elems from the above information and connect them to the relevant Edges
         let elems = element_node_ids
             .drain(0..)
             .enumerate()
             .map(|(elem_id, node_ids)| {
-                Elem::new(
-                    elem_id,
-                    node_ids,
-                    elem_edges[elem_id]
-                        .iter()
-                        .flatten()
-                        .copied()
-                        .collect::<Vec<usize>>()
-                        .try_into()
-                        .unwrap(),
-                    elements[elem_id].clone(),
-                )
+                let edge_ids: [usize; 4] = elem_edges[elem_id]
+                    .iter()
+                    .flatten()
+                    .copied()
+                    .collect::<Vec<usize>>()
+                    .try_into()
+                    .unwrap();
+
+                let elem = Elem::new(elem_id, node_ids, edge_ids, elements[elem_id].clone());
+
+                for edge_id in edge_ids.iter() {
+                    edges[*edge_id].connect_elem(&elem)
+                }
+
+                elem
             })
             .collect();
 
@@ -183,6 +226,12 @@ impl Mesh {
     }
 }
 
+/*
+    edge 0 : [node_0, node_1], top
+    edge 1 : [node_2, node_3], bottom,
+    edge 2 : [node_0, node_2], right,
+    edge 3 : [node_1, node_3], left,
+*/
 const EDGE_IDX_DEFS: [([usize; 2], usize); 4] =
     [([0, 1], 1), ([2, 3], 0), ([0, 2], 1), ([1, 3], 0)];
 
@@ -293,11 +342,22 @@ where
     T: PartialEq,
 {
     for (i, val) in values.iter().enumerate() {
-        for (val_cmp) in values.iter().skip(i) {
+        for val_cmp in values.iter().skip(i + 1) {
             if val == val_cmp {
                 return true;
             }
         }
     }
     false
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Mesh;
+
+    #[test]
+    fn mesh_from_file() {
+        let mesh_a = Mesh::from_file("../../test_input/test_mesh_a.json").unwrap();
+        let mesh_b = Mesh::from_file("../../test_input/test_mesh_b.json").unwrap();
+    }
 }
