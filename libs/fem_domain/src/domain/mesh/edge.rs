@@ -4,8 +4,8 @@ use super::{
 };
 use std::collections::BTreeMap;
 
-/// A flat line in parametric space defined as the line between two Points in real space.
 #[derive(Debug)]
+/// A flat line in parametric space defined as the line between two Points in real space.
 pub struct Edge {
     pub id: usize,
     pub nodes: [usize; 2],
@@ -19,7 +19,10 @@ pub struct Edge {
 
 impl Edge {
     pub fn new(id: usize, nodes: [&Node; 2], boundary: bool) -> Self {
-        let dir = nodes[0].coords.orientation_with(&nodes[1].coords).expect("Nodes must share either an x or y coordinate; Cannot construct Edge!");
+        let dir = nodes[0]
+            .coords
+            .orientation_with(&nodes[1].coords)
+            .expect("Nodes must share either an x or y coordinate; Cannot construct Edge!");
 
         Self {
             id,

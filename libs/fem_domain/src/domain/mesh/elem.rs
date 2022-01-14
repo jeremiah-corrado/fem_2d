@@ -6,9 +6,74 @@ use super::{
 use smallvec::SmallVec;
 use std::rc::Rc;
 
+/*
+    Layout of Geometric indices:
+    2 --------- 3
+    |     1     |
+    |           |
+    |2         3|
+    |           |
+    |     0     |
+    0 --------- 1
+
+
+    Layout of Geometric indices relative to Child indices (for each type of h-refinement):
+
+    T :
+                1
+    2 --------------------- 3
+    |2    1    3|2    1    3|
+    |           |           |
+    |2    2    3|2    3    3|
+    |           |           |
+    |0    0    1|0    0    1|
+  2 |----------- -----------| 3
+    |2    1    3|2    1    3|
+    |           |           |
+    |2    0    3|2    1    3|
+    |           |           |
+    |0    0    1|0    0    1|
+    0 --------------------- 1
+                0
+
+    U :
+                1
+    2 --------------------- 3
+    |2    1    3|2    1   3 |
+    |           |           |
+    |           |           |
+    |           |           |
+    |           |           |
+  2 |2    0    3|2    1    3| 3
+    |           |           |
+    |           |           |
+    |           |           |
+    |           |           |
+    |0    0    1|0    0    1|
+    0 --------------------- 1
+                0
+
+    V :
+                1
+    2 --------------------- 3
+    |2          1          3|
+    |                       |
+    |2          1          3|
+    |                       |
+    |0          0          1|
+  2 |-----------------------| 3
+    |2          1          3|
+    |                       |
+    |2          0          3|
+    |                       |
+    |0          0          1|
+    0 --------------------- 1
+                0
+*/
+
 #[derive(Debug)]
-/// Basic unit of the FEM Domain which describes some rectangular area in parametric space. 
-/// Stores associative relationships with neighboring Nodes and Edge as well as h-- and p--refinement information 
+/// Basic unit of the FEM Domain which describes some rectangular area in parametric space.
+/// Stores associative relationships with neighboring Nodes and Edge as well as h-- and p--refinement information
 pub struct Elem {
     pub id: usize,
     pub nodes: [usize; 4],

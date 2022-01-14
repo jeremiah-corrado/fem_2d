@@ -1,6 +1,6 @@
+extern crate json;
 extern crate num_complex;
 extern crate smallvec;
-extern crate json;
 
 mod domain;
 

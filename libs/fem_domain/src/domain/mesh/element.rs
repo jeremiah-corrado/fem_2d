@@ -3,7 +3,7 @@ use num_complex::Complex64;
 use std::fmt;
 
 #[derive(Debug)]
-/// Basic geometric unit of the FEM Domain. 
+/// Basic geometric unit of the FEM Domain.
 /// Describes the geometric structure and material properties of a rectangle in real space.
 pub struct Element {
     id: usize,
@@ -14,7 +14,9 @@ pub struct Element {
 impl Element {
     pub fn new(id: usize, points: [Point; 4], materials: Materials) -> Self {
         Self {
-            id, points, materials,
+            id,
+            points,
+            materials,
         }
     }
 
