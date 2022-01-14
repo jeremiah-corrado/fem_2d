@@ -1,6 +1,0 @@
-/target
-/libs/basis/target
-/libs/fem_domain/target
-/libs/eigensolver/target
-/libs/integration/target
-/libs/sparse_matrix/target
