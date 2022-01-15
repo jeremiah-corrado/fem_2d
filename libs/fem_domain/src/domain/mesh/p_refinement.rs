@@ -23,6 +23,17 @@ impl PolyOrders {
         Ok(())
     }
 
+    pub fn set(&mut self, [ni, nj]: [u8; 2]) -> Result<(), PRefError> {
+        if ni > MAX_POLYNOMIAL_ORDER || nj > MAX_POLYNOMIAL_ORDER {
+            return  Err(PRefError::ExceededMaxExpansion);
+        }
+
+        self.ni = ni;
+        self.nj = nj;
+
+        Ok(())
+    }
+
     /// Get the permutations of [i, j] for the u- or v-directed shape functions.
     ///
     /// * For u-directed: i ∈ [0, Ni) and j ∈ [0, Nj]

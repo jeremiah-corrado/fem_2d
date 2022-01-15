@@ -18,7 +18,8 @@ use json::JsonValue;
 
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
-use std::fs::read_to_string;
+use std::fs::{File, read_to_string};
+use std::io::BufWriter;
 use std::rc::Rc;
 
 /// Minimum Edge length in parametric space. h-Refinements will fail after edges are smaller than this value.
@@ -297,6 +298,23 @@ impl Mesh {
         })
     }
 
+    /// Print the mesh to a JSON file specified by path.
+    pub fn export_to_json(&self, path: impl AsRef<str>) -> std::io::Result<()> {
+        let f = File::create(path.as_ref())?;
+        let mut w = BufWriter::new(&f);
+
+        let mesh_object = object!{
+            "Elements": JsonValue::from(self.elements.iter().map(|element| element.to_json()).collect::<Vec<_>>()),
+            "Elems": JsonValue::from(self.elems.iter().map(|elem| elem.to_json()).collect::<Vec<_>>()),
+            "Nodes": JsonValue::from(self.nodes.iter().map(|node| node.to_json()).collect::<Vec<_>>()),
+            "Edges": JsonValue::from(self.edges.iter().map(|edge| edge.to_json()).collect::<Vec<_>>()),
+        };
+
+        mesh_object.write_pretty(&mut w, 4)?;
+
+        Ok(())
+    }
+
     // ----------------------------------------------------------------------------------------------------
     // General Data Retrieval
     // ----------------------------------------------------------------------------------------------------
@@ -319,10 +337,41 @@ impl Mesh {
     // h-refinement methods
     // ----------------------------------------------------------------------------------------------------
 
+    /// Apply an [HRef] to all [Elem]s that have not been h-refined
+    pub fn global_h_refinement(&mut self, refinement: HRef) -> Result<(), HRefError> {
+        self.execute_h_refinements(self.elems.iter().filter(|elem| !elem.has_children()).map(|shell_elem| {
+            (shell_elem.id, refinement)
+        }).collect())
+    }
+
+    /// Apply an [HRef] to a list of [Elem]s by their ID
+    pub fn h_refine_elems(&mut self, elems: Vec<usize>, refinement: HRef) -> Result<(), HRefError> {
+        self.execute_h_refinements(elems.iter().map(|elem_id| (*elem_id, refinement)).collect())
+    }
+
+    /// h-refine [Elem]s according to an external filter function
+    pub fn h_refine_with_filter<F>(&mut self, filt: F) -> Result<(), HRefError>
+        where F: Fn(&Elem) -> Option<HRef> 
+    {
+        self.execute_h_refinements(
+            self.elems.iter()
+            .map(|elem| {
+                (elem.id, filt(elem))
+            })
+            .filter(|(_, refinement)| {
+                refinement.is_some()
+            })
+            .map(|(id, refinement)| {
+                (id, refinement.unwrap())
+            })
+            .collect()
+        )
+    }
+
     /// Execute a series of [HRef]s on [Elem]s specified by their id
     pub fn execute_h_refinements(
         &mut self,
-        refinements: impl Iterator<Item = (usize, HRef)>,
+        refinements: Vec<(usize, HRef)>,
     ) -> Result<(), HRefError> {
         let mut refinements_map: BTreeMap<usize, HRef> = BTreeMap::new();
         for (elem_id, h_ref) in refinements {
@@ -382,7 +431,7 @@ impl Mesh {
         }
 
         if refinement_extensions.len() > 0 {
-            self.execute_h_refinements(refinement_extensions.into_iter())?;
+            self.execute_h_refinements(refinement_extensions)?;
         }
 
         Ok(())
@@ -659,10 +708,39 @@ impl Mesh {
     // p-refinement methods
     // ----------------------------------------------------------------------------------------------------
 
+    /// Apply a [PRef] to all [Elem]s 
+    pub fn global_p_refinement(&mut self, refinement: PRef) -> Result<(), PRefError> {
+        self.execute_p_refinements(self.elems.iter().map(|elem| (elem.id, refinement)).collect())
+    }
+
+    /// Apply a [PRef] to a list of [Elem]s by their ID 
+    pub fn p_refine_elems(&mut self, elems: Vec<usize>, refinement: PRef) -> Result<(), PRefError> {
+        self.execute_p_refinements(elems.iter().map(|elem_id| (*elem_id, refinement)).collect())
+    }
+
+    /// p-refine [Elem]s according to an external filter function
+    pub fn p_refine_with_filter<F>(&mut self, filt: F) -> Result<(), PRefError>
+        where F: Fn(&Elem) -> Option<PRef> 
+    {
+        self.execute_p_refinements(
+            self.elems.iter()
+            .map(|elem| {
+                (elem.id, filt(elem))
+            })
+            .filter(|(_, refinement)| {
+                refinement.is_some()
+            })
+            .map(|(id, refinement)| {
+                (id, refinement.unwrap())
+            })
+            .collect()
+        )
+    }
+
     /// Execute a series of [PRef]s on [Elem]s specified by their id
     pub fn execute_p_refinements(
         &mut self,
-        refinements: impl Iterator<Item = (usize, PRef)>,
+        refinements: Vec<(usize, PRef)>,
     ) -> Result<(), PRefError> {
         let mut refinements_map: BTreeMap<usize, PRef> = BTreeMap::new();
         for (elem_id, p_ref) in refinements {
@@ -680,6 +758,53 @@ impl Mesh {
 
         Ok(())
     }
+
+    /// Set the expansion orders on all [Elem]s
+    pub fn set_global_poly_orders(&mut self, orders: [u8; 2]) -> Result<(), PRefError> {
+        self.set_expansion_orders(self.elems.iter().map(|elem| (elem.id, orders)).collect())
+    }
+
+    /// Set the expansion orders on a list of [Elem]s by their ID 
+    pub fn set_expansion_on_elems(&mut self, elems: Vec<usize>, orders: [u8; 2]) -> Result<(), PRefError> {
+        self.set_expansion_orders(elems.iter().map(|elem_id| (*elem_id, orders)).collect())
+    }
+
+    /// set expansion orders on [Elem]s according to an external filter function
+    pub fn set_expansions_with_filter<F>(&mut self, filt: F) -> Result<(), PRefError>
+        where F: Fn(&Elem) -> Option<[u8; 2]> 
+    {
+        self.set_expansion_orders(
+            self.elems.iter()
+            .map(|elem| {
+                (elem.id, filt(elem))
+            })
+            .filter(|(_, orders)| {
+                orders.is_some()
+            })
+            .map(|(id, orders)| {
+                (id, orders.unwrap())
+            })
+            .collect()
+        )
+    }
+
+    pub fn set_expansion_orders(&mut self, poly_orders: Vec<(usize, [u8; 2])>) -> Result<(), PRefError> {
+        let mut poly_orders_map: BTreeMap<usize, [u8; 2]> = BTreeMap::new();
+        for (elem_id, orders) in poly_orders {
+            if elem_id >= self.elems.len() {
+                return Err(PRefError::ElemDoesntExist(elem_id));
+            }
+            if let Some(_) = poly_orders_map.insert(elem_id, orders) {
+                return Err(PRefError::DoubleRefinement(elem_id));
+            }
+        }
+
+        for (elem_id, orders) in poly_orders_map {
+            self.elems[elem_id].poly_orders.set(orders)?;
+        }
+
+        Ok(())
+    } 
 }
 
 // ----------------------------------------------------------------------------------------------------

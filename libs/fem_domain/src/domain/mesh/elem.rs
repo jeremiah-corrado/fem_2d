@@ -160,6 +160,10 @@ impl Elem {
         }
     }
 
+    pub fn has_children(&self) -> bool {
+        self.children.is_some()
+    }
+
     /// Produce a Json Object that describes this Elem
     pub fn to_json(&self) -> JsonValue {
         object! {
