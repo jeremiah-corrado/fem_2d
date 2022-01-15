@@ -14,11 +14,12 @@ pub use node::Node;
 pub use p_refinement::{PRef, PRefError, PolyOrders};
 pub use space::{ParaDir, Point, M2D, V2D};
 
+use super::IdTracker;
 use json::JsonValue;
 
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
-use std::fs::{File, read_to_string};
+use std::fs::{read_to_string, File};
 use std::io::BufWriter;
 use std::rc::Rc;
 
@@ -303,7 +304,7 @@ impl Mesh {
         let f = File::create(path.as_ref())?;
         let mut w = BufWriter::new(&f);
 
-        let mesh_object = object!{
+        let mesh_object = object! {
             "Elements": JsonValue::from(self.elements.iter().map(|element| element.to_json()).collect::<Vec<_>>()),
             "Elems": JsonValue::from(self.elems.iter().map(|elem| elem.to_json()).collect::<Vec<_>>()),
             "Nodes": JsonValue::from(self.nodes.iter().map(|node| node.to_json()).collect::<Vec<_>>()),
@@ -319,6 +320,7 @@ impl Mesh {
     // General Data Retrieval
     // ----------------------------------------------------------------------------------------------------
 
+    /// Get the four [Point]s composing an [`Elem`]
     pub fn elem_points<'a>(&'a self, elem_id: usize) -> [&'a Point; 4] {
         assert!(elem_id < self.elems.len());
         self.elems[elem_id]
@@ -326,11 +328,64 @@ impl Mesh {
             .map(|node_id| &self.nodes[node_id].coords)
     }
 
+    /// Get the twp [Point]s composing an [`Edge`]
     pub fn edge_points<'a>(&'a self, edge_id: usize) -> [&'a Point; 2] {
         assert!(edge_id < self.edges.len());
         self.edges[edge_id]
             .nodes
             .map(|node_id| &self.nodes[node_id].coords)
+    }
+
+    /// Get a list of an [`Elem`]s descendant's IDs
+    pub fn descendant_elems(
+        &self,
+        elem_id: usize,
+        include_starting_elem: bool,
+    ) -> Result<Vec<usize>, String> {
+        if elem_id >= self.elems.len() {
+            Err(format!(
+                "Elem {} doesn't exist; Cannot retrieve descendant Elems!",
+                elem_id
+            ))
+        } else {
+            let mut descendants = Vec::new();
+            self.rec_descendant_elems(elem_id, include_starting_elem, &mut descendants);
+            Ok(descendants)
+        }
+    }
+
+    fn rec_descendant_elems(&self, elem_id: usize, include: bool, desc: &mut Vec<usize>) {
+        if include {
+            desc.push(elem_id);
+        }
+        if let Some(child_elem_ids) = self.elems[elem_id].child_ids() {
+            for cei in child_elem_ids {
+                self.rec_descendant_elems(cei, true, desc);
+            }
+        }
+    }
+
+    /// Get a list of an [`Elem`]s ancestors's IDs
+    pub fn ancestor_elems(&self, elem_id: usize, include_starting_elem: bool) -> Result<Vec<usize>, String> {
+        if elem_id >= self.elems.len() {
+            Err(format!(
+                "Elem {} doesn't exist; Cannot retrieve ancestor Elems!",
+                elem_id
+            ))
+        } else {
+            let mut ancestors = Vec::new();
+            self.rec_ancestor_elems(elem_id, include_starting_elem, &mut ancestors);
+            Ok(ancestors)
+        }
+    }
+
+    fn rec_ancestor_elems(&self, elem_id: usize, include: bool, anc: &mut Vec<usize>) {
+        if include {
+            anc.push(elem_id);
+        }
+        if let Some(parent_elem_id) = self.elems[elem_id].parent_id() {
+            self.rec_ancestor_elems(parent_elem_id, true, anc);
+        }
     }
 
     // ----------------------------------------------------------------------------------------------------
@@ -339,9 +394,13 @@ impl Mesh {
 
     /// Apply an [HRef] to all [Elem]s that have not been h-refined
     pub fn global_h_refinement(&mut self, refinement: HRef) -> Result<(), HRefError> {
-        self.execute_h_refinements(self.elems.iter().filter(|elem| !elem.has_children()).map(|shell_elem| {
-            (shell_elem.id, refinement)
-        }).collect())
+        self.execute_h_refinements(
+            self.elems
+                .iter()
+                .filter(|elem| !elem.has_children())
+                .map(|shell_elem| (shell_elem.id, refinement))
+                .collect(),
+        )
     }
 
     /// Apply an [HRef] to a list of [Elem]s by their ID
@@ -351,20 +410,16 @@ impl Mesh {
 
     /// h-refine [Elem]s according to an external filter function
     pub fn h_refine_with_filter<F>(&mut self, filt: F) -> Result<(), HRefError>
-        where F: Fn(&Elem) -> Option<HRef> 
+    where
+        F: Fn(&Elem) -> Option<HRef>,
     {
         self.execute_h_refinements(
-            self.elems.iter()
-            .map(|elem| {
-                (elem.id, filt(elem))
-            })
-            .filter(|(_, refinement)| {
-                refinement.is_some()
-            })
-            .map(|(id, refinement)| {
-                (id, refinement.unwrap())
-            })
-            .collect()
+            self.elems
+                .iter()
+                .map(|elem| (elem.id, filt(elem)))
+                .filter(|(_, refinement)| refinement.is_some())
+                .map(|(id, refinement)| (id, refinement.unwrap()))
+                .collect(),
         )
     }
 
@@ -708,32 +763,33 @@ impl Mesh {
     // p-refinement methods
     // ----------------------------------------------------------------------------------------------------
 
-    /// Apply a [PRef] to all [Elem]s 
+    /// Apply a [PRef] to all [Elem]s
     pub fn global_p_refinement(&mut self, refinement: PRef) -> Result<(), PRefError> {
-        self.execute_p_refinements(self.elems.iter().map(|elem| (elem.id, refinement)).collect())
+        self.execute_p_refinements(
+            self.elems
+                .iter()
+                .map(|elem| (elem.id, refinement))
+                .collect(),
+        )
     }
 
-    /// Apply a [PRef] to a list of [Elem]s by their ID 
+    /// Apply a [PRef] to a list of [Elem]s by their ID
     pub fn p_refine_elems(&mut self, elems: Vec<usize>, refinement: PRef) -> Result<(), PRefError> {
         self.execute_p_refinements(elems.iter().map(|elem_id| (*elem_id, refinement)).collect())
     }
 
     /// p-refine [Elem]s according to an external filter function
     pub fn p_refine_with_filter<F>(&mut self, filt: F) -> Result<(), PRefError>
-        where F: Fn(&Elem) -> Option<PRef> 
+    where
+        F: Fn(&Elem) -> Option<PRef>,
     {
         self.execute_p_refinements(
-            self.elems.iter()
-            .map(|elem| {
-                (elem.id, filt(elem))
-            })
-            .filter(|(_, refinement)| {
-                refinement.is_some()
-            })
-            .map(|(id, refinement)| {
-                (id, refinement.unwrap())
-            })
-            .collect()
+            self.elems
+                .iter()
+                .map(|elem| (elem.id, filt(elem)))
+                .filter(|(_, refinement)| refinement.is_some())
+                .map(|(id, refinement)| (id, refinement.unwrap()))
+                .collect(),
         )
     }
 
@@ -764,31 +820,34 @@ impl Mesh {
         self.set_expansion_orders(self.elems.iter().map(|elem| (elem.id, orders)).collect())
     }
 
-    /// Set the expansion orders on a list of [Elem]s by their ID 
-    pub fn set_expansion_on_elems(&mut self, elems: Vec<usize>, orders: [u8; 2]) -> Result<(), PRefError> {
+    /// Set the expansion orders on a list of [Elem]s by their ID
+    pub fn set_expansion_on_elems(
+        &mut self,
+        elems: Vec<usize>,
+        orders: [u8; 2],
+    ) -> Result<(), PRefError> {
         self.set_expansion_orders(elems.iter().map(|elem_id| (*elem_id, orders)).collect())
     }
 
     /// set expansion orders on [Elem]s according to an external filter function
     pub fn set_expansions_with_filter<F>(&mut self, filt: F) -> Result<(), PRefError>
-        where F: Fn(&Elem) -> Option<[u8; 2]> 
+    where
+        F: Fn(&Elem) -> Option<[u8; 2]>,
     {
         self.set_expansion_orders(
-            self.elems.iter()
-            .map(|elem| {
-                (elem.id, filt(elem))
-            })
-            .filter(|(_, orders)| {
-                orders.is_some()
-            })
-            .map(|(id, orders)| {
-                (id, orders.unwrap())
-            })
-            .collect()
+            self.elems
+                .iter()
+                .map(|elem| (elem.id, filt(elem)))
+                .filter(|(_, orders)| orders.is_some())
+                .map(|(id, orders)| (id, orders.unwrap()))
+                .collect(),
         )
     }
 
-    pub fn set_expansion_orders(&mut self, poly_orders: Vec<(usize, [u8; 2])>) -> Result<(), PRefError> {
+    pub fn set_expansion_orders(
+        &mut self,
+        poly_orders: Vec<(usize, [u8; 2])>,
+    ) -> Result<(), PRefError> {
         let mut poly_orders_map: BTreeMap<usize, [u8; 2]> = BTreeMap::new();
         for (elem_id, orders) in poly_orders {
             if elem_id >= self.elems.len() {
@@ -804,7 +863,7 @@ impl Mesh {
         }
 
         Ok(())
-    } 
+    }
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -936,31 +995,6 @@ where
         }
     }
     false
-}
-
-// ----------------------------------------------------------------------------------------------------
-// hp-Refinement Utility functions
-// ----------------------------------------------------------------------------------------------------
-
-struct IdTracker {
-    next_id: usize,
-}
-
-impl IdTracker {
-    pub fn new(start: usize) -> Self {
-        Self { next_id: start }
-    }
-
-    pub fn next_id(&mut self) -> usize {
-        self.next_id += 1;
-        self.next_id - 1
-    }
-
-    pub fn next_two_ids(&mut self) -> [usize; 2] {
-        let ids = [self.next_id, self.next_id + 1];
-        self.next_id += 2;
-        ids
-    }
 }
 
 #[cfg(test)]

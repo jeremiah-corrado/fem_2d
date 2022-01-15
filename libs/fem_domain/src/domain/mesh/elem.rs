@@ -153,10 +153,10 @@ impl Elem {
     }
 
     /// Returns a vector of child Elem ids. Will return an empty vector if this Elem has no children.
-    pub fn child_ids(&self) -> Vec<usize> {
+    pub fn child_ids(&self) -> Option<SmallVec<[usize; 4]>> {
         match &self.children {
-            Some((child_elem_ids, _)) => child_elem_ids.to_vec(),
-            None => Vec::new(),
+            Some((child_elem_ids, _)) => Some(child_elem_ids.clone()),
+            None => None,
         }
     }
 
@@ -175,7 +175,12 @@ impl Elem {
             "edges": array![self.edges[0], self.edges[1], self.edges[2], self.edges[3]],
             "expansion": self.poly_orders,
             "h_levels": self.h_levels,
-            "children": JsonValue::from(self.child_ids())
+            "children": JsonValue::from(
+                match &self.children {
+                    Some((ids, _)) => ids.to_vec(),
+                    None => Vec::new(),
+                }
+            )
         }
     }
 }

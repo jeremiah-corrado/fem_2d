@@ -1,4 +1,5 @@
 use super::{ParaDir, MAX_POLYNOMIAL_ORDER};
+use crate::BasisDir;
 use json::JsonValue;
 use std::fmt;
 
@@ -25,7 +26,7 @@ impl PolyOrders {
 
     pub fn set(&mut self, [ni, nj]: [u8; 2]) -> Result<(), PRefError> {
         if ni > MAX_POLYNOMIAL_ORDER || nj > MAX_POLYNOMIAL_ORDER {
-            return  Err(PRefError::ExceededMaxExpansion);
+            return Err(PRefError::ExceededMaxExpansion);
         }
 
         self.ni = ni;
@@ -38,15 +39,20 @@ impl PolyOrders {
     ///
     /// * For u-directed: i ∈ [0, Ni) and j ∈ [0, Nj]
     /// * For v-directed: i ∈ [0, Ni] and j ∈ [0, Nj)
-    pub fn permutations(&self, dir: ParaDir) -> Box<dyn Iterator<Item = [u8; 2]> + '_> {
+    /// * For w-directed: i ∈ [0, Ni] and j ∈ [0, Nj]
+    pub fn permutations(&self, dir: BasisDir) -> Box<dyn Iterator<Item = [u8; 2]> + '_> {
         match dir {
-            ParaDir::U => Box::new(
+            BasisDir::U => Box::new(
                 (0..self.ni)
                     .flat_map(move |i_order| (0..=self.nj).map(move |j_order| [i_order, j_order])),
             ),
-            ParaDir::V => Box::new(
+            BasisDir::V => Box::new(
                 (0..=self.ni)
                     .flat_map(move |i_order| (0..self.nj).map(move |j_order| [i_order, j_order])),
+            ),
+            BasisDir::W => Box::new(
+                (0..=self.ni)
+                    .flat_map(move |i_order| (0..=self.nj).map(move |j_order| [i_order, j_order])),
             ),
         }
     }

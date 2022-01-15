@@ -138,6 +138,10 @@ impl Edge {
         self.child_node
     }
 
+    pub fn active_elem_pair(&self) -> Option<[usize; 2]> {
+        self.active_elems
+    }
+
     /// Produce a Json Object that describes this Elem
     pub fn to_json(&self) -> JsonValue {
         let mut edge_json = object! {
