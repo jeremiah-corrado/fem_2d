@@ -248,7 +248,7 @@ impl ElemUninit {
         self.nodes[edge_idx] = Some(edge_id);
     }
 
-    pub fn get_elem(self) -> Result<Elem, HRefError> {
+    pub fn into_elem(self) -> Result<Elem, HRefError> {
         let nodes_init = self.nodes.iter().filter(|n| n.is_some()).count() == 4;
         let edges_init = self.edges.iter().filter(|e| e.is_some()).count() == 4;
 

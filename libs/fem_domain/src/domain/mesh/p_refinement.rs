@@ -1,6 +1,6 @@
-use super::{MAX_POLYNOMIAL_ORDER, ParaDir};
-use std::fmt;
+use super::{ParaDir, MAX_POLYNOMIAL_ORDER};
 use json::JsonValue;
+use std::fmt;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct PolyOrders {
@@ -24,13 +24,19 @@ impl PolyOrders {
     }
 
     /// Get the permutations of [i, j] for the u- or v-directed shape functions.
-    /// 
+    ///
     /// * For u-directed: i ∈ [0, Ni) and j ∈ [0, Nj]
     /// * For v-directed: i ∈ [0, Ni] and j ∈ [0, Nj)
     pub fn permutations(&self, dir: ParaDir) -> Box<dyn Iterator<Item = [u8; 2]> + '_> {
         match dir {
-            ParaDir::U => Box::new((0..self.ni).flat_map(move |i_order| (0..=self.nj).map(move |j_order| [i_order, j_order]))),
-            ParaDir::V => Box::new((0..=self.ni).flat_map(move |i_order| (0..self.nj).map(move |j_order| [i_order, j_order]))),
+            ParaDir::U => Box::new(
+                (0..self.ni)
+                    .flat_map(move |i_order| (0..=self.nj).map(move |j_order| [i_order, j_order])),
+            ),
+            ParaDir::V => Box::new(
+                (0..=self.ni)
+                    .flat_map(move |i_order| (0..self.nj).map(move |j_order| [i_order, j_order])),
+            ),
         }
     }
 }

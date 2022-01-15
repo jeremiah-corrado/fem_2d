@@ -1,4 +1,4 @@
-use super::{Point, M2D, V2D};
+use super::{ParaDir, Point, M2D, V2D};
 use json::JsonValue;
 use num_complex::Complex64;
 use std::fmt;
@@ -45,6 +45,13 @@ impl Element {
         let dy_dv = (self.points[3].y - self.points[0].y) / 2.0;
 
         M2D::from([dx_du, 0.0], [0.0, dy_dv])
+    }
+
+    pub fn order_points(&self, p0: &Point, p1: &Point) -> std::cmp::Ordering {
+        match p0.orientation_with(p1) {
+            ParaDir::U => p0.x_order(p1),
+            ParaDir::V => p0.y_order(p1),
+        }
     }
 
     /// Produce a Json Object that describes this Element

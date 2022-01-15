@@ -208,6 +208,10 @@ impl Point {
         }
     }
 
+    pub fn between(a: &Self, b: &Self) -> Self {
+        Self::new((a.x + b.x) / 2.0, (a.y + b.y) / 2.0)
+    }
+
     pub fn from([x, y]: [f64; 2]) -> Self {
         Self {
             x,
@@ -241,6 +245,14 @@ impl Point {
         let dy = (other.y - self.y).abs();
 
         (dx.powi(2) + dy.powi(2)).sqrt()
+    }
+
+    pub fn x_order(&self, other: &Self) -> Ordering {
+        self.x_cmp.partial_cmp(&other.x_cmp).unwrap()
+    }
+
+    pub fn y_order(&self, other: &Self) -> Ordering {
+        self.y_cmp.partial_cmp(&other.y_cmp).unwrap()
     }
 }
 

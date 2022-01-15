@@ -9,13 +9,14 @@ mod space;
 pub use edge::Edge;
 pub use elem::{Elem, ElemUninit};
 pub use element::{Element, Materials};
-pub use h_refinement::{Bisection, HRef, HRefError, HRefLoc, Quadrant, HLevels};
+pub use h_refinement::{Bisection, HLevels, HRef, HRefError, HRefLoc, Quadrant};
 pub use node::Node;
 pub use p_refinement::{PRef, PRefError, PolyOrders};
 pub use space::{ParaDir, Point, M2D, V2D};
 
 use json::JsonValue;
 
+use std::cmp::Ordering;
 use std::collections::BTreeMap;
 use std::fs::read_to_string;
 use std::rc::Rc;
@@ -48,18 +49,15 @@ impl RefinementGeneration {
         }
     }
 
-    pub fn next_elem_id(&mut self) -> usize {
-        assert!(self.open, "Cannot increment elem_id on a closed refinement generation");
-        self.elem_id_range[1] += 1;
-        self.elem_id_range[1]
-    }
-
     pub fn next_gen(&mut self) -> Self {
         self.open = false;
         Self::new(self.elem_id_range[1], self.elem_id_range[1])
     }
-}
 
+    pub fn finish_gen(&mut self, last_id: usize) {
+        self.elem_id_range[1] = last_id;
+    }
+}
 
 impl Mesh {
     /// Construct a completely empty Mesh
@@ -74,9 +72,9 @@ impl Mesh {
     }
 
     /// Construct a Mesh from a JSON file with the following format
-    /// 
-    /// The first "Element" and "Node" describe the meaning of each variable 
-    /// 
+    ///
+    /// The first "Element" and "Node" describe the meaning of each variable
+    ///
     /// The following entries in each array describe this two element mesh:
     /// ```text
     ///     3               4               5
@@ -88,7 +86,7 @@ impl Mesh {
     ///  y  0               1               2
     ///  x 0.0             1.0             2.0
     /// ```
-    /// 
+    ///
     /// mesh.json
     /// ```JSON
     /// {
@@ -295,8 +293,26 @@ impl Mesh {
             elems,
             nodes,
             edges,
-            refinement_generations: vec![ref_gen_0]
+            refinement_generations: vec![ref_gen_0],
         })
+    }
+
+    // ----------------------------------------------------------------------------------------------------
+    // General Data Retrieval
+    // ----------------------------------------------------------------------------------------------------
+
+    pub fn elem_points<'a>(&'a self, elem_id: usize) -> [&'a Point; 4] {
+        assert!(elem_id < self.elems.len());
+        self.elems[elem_id]
+            .nodes
+            .map(|node_id| &self.nodes[node_id].coords)
+    }
+
+    pub fn edge_points<'a>(&'a self, edge_id: usize) -> [&'a Point; 2] {
+        assert!(edge_id < self.edges.len());
+        self.edges[edge_id]
+            .nodes
+            .map(|node_id| &self.nodes[node_id].coords)
     }
 
     // ----------------------------------------------------------------------------------------------------
@@ -314,35 +330,55 @@ impl Mesh {
                 return Err(HRefError::ElemDoesntExist(elem_id));
             }
             if let Some(_) = refinements_map.insert(elem_id, h_ref) {
-                return Err(HRefError::DoubleRefinement(elem_id))
+                return Err(HRefError::DoubleRefinement(elem_id));
             }
         }
-        
+
         self.start_new_refinement_gen();
         let mut refinement_extensions: Vec<(usize, HRef)> = Vec::new();
         let mut elem_id_tracker = self.elems.len();
+        let mut node_id_tracker = IdTracker::new(self.nodes.len());
+        let mut edge_id_tracker = IdTracker::new(self.edges.len());
 
         for (elem_id, refinement) in refinements_map {
-            let new_uninitialized_elems = self.elems[elem_id].h_refine(refinement, &mut elem_id_tracker)?;
+            let new_uninitialized_elems =
+                self.elems[elem_id].h_refine(refinement, &mut elem_id_tracker)?;
+
             let mut new_elems = match refinement {
-                HRef::T => self.execute_t_refinement(new_uninitialized_elems)?,
+                HRef::T => self.execute_t_refinement(
+                    new_uninitialized_elems,
+                    elem_id,
+                    &mut node_id_tracker,
+                    &mut edge_id_tracker,
+                )?,
                 HRef::U(extension) => {
-                    let new_u_elems = self.execute_u_refinement(new_uninitialized_elems)?;
+                    let new_u_elems = self.execute_u_refinement(
+                        new_uninitialized_elems,
+                        elem_id,
+                        &mut node_id_tracker,
+                        &mut edge_id_tracker,
+                    )?;
                     if let Some(v_ref) = extension {
                         refinement_extensions.push((new_u_elems[v_ref.index()].id, HRef::V(None)))
                     }
                     new_u_elems
-                },
+                }
                 HRef::V(extension) => {
-                    let new_v_elems = self.execute_v_refinement(new_uninitialized_elems)?;
+                    let new_v_elems = self.execute_v_refinement(
+                        new_uninitialized_elems,
+                        elem_id,
+                        &mut node_id_tracker,
+                        &mut edge_id_tracker,
+                    )?;
                     if let Some(u_ref) = extension {
                         refinement_extensions.push((new_v_elems[u_ref.index()].id, HRef::U(None)))
-                    } 
+                    }
                     new_v_elems
                 }
             };
 
             self.elems.extend(new_elems.drain(0..));
+            self.end_refinement_gen();
         }
 
         if refinement_extensions.len() > 0 {
@@ -352,30 +388,282 @@ impl Mesh {
         Ok(())
     }
 
-    fn start_new_refinement_gen(&mut self)  {
+    fn start_new_refinement_gen(&mut self) {
         let next_gen = self.refinement_generations.last_mut().unwrap().next_gen();
         self.refinement_generations.push(next_gen);
     }
 
-    fn execute_t_refinement(&mut self, new_elems: Vec<ElemUninit>) -> Result<Vec<Elem>, HRefError> {
-        unimplemented!()
-    }
-    
-    fn execute_u_refinement(&mut self, new_elems: Vec<ElemUninit>) -> Result<Vec<Elem>, HRefError> {
-        unimplemented!()
-    }
-    
-    fn execute_v_refinement(&mut self, new_elems: Vec<ElemUninit>) -> Result<Vec<Elem>, HRefError> {
-        unimplemented!()
+    fn end_refinement_gen(&mut self) {
+        self.refinement_generations
+            .last_mut()
+            .unwrap()
+            .finish_gen(self.elems.len() - 1);
     }
 
+    fn execute_t_refinement(
+        &mut self,
+        mut new_elems: Vec<ElemUninit>,
+        parent_elem_id: usize,
+        node_id_tracker: &mut IdTracker,
+        edge_id_tracker: &mut IdTracker,
+    ) -> Result<Vec<Elem>, HRefError> {
+        assert_eq!(new_elems.len(), 4);
+
+        // create a new node in the center of the parent Elem
+        let parent_elem_points = self.elem_points(parent_elem_id);
+        let center_node_id = node_id_tracker.next_id();
+        let center_node = Node::new(
+            center_node_id,
+            Point::between(parent_elem_points[0], parent_elem_points[1]),
+            false,
+        );
+        self.nodes.push(center_node);
+
+        // connect the child Elems to the center node and the parents nodes
+        for (elem_idx, elem_uninit) in new_elems.iter_mut().enumerate() {
+            elem_uninit.set_node(3 - elem_idx, center_node_id);
+            elem_uninit.set_node(elem_idx, self.elems[parent_elem_id].nodes[elem_idx]);
+        }
+
+        // Iterate over each parent Edge and refine it if necessary
+        //      connect the child Elems to the edges descendant edges and node
+        // Create a new Edge between the center_node and the new descendant Node
+        //      connect the child Elems to the new Edge
+        for (edge_index, adj_child_elem_indices, shared_node_indices, internal_edge_idx) in [
+            (0, [0, 1], [1, 0], [3, 2]),
+            (1, [2, 3], [3, 2], [1, 0]),
+            (2, [0, 2], [2, 0], [3, 2]),
+            (3, [1, 3], [3, 1], [1, 0]),
+        ] {
+            // get ids of child edges and node. Create them if they haven't been already
+            let (child_edge_ids, shared_node_id) = self.h_refine_edge_if_needed(
+                self.elems[parent_elem_id].edges[edge_index],
+                node_id_tracker,
+                edge_id_tracker,
+            )?;
+
+            // connect the uninitialized elements to the child Edges and Node
+            new_elems[adj_child_elem_indices[0]].set_edge(edge_index, child_edge_ids[0]);
+            new_elems[adj_child_elem_indices[1]].set_edge(edge_index, child_edge_ids[1]);
+
+            new_elems[adj_child_elem_indices[0]].set_node(shared_node_indices[0], shared_node_id);
+            new_elems[adj_child_elem_indices[1]].set_node(shared_node_indices[1], shared_node_id);
+
+            // create a new edge between the shared node and central node
+            let new_edge_id = self.new_edge_between_nodes(
+                [shared_node_id, center_node_id],
+                edge_id_tracker,
+                parent_elem_id,
+            )?;
+
+            // connect it to the child Elems
+            new_elems[adj_child_elem_indices[0]].set_edge(internal_edge_idx[0], new_edge_id);
+            new_elems[adj_child_elem_indices[1]].set_edge(internal_edge_idx[1], new_edge_id);
+        }
+
+        // upgrade the ElemUninits to Elems (They should each have 4 node_ids and 4 edge_ids by this point)
+        // connect the Elems to their relevant edges in the process
+        Ok(self.upgrade_uninit_elems(new_elems)?)
+    }
+
+    fn execute_u_refinement(
+        &mut self,
+        mut new_elems: Vec<ElemUninit>,
+        parent_elem_id: usize,
+        node_id_tracker: &mut IdTracker,
+        edge_id_tracker: &mut IdTracker,
+    ) -> Result<Vec<Elem>, HRefError> {
+        assert_eq!(new_elems.len(), 2);
+        let mut outer_node_ids = [0; 2];
+
+        // h_refine Edges 0 and 1 if necessary and connect child Elems to the relevant Nodes and Edges
+        for (edge_index, shared_node_indices, outer_node_indices) in
+            [(0, [1, 0], [0, 1]), (1, [3, 2], [2, 3])]
+        {
+            // get ids of child Edges and Node. Create them if they haven't been already
+            let (child_edge_ids, shared_node_id) = self.h_refine_edge_if_needed(
+                self.elems[parent_elem_id].edges[edge_index],
+                node_id_tracker,
+                edge_id_tracker,
+            )?;
+
+            outer_node_ids[edge_index] = shared_node_id;
+
+            // connect the new Edges and Node to the child Elems
+            new_elems[0].set_edge(edge_index, child_edge_ids[0]);
+            new_elems[1].set_edge(edge_index, child_edge_ids[1]);
+            new_elems[0].set_node(shared_node_indices[0], shared_node_id);
+            new_elems[1].set_node(shared_node_indices[1], shared_node_id);
+
+            // connect the parents outer Nodes to the child Elems
+            new_elems[0].set_node(
+                outer_node_indices[0],
+                self.elems[parent_elem_id].nodes[outer_node_indices[0]],
+            );
+            new_elems[1].set_node(
+                outer_node_indices[1],
+                self.elems[parent_elem_id].nodes[outer_node_indices[1]],
+            );
+        }
+
+        // create a new Edge between the two new Nodes
+        let new_edge_id =
+            self.new_edge_between_nodes(outer_node_ids, edge_id_tracker, parent_elem_id)?;
+
+        // connect the new Edge to both child Elems
+        new_elems[0].set_edge(3, new_edge_id);
+        new_elems[1].set_edge(2, new_edge_id);
+
+        // connect the parents outer unrefined Edges to the child Elems
+        new_elems[0].set_edge(2, self.elems[parent_elem_id].edges[2]);
+        new_elems[1].set_edge(3, self.elems[parent_elem_id].edges[3]);
+
+        // upgrade the ElemUninits to Elems (They should each have 4 node_ids and 4 edge_ids by this point)
+        // connect the Elems to their relevant edges in the process
+        Ok(self.upgrade_uninit_elems(new_elems)?)
+    }
+
+    fn execute_v_refinement(
+        &mut self,
+        mut new_elems: Vec<ElemUninit>,
+        parent_elem_id: usize,
+        node_id_tracker: &mut IdTracker,
+        edge_id_tracker: &mut IdTracker,
+    ) -> Result<Vec<Elem>, HRefError> {
+        assert_eq!(new_elems.len(), 2);
+        let mut outer_node_ids = [0; 2];
+
+        // h_refine Edges 0 and 1 if necessary and connect child Elems to the relevant Nodes and Edges
+        for (edge_index, shared_node_indices, outer_node_indices) in
+            [(2, [2, 0], [0, 2]), (3, [3, 1], [1, 3])]
+        {
+            // get ids of child Edges and Node. Create them if they haven't been already
+            let (child_edge_ids, shared_node_id) = self.h_refine_edge_if_needed(
+                self.elems[parent_elem_id].edges[edge_index],
+                node_id_tracker,
+                edge_id_tracker,
+            )?;
+
+            outer_node_ids[edge_index] = shared_node_id;
+
+            // connect the new Edges and Node to the child Elems
+            new_elems[0].set_edge(edge_index, child_edge_ids[0]);
+            new_elems[1].set_edge(edge_index, child_edge_ids[1]);
+            new_elems[0].set_node(shared_node_indices[0], shared_node_id);
+            new_elems[1].set_node(shared_node_indices[1], shared_node_id);
+
+            // connect the parents outer Nodes to the child Elems
+            new_elems[0].set_node(
+                outer_node_indices[0],
+                self.elems[parent_elem_id].nodes[outer_node_indices[0]],
+            );
+            new_elems[1].set_node(
+                outer_node_indices[1],
+                self.elems[parent_elem_id].nodes[outer_node_indices[1]],
+            );
+        }
+
+        // create a new Edge between the two new Nodes
+        let new_edge_id =
+            self.new_edge_between_nodes(outer_node_ids, edge_id_tracker, parent_elem_id)?;
+
+        // connect the new Edge to both child Elems
+        new_elems[0].set_edge(1, new_edge_id);
+        new_elems[1].set_edge(0, new_edge_id);
+
+        // connect the parents outer unrefined Edges to the child Elems
+        new_elems[0].set_edge(0, self.elems[parent_elem_id].edges[2]);
+        new_elems[1].set_edge(1, self.elems[parent_elem_id].edges[3]);
+
+        // upgrade the ElemUninits to Elems (They should each have 4 node_ids and 4 edge_ids by this point)
+        // connect the Elems to their relevant edges in the process
+        Ok(self.upgrade_uninit_elems(new_elems)?)
+    }
+
+    fn h_refine_edge_if_needed(
+        &mut self,
+        parent_edge_id: usize,
+        node_id_tracker: &mut IdTracker,
+        edge_id_tracker: &mut IdTracker,
+    ) -> Result<([usize; 2], usize), HRefError> {
+        Ok(if self.edges[parent_edge_id].has_children() {
+            (
+                self.edges[parent_edge_id].child_ids().try_into().unwrap(),
+                self.edges[parent_edge_id].child_node_id().unwrap(),
+            )
+        } else {
+            let new_edge_ids = edge_id_tracker.next_two_ids();
+            let new_node_id = node_id_tracker.next_id();
+
+            let mut new_edges = self.edges[parent_edge_id].h_refine(new_edge_ids, new_node_id)?;
+            self.edges.extend(new_edges.drain(0..));
+
+            let parent_edge_points = self.edge_points(parent_edge_id);
+            let node_coords = Point::between(parent_edge_points[0], parent_edge_points[1]);
+            self.nodes.push(Node::new(
+                new_node_id,
+                node_coords,
+                self.edges[parent_edge_id].boundary,
+            ));
+
+            (new_edge_ids, new_node_id)
+        })
+    }
+
+    fn new_edge_between_nodes(
+        &mut self,
+        node_ids: [usize; 2],
+        edge_id_tracker: &mut IdTracker,
+        parent_elem_id: usize,
+    ) -> Result<usize, HRefError> {
+        assert_ne!(node_ids[0], node_ids[1]);
+
+        let new_edge_id = edge_id_tracker.next_id();
+        let node_0 = &self.nodes[node_ids[0]];
+        let node_1 = &self.nodes[node_ids[0]];
+
+        let ordered_nodes = match self.elems[parent_elem_id]
+            .element
+            .order_points(&node_0.coords, &node_1.coords)
+        {
+            Ordering::Equal => return Err(HRefError::EdgeOnEqualPoints(parent_elem_id)),
+            Ordering::Less => [node_0, node_1],
+            Ordering::Greater => [node_1, node_0],
+        };
+
+        let new_edge = Edge::new(new_edge_id, ordered_nodes, false);
+        self.edges.push(new_edge);
+
+        Ok(new_edge_id)
+    }
+
+    fn upgrade_uninit_elems(
+        &mut self,
+        elems_uninit: Vec<ElemUninit>,
+    ) -> Result<Vec<Elem>, HRefError> {
+        let mut elems = Vec::with_capacity(4);
+        for elem_uninit in elems_uninit {
+            elems.push(elem_uninit.into_elem()?);
+        }
+
+        for elem in elems.iter() {
+            for edge_id in elem.edges {
+                self.edges[edge_id].connect_elem(elem);
+            }
+        }
+
+        Ok(elems)
+    }
 
     // ----------------------------------------------------------------------------------------------------
     // p-refinement methods
     // ----------------------------------------------------------------------------------------------------
 
     /// Execute a series of [PRef]s on [Elem]s specified by their id
-    pub fn execute_p_refinements(&mut self, refinements: impl Iterator<Item = (usize, PRef)>) -> Result<(), PRefError> {
+    pub fn execute_p_refinements(
+        &mut self,
+        refinements: impl Iterator<Item = (usize, PRef)>,
+    ) -> Result<(), PRefError> {
         let mut refinements_map: BTreeMap<usize, PRef> = BTreeMap::new();
         for (elem_id, p_ref) in refinements {
             if elem_id >= self.elems.len() {
@@ -389,13 +677,13 @@ impl Mesh {
         for (elem_id, refinement) in refinements_map {
             self.elems[elem_id].poly_orders.refine(refinement)?;
         }
-        
+
         Ok(())
     }
 }
 
 // ----------------------------------------------------------------------------------------------------
-// Helper methods for Mesh construction from JSON file
+// Mesh construction from JSON Utility functions
 // ----------------------------------------------------------------------------------------------------
 
 /*
@@ -523,6 +811,31 @@ where
         }
     }
     false
+}
+
+// ----------------------------------------------------------------------------------------------------
+// hp-Refinement Utility functions
+// ----------------------------------------------------------------------------------------------------
+
+struct IdTracker {
+    next_id: usize,
+}
+
+impl IdTracker {
+    pub fn new(start: usize) -> Self {
+        Self { next_id: start }
+    }
+
+    pub fn next_id(&mut self) -> usize {
+        self.next_id += 1;
+        self.next_id - 1
+    }
+
+    pub fn next_two_ids(&mut self) -> [usize; 2] {
+        let ids = [self.next_id, self.next_id + 1];
+        self.next_id += 2;
+        ids
+    }
 }
 
 #[cfg(test)]

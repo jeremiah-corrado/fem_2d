@@ -3,6 +3,7 @@ use super::{
     Elem, Node, ParaDir, MIN_EDGE_LENGTH,
 };
 use json::JsonValue;
+use smallvec::SmallVec;
 use std::collections::BTreeMap;
 
 #[derive(Debug)]
@@ -17,6 +18,7 @@ pub struct Edge {
     parent: Option<(usize, Bisection)>,
     elems: [BTreeMap<[u8; 2], usize>; 2],
     active_elems: Option<[usize; 2]>,
+    child_node: Option<usize>,
 }
 
 impl Edge {
@@ -34,6 +36,7 @@ impl Edge {
             parent: None,
             elems: [BTreeMap::new(), BTreeMap::new()],
             active_elems: None,
+            child_node: None,
         }
     }
 
@@ -69,7 +72,7 @@ impl Edge {
         &mut self,
         new_ids: [usize; 2],
         new_node_id: usize,
-    ) -> Result<[Self; 2], HRefError> {
+    ) -> Result<SmallVec<[Self; 2]>, HRefError> {
         match self.children {
             Some(_) => Err(HRefError::EdgeHasChildren(self.id)),
             None => {
@@ -79,7 +82,8 @@ impl Edge {
                     Err(HRefError::MinEdgeLength(self.id))
                 } else {
                     self.children = Some(new_ids.clone());
-                    Ok([
+                    self.child_node = Some(new_node_id);
+                    Ok(smallvec![
                         Self {
                             id: new_ids[0],
                             nodes: [self.nodes[0], new_node_id],
@@ -90,6 +94,7 @@ impl Edge {
                             parent: Some((self.id, Bisection::BL)),
                             elems: [BTreeMap::new(), BTreeMap::new()],
                             active_elems: None,
+                            child_node: None,
                         },
                         Self {
                             id: new_ids[1],
@@ -101,6 +106,7 @@ impl Edge {
                             parent: Some((self.id, Bisection::TR)),
                             elems: [BTreeMap::new(), BTreeMap::new()],
                             active_elems: None,
+                            child_node: None,
                         },
                     ])
                 }
@@ -122,6 +128,14 @@ impl Edge {
             Some(child_ids) => child_ids.to_vec(),
             None => Vec::new(),
         }
+    }
+
+    pub fn has_children(&self) -> bool {
+        self.children.is_some()
+    }
+
+    pub fn child_node_id(&self) -> Option<usize> {
+        self.child_node
     }
 
     /// Produce a Json Object that describes this Elem

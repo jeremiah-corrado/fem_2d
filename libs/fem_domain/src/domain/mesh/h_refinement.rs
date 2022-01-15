@@ -168,6 +168,7 @@ pub enum HRefError {
     UninitializedElem(usize),
     ElemDoesntExist(usize),
     DoubleRefinement(usize),
+    EdgeOnEqualPoints(usize),
 }
 
 impl fmt::Display for HRefError {
@@ -189,8 +190,21 @@ impl fmt::Display for HRefError {
                 "ElemUninit {} was not fully initialized by the conclusion of h-refinement",
                 elem_uninit_id
             ),
-            Self::ElemDoesntExist(elem_id) => write!(f, "Elem {} does not exist; Cannot apply h-Refinement!", elem_id),
-            Self::DoubleRefinement(elem_id) => write!(f, "Multiple h-refinements were specified for Elem {} in the same generation; Cannot apply h-Refinements", elem_id),
+            Self::ElemDoesntExist(elem_id) => write!(
+                f,
+                "Elem {} does not exist; cannot apply h-Refinement!",
+                elem_id
+            ),
+            Self::DoubleRefinement(elem_id) => write!(
+                f,
+                "Multiple h-refinements were specified for Elem {} in the same generation!",
+                elem_id
+            ),
+            Self::EdgeOnEqualPoints(elem_id) => write!(
+                f,
+                "Attempt to generate a child-Edge between two identical points over Elem {}!",
+                elem_id
+            ),
         }
     }
 }

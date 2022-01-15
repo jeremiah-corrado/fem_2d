@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate json;
 extern crate num_complex;
+#[macro_use]
 extern crate smallvec;
 
 mod domain;
