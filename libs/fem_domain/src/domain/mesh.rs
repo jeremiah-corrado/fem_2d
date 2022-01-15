@@ -816,7 +816,7 @@ impl Mesh {
     }
 
     /// Set the expansion orders on all [Elem]s
-    pub fn set_global_poly_orders(&mut self, orders: [u8; 2]) -> Result<(), PRefError> {
+    pub fn set_global_expansion_orders(&mut self, orders: [u8; 2]) -> Result<(), PRefError> {
         self.set_expansion_orders(self.elems.iter().map(|elem| (elem.id, orders)).collect())
     }
 
