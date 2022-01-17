@@ -1,8 +1,7 @@
 mod basis_spec;
 
-pub use basis_spec::{BasisDir, BasisLoc, BasisSpec};
+pub use basis_spec::{BasisDir, BasisLoc, BasisSpec, BSAddress};
 use smallvec::SmallVec;
-use std::fmt;
 
 /// A single degree of freedom
 pub struct DoF {
@@ -11,42 +10,42 @@ pub struct DoF {
 }
 
 impl DoF {
-    pub fn new(id: usize, basis_specs: &[&BasisSpec]) -> Self {
+    pub fn new(id: usize, bs_addresses: SmallVec<[BSAddress; 4]>) -> Self {
         Self {
             id,
-            basis_specs: match basis_specs.len() {
-                1 => BasisSpecGroup::ELEM(basis_specs[0].id),
-                2 => BasisSpecGroup::EDGE([basis_specs[0].id, basis_specs[1].id]),
+            basis_specs: match bs_addresses.len() {
+                1 => BasisSpecGroup::ELEM(bs_addresses[0]),
+                2 => BasisSpecGroup::EDGE([bs_addresses[0], bs_addresses[1]]),
                 4 => BasisSpecGroup::NODE([
-                    basis_specs[0].id,
-                    basis_specs[1].id,
-                    basis_specs[2].id,
-                    basis_specs[3].id,
+                    bs_addresses[0],
+                    bs_addresses[1],
+                    bs_addresses[2],
+                    bs_addresses[3],
                 ]),
                 _ => panic!(
-                    "BasisSpec groups must contain 1, 2, or 4 BasisSpecs; cannot construct DoF {}!",
+                    "BasisSpec groups must contain 1, 2, or 4 Addresses; cannot construct DoF {}!",
                     id
                 ),
             },
         }
     }
 
-    pub fn basis_spec_ids(&self) -> SmallVec<[usize; 4]> {
+    pub fn basis_spec_addresses(&self) -> SmallVec<[BSAddress; 4]> {
         match self.basis_specs {
-            BasisSpecGroup::ELEM(elem_bs_id) => smallvec![elem_bs_id],
-            BasisSpecGroup::EDGE(edge_bs_ids) => smallvec![edge_bs_ids[0], edge_bs_ids[1]],
-            BasisSpecGroup::NODE(node_bs_ids) => smallvec![
-                node_bs_ids[0],
-                node_bs_ids[1],
-                node_bs_ids[2],
-                node_bs_ids[3]
+            BasisSpecGroup::ELEM(elem_bs_address) => smallvec![elem_bs_address],
+            BasisSpecGroup::EDGE(edge_bs_addresses) => smallvec![edge_bs_addresses[0], edge_bs_addresses[1]],
+            BasisSpecGroup::NODE(node_bs_addresses) => smallvec![
+                node_bs_addresses[0],
+                node_bs_addresses[1],
+                node_bs_addresses[2],
+                node_bs_addresses[3]
             ],
         }
     }
 }
 
 enum BasisSpecGroup {
-    ELEM(usize),
-    EDGE([usize; 2]),
-    NODE([usize; 4]),
+    ELEM(BSAddress),
+    EDGE([BSAddress; 2]),
+    NODE([BSAddress; 4]),
 }

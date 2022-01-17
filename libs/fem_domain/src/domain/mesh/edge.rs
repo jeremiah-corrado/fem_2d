@@ -123,10 +123,10 @@ impl Edge {
     }
 
     /// Returns a vector of child Edge ids. Will return an empty vector if this Edge has no children.
-    pub fn child_ids(&self) -> Vec<usize> {
+    pub fn child_ids(&self) -> Option<SmallVec<[usize; 2]>> {
         match self.children {
-            Some(child_ids) => child_ids.to_vec(),
-            None => Vec::new(),
+            Some(child_ids) => Some(SmallVec::from(child_ids)),
+            None => None,
         }
     }
 
@@ -138,8 +138,28 @@ impl Edge {
         self.child_node
     }
 
+    /// Which two Elem's should support edge-type Shape Functions (if any)
     pub fn active_elem_pair(&self) -> Option<[usize; 2]> {
         self.active_elems
+    }
+
+    /// Attempts to establish an active pair of Elems. Returns false if none can be established
+    pub fn set_activation(&mut self) -> bool {
+        let (bl_elems, tr_elems) = self.elems.split_at_mut(1);
+        match (bl_elems[0].last_entry(), tr_elems[0].last_entry()) {
+            (Some(bl_entry), Some(tr_entry)) => {
+                self.active_elems = Some([*bl_entry.get(), *tr_entry.get()]);
+                true
+            },
+            (_, _) => {
+                self.active_elems = None;
+                false
+            },
+        }
+    }
+
+    pub fn reset_activation(&mut self) {
+        self.active_elems = None;
     }
 
     /// Produce a Json Object that describes this Elem
@@ -150,7 +170,10 @@ impl Edge {
             "direction": self.dir,
             "nodes": array![self.nodes[0], self.nodes[1]],
             "parent": self.parent_id(),
-            "children": JsonValue::from(self.child_ids()),
+            "children": match self.children {
+                Some(child_ids) => array![child_ids[0], child_ids[1]],
+                None => array![],
+            },
             "cells": array![array![], array![]],
         };
 

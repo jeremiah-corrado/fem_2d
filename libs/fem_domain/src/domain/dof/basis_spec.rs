@@ -72,6 +72,10 @@ impl BasisSpec {
             (_, _) => false,
         }
     }
+
+    pub fn update_id(&mut self, new_id: usize) {
+        self.id = new_id;
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -95,5 +99,18 @@ impl BasisLoc {
 
     pub fn node_bs(elem: &Elem, idx: u8) -> Self {
         Self::NODE(idx, elem.nodes[idx as usize])
+    }
+}
+
+pub struct BSAddress {
+    elem_id: usize,
+    bs_id: usize,
+}
+
+impl BSAddress {
+    pub fn new(elem_id: usize, bs_id: usize) -> Self {
+        Self {
+            elem_id, bs_id,
+        }
     }
 }

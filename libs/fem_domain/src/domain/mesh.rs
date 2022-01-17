@@ -16,6 +16,7 @@ pub use space::{ParaDir, Point, M2D, V2D};
 
 use super::IdTracker;
 use json::JsonValue;
+use smallvec::SmallVec;
 
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
@@ -388,6 +389,33 @@ impl Mesh {
         }
     }
 
+    /// Get a list of an [`Edge`]s descendant's IDs
+    pub fn descendant_edges(&self, edge_id: usize, include_starting_edge: bool) -> Result<Vec<usize>, String> {
+        if edge_id > self.edges.len() {
+            Err(
+                format!(
+                    "Edge {} does not exist; Cannot retrieve descendant Edges!",
+                    edge_id
+                )
+            )
+        } else {
+            let mut descendants = Vec::new();
+            self.rec_descendant_edges(edge_id, include_starting_edge, &mut descendants);
+            Ok(descendants)
+        }
+    }
+
+    fn rec_descendant_edges(&self, edge_id: usize, include: bool, desc: &mut Vec<usize>) {
+        if include {
+            desc.push(edge_id);
+        }
+        if let Some(child_edge_ids) = self.edges[edge_id].child_ids() {
+            for cei in child_edge_ids {
+                self.rec_descendant_edges(cei, true, desc);
+            }
+        }
+    }
+
     // ----------------------------------------------------------------------------------------------------
     // h-refinement methods
     // ----------------------------------------------------------------------------------------------------
@@ -689,10 +717,10 @@ impl Mesh {
         parent_edge_id: usize,
         node_id_tracker: &mut IdTracker,
         edge_id_tracker: &mut IdTracker,
-    ) -> Result<([usize; 2], usize), HRefError> {
+    ) -> Result<(SmallVec<[usize; 2]>, usize), HRefError> {
         Ok(if self.edges[parent_edge_id].has_children() {
             (
-                self.edges[parent_edge_id].child_ids().try_into().unwrap(),
+                self.edges[parent_edge_id].child_ids().unwrap(),
                 self.edges[parent_edge_id].child_node_id().unwrap(),
             )
         } else {
@@ -710,7 +738,7 @@ impl Mesh {
                 self.edges[parent_edge_id].boundary,
             ));
 
-            (new_edge_ids, new_node_id)
+            (SmallVec::from(new_edge_ids), new_node_id)
         })
     }
 
@@ -757,6 +785,42 @@ impl Mesh {
         }
 
         Ok(elems)
+    }
+
+    pub(crate) fn set_edge_activation(&mut self) {
+        for edge in self.edges.iter_mut() {
+            edge.reset_activation();
+        }
+
+        let mut base_edge_ids: Vec<usize> = self.edges.iter().filter(|edge| edge.parent_id().is_none())
+            .map(|edge| edge.id).collect();
+
+        for base_edge_id in base_edge_ids.drain(0..) {
+            if !self.rec_set_edge_activation_in_tree(base_edge_id) {
+                panic!("Unable to find active Edge Pair over Edge {}; Something must be wrong with the mesh!", base_edge_id);
+            }
+        }
+    }
+
+    fn rec_set_edge_activation_in_tree(&mut self, edge_id: usize) -> bool {
+        if self.edges[edge_id].set_activation() {
+            if let Some(mut child_edge_ids) = self.edges[edge_id].child_ids() {
+                let mut children_found_matches: [bool; 2] = [false; 2];
+
+                for (i, cei) in child_edge_ids.drain(0..).enumerate() {
+                    children_found_matches[i] = self.rec_set_edge_activation_in_tree(cei);
+                }
+
+                assert_eq!(children_found_matches[0], children_found_matches[1]);
+
+                if children_found_matches[0] {
+                    self.edges[edge_id].reset_activation();
+                }
+            }
+            true
+        } else {
+            false
+        }
     }
 
     // ----------------------------------------------------------------------------------------------------
@@ -1001,9 +1065,54 @@ where
 mod tests {
     use super::Mesh;
 
+    const MESH_A_POINTS_X: [[f64; 4]; 4] = [
+        [0.0, 1.0, 0.0, 1.0],
+        [1.0, 2.0, 1.0, 2.0],
+        [0.0, 1.0, 0.0, 1.0],
+        [1.0, 2.0, 1.0, 2.0],
+    ];
+
+    const MESH_A_POINTS_Y: [[f64; 4]; 4] = [
+        [0.0, 0.0, 1.0, 1.0],
+        [0.0, 0.0, 1.0, 1.0],
+        [1.0, 1.0, 2.0, 2.0],
+        [1.0, 1.0, 2.0, 2.0],
+    ];
+
+    const MESH_A_NEIGHBORS: [[Option<usize>; 4]; 4] = [
+        [None, Some(2), None, Some(1)],
+        [None, Some(3), Some(0), None],
+        [Some(0), None, None, Some(3)],
+        [Some(1), None, Some(2), None],
+    ];
+
     #[test]
     fn mesh_from_file() {
         let mesh_a = Mesh::from_file("../../test_input/test_mesh_a.json").unwrap();
-        let mesh_b = Mesh::from_file("../../test_input/test_mesh_b.json").unwrap();
+        for (element, mats_cmp) in mesh_a.elements.iter().zip([
+            [1.0, 1.0],
+            [1.0, 2.0],
+            [2.0, 1.0],
+            [2.0, 2.0],
+        ].iter()) {
+            assert!((element.materials.eps_rel.re - mats_cmp[0]).abs() < 1e-14);
+        }
+
+        for (elem_id, elem) in mesh_a.elems.iter().enumerate() {
+            for n_idx in 0..4 {
+                let p = &mesh_a.nodes[elem.nodes[n_idx]].coords;
+
+                assert!((p.x - MESH_A_POINTS_X[elem_id][n_idx]).abs() < 1e-14);
+                assert!((p.y - MESH_A_POINTS_Y[elem_id][n_idx]).abs() < 1e-14);
+
+                if let Some(expected_neighbor) = MESH_A_NEIGHBORS[elem_id][n_idx] {
+                    assert_eq!(elem.edges[n_idx], expected_neighbor);
+                }
+            }
+        }
+
+        let _ = Mesh::from_file("../../test_input/test_mesh_b.json").unwrap();
     }
+
+
 }
