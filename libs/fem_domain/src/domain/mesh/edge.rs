@@ -56,15 +56,19 @@ impl Edge {
             _ => unreachable!(),
         };
         let address = elem.h_levels.edge_ranking(self.dir);
-        assert!(
-            self.elems[side_index].get(&address).is_none(),
-            "Edge {} is already connected another Elem at {:?}; Cannot connect to Elem {}!",
-            self.id,
-            address,
-            elem.id
-        );
 
-        self.elems[side_index].insert(address, elem.id);
+        if let Some(prev_elem_id) = self.elems[side_index].insert(address, elem.id) {
+            assert_eq!(
+                prev_elem_id, elem.id, 
+                "Edge {} is already connected to Elem {} at {:?} (on side {}); Cannot connect to Elem {}",
+                self.id,
+                prev_elem_id,
+                address,
+                side_index,
+                elem.id,
+            );
+        }
+
     }
 
     /// Produce two child Edges from this edge and a new Node along its center
@@ -160,6 +164,22 @@ impl Edge {
 
     pub fn reset_activation(&mut self) {
         self.active_elems = None;
+    }
+
+    pub fn other_active_elem_id(&self, elem_id: usize) -> Option<usize> {
+        match self.active_elems {
+            Some(active_elem_ids) => {
+                match active_elem_ids.iter().position(|eid_cmp| eid_cmp == &elem_id) {
+                    Some(this_pos) => match this_pos {
+                        0 => Some(active_elem_ids[1]),
+                        1 => Some(active_elem_ids[0]),
+                        _ => unreachable!(),
+                    },
+                    None => None,
+                }
+            },
+            None => None,
+        }
     }
 
     /// Produce a Json Object that describes this Elem

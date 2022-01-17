@@ -163,8 +163,8 @@ impl HLevels {
 
     pub fn edge_ranking(self, edge_dir: ParaDir) -> [u8; 2] {
         match edge_dir {
-            ParaDir::U => [self.u, self.v],
-            ParaDir::V => [self.v, self.u],
+            ParaDir::U => [self.v, self.u],
+            ParaDir::V => [self.u, self.v],
         }
     }
 }

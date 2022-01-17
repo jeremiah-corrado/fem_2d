@@ -226,7 +226,9 @@ impl Point {
     pub fn orientation_with(&self, other: &Self) -> ParaDir {
         assert!(
             self.x_cmp != other.x_cmp || self.y_cmp != other.y_cmp,
-            "Cannot compute the orientation between two Points at the same location!"
+            "Cannot compute the orientation between two Points at the same location: [{} == {}]!",
+            self,
+            other,
         );
 
         let dx = (other.x - self.x).abs();
@@ -302,6 +304,17 @@ impl Into<JsonValue> for Point {
             "x": self.x,
             "y": self.y,
         }
+    }
+}
+
+impl fmt::Display for Point {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "(x: {:.10}, y: {:.10})",
+            self.x,
+            self.y,
+        )
     }
 }
 

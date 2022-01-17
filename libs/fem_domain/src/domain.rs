@@ -53,7 +53,7 @@ impl Domain {
     /// Generate Degrees of Freedom over the mesh according to the Polynomial Expansion orders on each [Elem]
     pub fn gen_dofs(&mut self) {
         // prepare for fresh set of DoFs and BasisSpecs
-        self.basis_specs.clear();
+        self.basis_specs = vec![Vec::new(); self.mesh.elems.len()];
         self.dofs.clear();
         self.mesh.set_edge_activation();
         let mut dof_id_tracker = IdTracker::new(0);

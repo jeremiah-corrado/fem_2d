@@ -6,6 +6,7 @@ use super::{
 use json::JsonValue;
 use smallvec::SmallVec;
 use std::rc::Rc;
+use std::fmt;
 
 /*
     Layout of Geometric indices:
@@ -186,6 +187,7 @@ impl Elem {
 }
 
 /// Intermediate data structure used to represent a child [Elem] during the execution of an [HRef]
+#[derive(Debug, Clone)]
 pub struct ElemUninit {
     pub id: usize,
     pub nodes: [Option<usize>; 4],
@@ -225,16 +227,20 @@ impl ElemUninit {
             node_id,
             self.id
         );
-        assert!(
-            self.nodes[node_idx].is_none(),
-            "Node ({}) has already been set to {} on ElemUninit {}; Cannot set to {}",
-            node_idx,
-            self.nodes[node_idx].unwrap(),
-            self.id,
-            node_id
-        );
-
-        self.nodes[node_idx] = Some(node_id);
+        
+        if let Some(current_id) = self.nodes[node_idx] {
+            assert_eq!(
+                current_id, 
+                node_id, 
+                "Node ({}) has already been set to {} on ElemUninit {}; Cannot set to {}",
+                node_idx,
+                self.nodes[node_idx].unwrap(),
+                self.id,
+                node_id
+            );
+        } else {
+            self.nodes[node_idx] = Some(node_id);
+        }
     }
 
     pub fn set_edge(&mut self, edge_idx: usize, edge_id: usize) {
@@ -245,6 +251,7 @@ impl ElemUninit {
             edge_id,
             self.id
         );
+        
         assert!(
             self.edges[edge_idx].is_none(),
             "Edge ({}) has already been set to {} on ElemUninit {}; Cannot set to {}",
@@ -254,7 +261,7 @@ impl ElemUninit {
             edge_id
         );
 
-        self.nodes[edge_idx] = Some(edge_id);
+        self.edges[edge_idx] = Some(edge_id);
     }
 
     pub fn into_elem(self) -> Result<Elem, HRefError> {
@@ -289,5 +296,35 @@ impl ElemUninit {
         } else {
             Err(HRefError::UninitializedElem(self.id))
         }
+    }
+
+    fn fmt_edge(&self, idx: usize) -> String {
+        match self.edges[idx] {
+            Some(id) => id.to_string(),
+            None => String::from("_"),
+        }
+    }
+
+    fn fmt_node(&self, idx: usize) -> String {
+        match self.nodes[idx] {
+            Some(id) => id.to_string(),
+            None => String::from("_"),
+        }
+    }
+}
+
+impl fmt::Display for ElemUninit {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "ID: {} \t edges: [{}, {}, {}, {}] \t nodes: [{}, {}, {}, {}]", 
+            self.id,
+            self.fmt_edge(0),
+            self.fmt_edge(1),
+            self.fmt_edge(2),
+            self.fmt_edge(3),
+            self.fmt_node(0),
+            self.fmt_node(1),
+            self.fmt_node(2),
+            self.fmt_node(3),
+        )
     }
 }

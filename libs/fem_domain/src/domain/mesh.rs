@@ -329,12 +329,13 @@ impl Mesh {
             .map(|node_id| &self.nodes[node_id].coords)
     }
 
-    /// Get the twp [Point]s composing an [`Edge`]
+    /// Get the two [Point]s composing an [`Edge`]
     pub fn edge_points<'a>(&'a self, edge_id: usize) -> [&'a Point; 2] {
         assert!(edge_id < self.edges.len());
-        self.edges[edge_id]
-            .nodes
-            .map(|node_id| &self.nodes[node_id].coords)
+        [
+            &self.nodes[self.edges[edge_id].nodes[0]].coords,
+            &self.nodes[self.edges[edge_id].nodes[1]].coords,
+        ]
     }
 
     /// Get a list of an [`Elem`]s descendant's IDs
@@ -544,12 +545,14 @@ impl Mesh {
         // create a new node in the center of the parent Elem
         let parent_elem_points = self.elem_points(parent_elem_id);
         let center_node_id = node_id_tracker.next_id();
-        let center_node = Node::new(
+        let center_point = Point::between(parent_elem_points[0], parent_elem_points[3]);
+
+        assert_eq!(center_node_id, self.nodes.len());
+        self.nodes.push(Node::new(
             center_node_id,
-            Point::between(parent_elem_points[0], parent_elem_points[1]),
+            center_point,
             false,
-        );
-        self.nodes.push(center_node);
+        ));
 
         // connect the child Elems to the center node and the parents nodes
         for (elem_idx, elem_uninit) in new_elems.iter_mut().enumerate() {
@@ -563,11 +566,11 @@ impl Mesh {
         //      connect the child Elems to the new Edge
         for (edge_index, adj_child_elem_indices, shared_node_indices, internal_edge_idx) in [
             (0, [0, 1], [1, 0], [3, 2]),
-            (1, [2, 3], [3, 2], [1, 0]),
-            (2, [0, 2], [2, 0], [3, 2]),
+            (1, [2, 3], [3, 2], [3, 2]),
+            (2, [0, 2], [2, 0], [1, 0]),
             (3, [1, 3], [3, 1], [1, 0]),
         ] {
-            // get ids of child edges and node. Create them if they haven't been already
+            // get ids of child edges and node. Refine the parent edge if it hasn't been refined already
             let (child_edge_ids, shared_node_id) = self.h_refine_edge_if_needed(
                 self.elems[parent_elem_id].edges[edge_index],
                 node_id_tracker,
@@ -590,7 +593,7 @@ impl Mesh {
 
             // connect it to the child Elems
             new_elems[adj_child_elem_indices[0]].set_edge(internal_edge_idx[0], new_edge_id);
-            new_elems[adj_child_elem_indices[1]].set_edge(internal_edge_idx[1], new_edge_id);
+            new_elems[adj_child_elem_indices[1]].set_edge(internal_edge_idx[1], new_edge_id);    
         }
 
         // upgrade the ElemUninits to Elems (They should each have 4 node_ids and 4 edge_ids by this point)
@@ -650,6 +653,8 @@ impl Mesh {
         new_elems[0].set_edge(2, self.elems[parent_elem_id].edges[2]);
         new_elems[1].set_edge(3, self.elems[parent_elem_id].edges[3]);
 
+
+
         // upgrade the ElemUninits to Elems (They should each have 4 node_ids and 4 edge_ids by this point)
         // connect the Elems to their relevant edges in the process
         Ok(self.upgrade_uninit_elems(new_elems)?)
@@ -676,7 +681,7 @@ impl Mesh {
                 edge_id_tracker,
             )?;
 
-            outer_node_ids[edge_index] = shared_node_id;
+            outer_node_ids[edge_index - 2] = shared_node_id;
 
             // connect the new Edges and Node to the child Elems
             new_elems[0].set_edge(edge_index, child_edge_ids[0]);
@@ -732,11 +737,16 @@ impl Mesh {
 
             let parent_edge_points = self.edge_points(parent_edge_id);
             let node_coords = Point::between(parent_edge_points[0], parent_edge_points[1]);
-            self.nodes.push(Node::new(
-                new_node_id,
-                node_coords,
-                self.edges[parent_edge_id].boundary,
-            ));
+            
+            assert_eq!(new_node_id, self.nodes.len());
+            
+            self.nodes.push(
+                Node::new(
+                    new_node_id,
+                    node_coords,
+                    self.edges[parent_edge_id].boundary,
+                )
+            );
 
             (SmallVec::from(new_edge_ids), new_node_id)
         })
@@ -752,7 +762,7 @@ impl Mesh {
 
         let new_edge_id = edge_id_tracker.next_id();
         let node_0 = &self.nodes[node_ids[0]];
-        let node_1 = &self.nodes[node_ids[0]];
+        let node_1 = &self.nodes[node_ids[1]];
 
         let ordered_nodes = match self.elems[parent_elem_id]
             .element
@@ -763,7 +773,10 @@ impl Mesh {
             Ordering::Greater => [node_1, node_0],
         };
 
+        // print!("Edge {} \t [{} --- {}] \t", new_edge_id, ordered_nodes[0].coords, ordered_nodes[1].coords);
         let new_edge = Edge::new(new_edge_id, ordered_nodes, false);
+        // println!("Dir: {:?}", new_edge.dir);
+
         self.edges.push(new_edge);
 
         Ok(new_edge_id)
@@ -792,7 +805,9 @@ impl Mesh {
             edge.reset_activation();
         }
 
-        let mut base_edge_ids: Vec<usize> = self.edges.iter().filter(|edge| edge.parent_id().is_none())
+        let mut base_edge_ids: Vec<usize> = self.edges.iter().filter(|edge| {
+            edge.parent_id().is_none() && !edge.boundary
+        })
             .map(|edge| edge.id).collect();
 
         for base_edge_id in base_edge_ids.drain(0..) {
@@ -1088,7 +1103,9 @@ mod tests {
 
     #[test]
     fn mesh_from_file() {
-        let mesh_a = Mesh::from_file("../../test_input/test_mesh_a.json").unwrap();
+        let mut mesh_a = Mesh::from_file("../../test_input/test_mesh_a.json").unwrap();
+        mesh_a.set_edge_activation();
+
         for (element, mats_cmp) in mesh_a.elements.iter().zip([
             [1.0, 1.0],
             [1.0, 2.0],
@@ -1106,7 +1123,7 @@ mod tests {
                 assert!((p.y - MESH_A_POINTS_Y[elem_id][n_idx]).abs() < 1e-14);
 
                 if let Some(expected_neighbor) = MESH_A_NEIGHBORS[elem_id][n_idx] {
-                    assert_eq!(elem.edges[n_idx], expected_neighbor);
+                    assert_eq!(mesh_a.edges[elem.edges[n_idx]].other_active_elem_id(elem_id).unwrap(), expected_neighbor);
                 }
             }
         }
@@ -1115,11 +1132,22 @@ mod tests {
     }
 
     #[test]
+    fn basic_h_refinement() {
+        let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
+        mesh_c.export_to_json("../../test_output/mesh_c_copy.json").unwrap();
+
+        mesh_c.h_refine_elems(vec![0], HRef::T);
+    }
+
+    #[test]
     fn mesh_to_file() {
         let mut mesh_b = Mesh::from_file("../../test_input/test_mesh_b.json").unwrap();
+        mesh_b.export_to_json("../../test_output/mesh_b_copy.json").unwrap();
 
         mesh_b.execute_p_refinements(vec![(0, PRef::from(3, 3)), (1, PRef::from(2, 3)), (2, PRef::from(3, 2))]);
         mesh_b.execute_h_refinements(vec![(0, HRef::T), (1, HRef::u_extened(0).unwrap()), (2, HRef::v_extened(1).unwrap())]);
+        // mesh_b.execute_h_refinements(vec![(0, HRef::T), (1, HRef::u()), (2, HRef::v())]);
+
 
         mesh_b.export_to_json("../../test_output/mesh_b_refined.json").unwrap();
     }
