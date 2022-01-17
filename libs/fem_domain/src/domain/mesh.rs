@@ -1063,7 +1063,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::Mesh;
+    use super::*;
 
     const MESH_A_POINTS_X: [[f64; 4]; 4] = [
         [0.0, 1.0, 0.0, 1.0],
@@ -1114,5 +1114,13 @@ mod tests {
         let _ = Mesh::from_file("../../test_input/test_mesh_b.json").unwrap();
     }
 
+    #[test]
+    fn mesh_to_file() {
+        let mut mesh_b = Mesh::from_file("../../test_input/test_mesh_b.json").unwrap();
 
+        mesh_b.execute_p_refinements(vec![(0, PRef::from(3, 3)), (1, PRef::from(2, 3)), (2, PRef::from(3, 2))]);
+        mesh_b.execute_h_refinements(vec![(0, HRef::T), (1, HRef::u_extened(0).unwrap()), (2, HRef::v_extened(1).unwrap())]);
+
+        mesh_b.export_to_json("../../test_output/mesh_b_refined.json").unwrap();
+    }
 }

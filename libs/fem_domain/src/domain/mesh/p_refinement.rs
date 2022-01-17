@@ -1,4 +1,4 @@
-use super::{ParaDir, MAX_POLYNOMIAL_ORDER};
+use super::MAX_POLYNOMIAL_ORDER;
 use crate::BasisDir;
 use json::JsonValue;
 use std::fmt;

@@ -1,4 +1,3 @@
-use super::h_refinement::HRefError;
 use super::Point;
 use json::JsonValue;
 

@@ -62,7 +62,7 @@ impl BasisSpec {
                     (_, _) => false,
                 }
             }
-            (BasisLoc::NODE(idx_0, node_id_0), BasisLoc::NODE(idx_1, node_id_1)) => {
+            (BasisLoc::NODE(_, node_id_0), BasisLoc::NODE(_, node_id_1)) => {
                 assert_eq!(
                     node_id_0, node_id_1,
                     "Cannot attempt to match Node-Type BasisSpecs associated with different Nodes!"
@@ -102,6 +102,7 @@ impl BasisLoc {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
 pub struct BSAddress {
     elem_id: usize,
     bs_id: usize,

@@ -15,6 +15,30 @@ pub enum HRef {
 }
 
 impl HRef {
+    pub const fn u() -> Self {
+        Self::U(None)
+    }
+
+    pub const fn v() -> Self {
+        Self::V(None)
+    }
+
+    pub const fn u_extened(child_idx: u8) -> Result<Self, HRefError> {
+        match child_idx {
+            0 => Ok(Self::U(Some(Bisection::BL))),
+            1 => Ok(Self::U(Some(Bisection::TR))),
+            _ => Err(HRefError::BisectionIdxExceeded),
+        }
+    }
+
+    pub const fn v_extened(child_idx: u8) -> Result<Self, HRefError> {
+        match child_idx {
+            0 => Ok(Self::V(Some(Bisection::BL))),
+            1 => Ok(Self::V(Some(Bisection::TR))),
+            _ => Err(HRefError::BisectionIdxExceeded),
+        }
+    }
+
     pub fn indices_and_ids(
         &self,
         id_counter: &mut usize,
@@ -169,6 +193,7 @@ pub enum HRefError {
     ElemDoesntExist(usize),
     DoubleRefinement(usize),
     EdgeOnEqualPoints(usize),
+    BisectionIdxExceeded,
 }
 
 impl fmt::Display for HRefError {
@@ -205,6 +230,7 @@ impl fmt::Display for HRefError {
                 "Attempt to generate a child-Edge between two identical points over Elem {}!",
                 elem_id
             ),
+            Self::BisectionIdxExceeded => write!(f, "Extended refinement index must be 0 or 1!"),
         }
     }
 }

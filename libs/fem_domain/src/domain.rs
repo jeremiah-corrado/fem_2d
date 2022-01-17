@@ -79,8 +79,8 @@ impl Domain {
         // Create DoFs from pairs of matched BasisSpecs on the active Elems associated with each Edge
         for (edge_id, mut edge_bs_list) in edge_bs {
             if let Some(active_elem_ids) = self.mesh.edges[edge_id].active_elem_pair() {
-                // only basis specs associated with the active pair of Elems need to be considered
-                let mut rel_basis_specs: Vec<BasisSpec> = edge_bs_list
+                // only basis specs associated with the active pair of Elems need to be considered here
+                let rel_basis_specs: Vec<BasisSpec> = edge_bs_list
                     .drain(0..)
                     .filter(|bs| active_elem_ids.contains(&bs.elem_id))
                     .collect();
@@ -106,23 +106,22 @@ impl Domain {
                     }
                 }
 
-                // create new DoFs from the matched pairs
-                // and add the individual BasisSpecs to their Elem's list
-                for ap in active_pairs {
+                // Store the matched BasisSpecs and create new DoFs
+                for pair in active_pairs {
+                    let addresses = pair.iter().map(|rel_idx| {
+                    // TODO: should use MaybeUninit in BasisSpec (or some other method) to avoid expensive Clone  here!
+                        self.push_basis_spec(rel_basis_specs[*rel_idx].clone())
+                    }).collect();
+
                     self.dofs.push(DoF::new(
                         dof_id_tracker.next_id(),
-                        &[&rel_basis_specs[ap[0]], &rel_basis_specs[ap[1]]],
+                        addresses,
                     ));
-
-                    self.basis_specs[rel_basis_specs[ap[0]].elem_id]
-                        .push(rel_basis_specs[ap[0]].clone());
-                    self.basis_specs[rel_basis_specs[ap[1]].elem_id]
-                        .push(rel_basis_specs[ap[1]].clone());
                 }
             }
         }
 
-        // ignoring Node-Type DoFs for now. Needs to be implemented!
+        // TODO: implement node-type BasisSpec Matching!
     }
 
     fn gen_basis_specs(&self) -> [BTreeMap<usize, Vec<BasisSpec>>; 3] {
@@ -239,5 +238,28 @@ impl IdTracker {
         let ids = [self.next_id, self.next_id + 1];
         self.next_id += 2;
         ids
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn create_dofs() {
+        let mut dom_a = Domain::from_mesh_file("../../test_input/test_mesh_a.json").unwrap();
+
+        dom_a.mesh.set_global_expansion_orders([5, 5]);
+        dom_a.gen_dofs();
+
+        dom_a.mesh.global_h_refinement(HRef::T);
+        dom_a.gen_dofs();
+
+        dom_a.mesh.h_refine_elems(vec![4, 5], HRef::T);
+        dom_a.mesh.h_refine_elems(vec![6, 7], HRef::u());
+        dom_a.mesh.h_refine_elems(vec![8, 9], HRef::v());
+        dom_a.mesh.p_refine_elems(vec![10, 11, 12, 13], PRef::from(2, -1));
+        dom_a.gen_dofs();
     }
 }
