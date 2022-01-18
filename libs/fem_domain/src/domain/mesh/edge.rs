@@ -71,7 +71,7 @@ impl Edge {
 
     }
 
-    /// Produce two child Edges from this edge and a new Node along its center
+    /// Produce two child Edges from this edge and connect them to a new Node along its center
     pub fn h_refine(
         &mut self,
         new_ids: [usize; 2],

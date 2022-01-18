@@ -25,7 +25,7 @@ use std::io::BufWriter;
 use std::rc::Rc;
 
 /// Minimum Edge length in parametric space. h-Refinements will fail after edges are smaller than this value.
-pub const MIN_EDGE_LENGTH: f64 = 1e-6;
+pub const MIN_EDGE_LENGTH: f64 = 3.0518e-5; // 15ish refinement layers with unit sized cells
 
 /// Maximum Polynomial expansion. p-Refinements will fail when Elem's expansion orders exceed this value.
 pub const MAX_POLYNOMIAL_ORDER: u8 = 20;
@@ -1101,6 +1101,7 @@ mod tests {
         [Some(1), None, Some(2), None],
     ];
 
+
     #[test]
     fn mesh_from_file() {
         let mut mesh_a = Mesh::from_file("../../test_input/test_mesh_a.json").unwrap();
@@ -1144,11 +1145,104 @@ mod tests {
         let mut mesh_b = Mesh::from_file("../../test_input/test_mesh_b.json").unwrap();
         mesh_b.export_to_json("../../test_output/mesh_b_copy.json").unwrap();
 
-        mesh_b.execute_p_refinements(vec![(0, PRef::from(3, 3)), (1, PRef::from(2, 3)), (2, PRef::from(3, 2))]);
-        mesh_b.execute_h_refinements(vec![(0, HRef::T), (1, HRef::u_extened(0).unwrap()), (2, HRef::v_extened(1).unwrap())]);
+        mesh_b.execute_p_refinements(vec![(0, PRef::from(3, 3)), (1, PRef::from(2, 3)), (2, PRef::from(3, 2))]).unwrap();
+        mesh_b.execute_h_refinements(vec![(0, HRef::T), (1, HRef::u_extened(0).unwrap()), (2, HRef::v_extened(1).unwrap())]).unwrap();
         // mesh_b.execute_h_refinements(vec![(0, HRef::T), (1, HRef::u()), (2, HRef::v())]);
 
 
         mesh_b.export_to_json("../../test_output/mesh_b_refined.json").unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn h_refine_non_existent() {
+        let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
+        mesh_c.h_refine_elems(vec![0, 1], HRef::T).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn h_refine_elem_with_children() {
+        let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
+        mesh_c.h_refine_elems(vec![0], HRef::T).unwrap();
+        mesh_c.h_refine_elems(vec![0], HRef::T).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn double_h_refinement() {
+        let mut mesh_a = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
+        mesh_a.execute_h_refinements(vec![(0, HRef::T), (1, HRef::T), (0, HRef::u())]).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn bad_extended_h_refinement() {
+        let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
+        mesh_c.h_refine_elems(vec![0], HRef::u_extened(2).unwrap()).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn minimum_edge_length_exceeded() {
+        let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
+        
+        // repeatedly refine the bottom left cell
+        for _ in 0..16 {
+            mesh_c.h_refine_with_filter(|elem| {
+                if !elem.has_children() && elem.nodes[0] == 0 {
+                    Some(HRef::T)
+                } else {
+                    None
+                }
+            }).unwrap()
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn p_refine_non_existent() {
+        let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
+        mesh_c.p_refine_elems(vec![0, 1], PRef::from(1, 1)).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn double_p_refinement() {
+        let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
+        mesh_c.p_refine_elems(vec![0, 0], PRef::from(1, 1)).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn neg_p_refinement_i() {
+        let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
+        mesh_c.set_global_expansion_orders([3, 3]);
+        mesh_c.p_refine_elems(vec![0], PRef::from(-3, 1)).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn neg_p_refinement_j() {
+        let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
+        mesh_c.set_global_expansion_orders([3, 3]);
+
+        mesh_c.p_refine_elems(vec![0], PRef::from(1, -3)).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn p_refinement_over_max_i() {
+        let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
+        let max_exp_as_i8 = MAX_POLYNOMIAL_ORDER.try_into().unwrap();
+        mesh_c.p_refine_elems(vec![0], PRef::from(max_exp_as_i8, 0)).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn p_refinement_over_max_j() {
+        let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
+        let max_exp_as_i8 = MAX_POLYNOMIAL_ORDER.try_into().unwrap();
+        mesh_c.p_refine_elems(vec![0], PRef::from(0, max_exp_as_i8)).unwrap();
     }
 }
