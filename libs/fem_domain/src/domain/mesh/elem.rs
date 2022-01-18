@@ -149,7 +149,7 @@ impl Elem {
     }
 
     /// Projection of a real [Point] on to parametric space (via this Elem's parent [Element])
-    pub fn parametric_projection(&self, real: Point) -> V2D {
+    pub fn parametric_projection(&self, real: &Point) -> V2D {
         self.element.parametric_projection(real)
     }
 

@@ -1,3 +1,9 @@
+extern crate cxx;
+
+mod eigenproblem;
+
+pub use eigenproblem::{GEP, AIJMatrix};
+
 #[cfg(test)]
 mod tests {
     #[test]

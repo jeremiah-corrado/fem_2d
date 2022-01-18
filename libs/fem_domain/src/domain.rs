@@ -67,9 +67,9 @@ impl Domain {
                 self.basis_specs[elem_id] = Vec::with_capacity(elem_bs_list.len());
 
                 for elem_bs in elem_bs_list.drain(0..) {
-                    let address = self.push_basis_spec(elem_bs);
-                    self.dofs
-                        .push(DoF::new(dof_id_tracker.next_id(), smallvec![address]));
+                    let dof_id = dof_id_tracker.next_id();
+                    let address = self.push_basis_spec(elem_bs, dof_id);
+                    self.dofs.push(DoF::new(dof_id, smallvec![address]));
                 }
             }
         }
@@ -106,16 +106,16 @@ impl Domain {
 
                 // Store the matched BasisSpecs and create new DoFs
                 for pair in active_pairs {
+                    let dof_id = dof_id_tracker.next_id();
                     let addresses = pair
                         .iter()
                         .map(|rel_idx| {
                             // TODO: should use MaybeUninit in BasisSpec (or some other method) to avoid expensive Clone  here!
-                            self.push_basis_spec(rel_basis_specs[*rel_idx].clone())
+                            self.push_basis_spec(rel_basis_specs[*rel_idx].clone(), dof_id)
                         })
                         .collect();
 
-                    self.dofs
-                        .push(DoF::new(dof_id_tracker.next_id(), addresses));
+                    self.dofs.push(DoF::new(dof_id, addresses));
                 }
             }
         }
@@ -172,7 +172,7 @@ impl Domain {
     pub fn descendant_basis_specs<'a>(
         &'a self,
         elem_id: usize,
-    ) -> Result<Vec<&'a BasisSpec>, String> {
+    ) -> Result<Vec<(usize, &'a Vec<BasisSpec>)>, String> {
         if elem_id >= self.mesh.elems.len() {
             Err(format!(
                 "Elem {} doesn't exist; Cannot retrieve Descendant BasisSpecs!",
@@ -182,7 +182,7 @@ impl Domain {
             let desc_elem_ids = self.mesh.descendant_elems(elem_id, false)?;
             Ok(desc_elem_ids
                 .iter()
-                .flat_map(|elem_id| self.basis_specs[*elem_id].iter())
+                .map(|elem_id| (*elem_id, &self.basis_specs[*elem_id]))
                 .collect())
         }
     }
@@ -208,11 +208,11 @@ impl Domain {
 
     // push a new BasisSpec onto the list, updating its ID to match its position in its elem's list
     // return its [elem_id, elem_list_position]
-    fn push_basis_spec(&mut self, mut bs: BasisSpec) -> BSAddress {
+    fn push_basis_spec(&mut self, mut bs: BasisSpec, dof_id: usize) -> BSAddress {
         let new_id = self.basis_specs[bs.elem_id].len();
         let elem_id = bs.elem_id;
 
-        bs.update_id(new_id);
+        bs.update_ids(new_id, dof_id);
         self.basis_specs[elem_id].push(bs);
 
         BSAddress::new(elem_id, new_id)

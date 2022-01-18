@@ -306,6 +306,14 @@ impl Mesh {
             .map(|node_id| &self.nodes[node_id].coords)
     }
 
+    pub fn elem_diag_points<'a>(&'a self, elem_id: usize) -> [&'a Point; 2] {
+        assert!(elem_id < self.elems.len());
+        [
+            &self.nodes[self.elems[elem_id].nodes[0]].coords,
+            &self.nodes[self.elems[elem_id].nodes[3]].coords,
+        ]
+    }
+
     /// Get the two [Point]s composing an [`Edge`]
     pub fn edge_points<'a>(&'a self, edge_id: usize) -> [&'a Point; 2] {
         assert!(edge_id < self.edges.len());
@@ -398,6 +406,12 @@ impl Mesh {
                 self.rec_descendant_edges(cei, true, desc);
             }
         }
+    }
+
+    pub fn max_expansion_orders(&self) -> [u8; 2] {
+        self.elems.iter().fold([0; 2], |acc, elem| {
+            elem.poly_orders.max_with(acc)
+        })
     }
 
     // ----------------------------------------------------------------------------------------------------

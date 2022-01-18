@@ -1,3 +1,4 @@
+
 /// AIJ Sparse Matrix Format native to [PETSC](https://petsc.org/main/docs/manualpages/Mat/MatCreateSeqAIJWithArrays.html#MatCreateSeqAIJWithArrays)
 pub struct AIJMatrix {
     /// i[row_idx] = i[row_idx - 1] + number of entries on row i

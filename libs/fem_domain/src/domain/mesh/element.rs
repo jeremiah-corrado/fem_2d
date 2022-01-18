@@ -22,7 +22,7 @@ impl Element {
         }
     }
 
-    pub fn parametric_projection(&self, real: Point) -> V2D {
+    pub fn parametric_projection(&self, real: &Point) -> V2D {
         assert!(
             real.x < self.points[3].x && real.x > self.points[0].x,
             "Real Point is outside Elem {}'s X Bounds; Cannot project onto Parametric Space!",

@@ -6,8 +6,9 @@ pub struct BasisSpec {
     pub i: u8,
     pub j: u8,
     pub dir: BasisDir,
-    pub(crate) loc: BasisLoc,
     pub elem_id: usize,
+    pub dof_id: Option<usize>,
+    pub(crate) loc: BasisLoc,
 }
 
 impl BasisSpec {
@@ -30,8 +31,9 @@ impl BasisSpec {
             i,
             j,
             dir,
-            loc,
+            dof_id: None,
             elem_id: elem.id,
+            loc,
         }
     }
 
@@ -73,8 +75,18 @@ impl BasisSpec {
         }
     }
 
-    pub fn update_id(&mut self, new_id: usize) {
+    pub fn update_ids(&mut self, new_id: usize, dof_id: usize) {
         self.id = new_id;
+        self.dof_id = Some(dof_id);
+    }
+
+    pub fn get_integration_data(&self) -> ([usize; 2], BasisDir, usize) {
+        debug_assert!(self.dof_id.is_some(), "Cannot get integration data for unmatched BasisSpec: {}", self.id);
+        (
+            [self.i as usize, self.j as usize],
+            self.dir,
+            self.dof_id.unwrap()
+        )
     }
 }
 

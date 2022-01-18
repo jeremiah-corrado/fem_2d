@@ -66,7 +66,7 @@ impl<SF: ShapeFn> BasisFnSampler<SF> {
     }
 
     /// Generate a [BasisFn] defined over an [Elem]. Can be defined over a subset of the Element.
-    pub fn sample_basis_fn(&self, elem: &Elem, sampled_space: Option<[Point; 2]>) -> BasisFn<SF> {
+    pub fn sample_basis_fn(&self, elem: &Elem, sampled_space: Option<[&Point; 2]>) -> BasisFn<SF> {
         BasisFn::with(
             self.i_max,
             self.j_max,
@@ -101,7 +101,7 @@ impl<SF: ShapeFn> BasisFn<SF> {
         raw_u_points: &[f64],
         raw_v_points: &[f64],
         elem: &Elem,
-        sampled_space: Option<[Point; 2]>,
+        sampled_space: Option<[&Point; 2]>,
     ) -> Self {
         let [(u_glq_scale, u_points_scaled), (v_glq_scale, v_points_scaled)] = match sampled_space {
             Some([sample_min, sample_max]) => {

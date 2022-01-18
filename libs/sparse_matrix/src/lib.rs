@@ -1,7 +1,7 @@
-mod aij_matrix;
+extern crate eigensolver;
+
 mod sparse_matrix_btree;
 
-pub use aij_matrix::AIJMatrix;
 pub use sparse_matrix_btree::SparseMatrix;
 
 #[cfg(test)]
