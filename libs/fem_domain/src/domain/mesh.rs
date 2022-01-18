@@ -673,8 +673,8 @@ impl Mesh {
         new_elems[1].set_edge(0, new_edge_id);
 
         // connect the parents outer unrefined Edges to the child Elems
-        new_elems[0].set_edge(0, self.elems[parent_elem_id].edges[2]);
-        new_elems[1].set_edge(1, self.elems[parent_elem_id].edges[3]);
+        new_elems[0].set_edge(0, self.elems[parent_elem_id].edges[0]);
+        new_elems[1].set_edge(1, self.elems[parent_elem_id].edges[1]);
 
         // upgrade the ElemUninits to Elems (They should each have 4 node_ids and 4 edge_ids by this point)
         // connect the Elems to their relevant edges in the process
@@ -1140,21 +1140,16 @@ mod tests {
                 (2, PRef::from(3, 2)),
             ])
             .unwrap();
-        // mesh_b
-        //     .execute_h_refinements(vec![
-        //         (0, HRef::T),
-        //         (1, HRef::u_extened(0).unwrap()),
-        //         (2, HRef::v_extened(0).unwrap()),
-        //     ])
-        //     .unwrap();
-
         mesh_b
             .execute_h_refinements(vec![
                 (0, HRef::T),
-                (1, HRef::u()),
-                (2, HRef::v()),
+                (1, HRef::u_extened(0).unwrap()),
+                (2, HRef::v_extened(0).unwrap()),
             ])
             .unwrap();
+
+        mesh_b.p_refine_elems(vec![3, 4, 5], PRef::from(-1, -1)).unwrap();
+        mesh_b.h_refine_elems(vec![6, 14, 12], HRef::T).unwrap();
 
         mesh_b.set_edge_activation();
         mesh_b
