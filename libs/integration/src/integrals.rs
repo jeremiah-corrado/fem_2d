@@ -1,5 +1,5 @@
 use basis::{BasisFn, ShapeFn};
-use fem_domain::ParaDir;
+use fem_domain::BasisDir;
 
 mod curl_products;
 mod glq_integration;
@@ -33,8 +33,8 @@ pub trait Integral {
     /// Compute an integral between [BasisFn]'s P and Q, where P and Q both have a parametric direction ([ParaDir]) and orders i and j.
     fn integrate<SF: ShapeFn>(
         &self,
-        p_dir: ParaDir,
-        q_dir: ParaDir,
+        p_dir: BasisDir,
+        q_dir: BasisDir,
         p_orders: [usize; 2],
         q_orders: [usize; 2],
         p_basis: &BasisFn<SF>,
@@ -45,8 +45,8 @@ pub trait Integral {
     /// This function may still return a "Full" [IntegralResult] if the solution is known to be zero along the edges.
     fn integrate_by_parts<SF: ShapeFn>(
         &self,
-        p_dir: ParaDir,
-        q_dir: ParaDir,
+        p_dir: BasisDir,
+        q_dir: BasisDir,
         p_orders: [usize; 2],
         q_orders: [usize; 2],
         p_basis: &BasisFn<SF>,

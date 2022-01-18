@@ -298,6 +298,8 @@ impl PartialEq for Point {
     }
 }
 
+impl Eq for Point {}
+
 impl Into<JsonValue> for Point {
     fn into(self) -> JsonValue {
         object! {

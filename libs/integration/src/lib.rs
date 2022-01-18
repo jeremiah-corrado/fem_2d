@@ -10,6 +10,8 @@ pub use integrals::{
     IntegralResult, L2InnerProduct,
 };
 
+pub use matrix_filling::fill_matrices;
+
 #[cfg(test)]
 mod tests {
     #[test]

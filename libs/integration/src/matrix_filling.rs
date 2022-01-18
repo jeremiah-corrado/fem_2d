@@ -1,21 +1,22 @@
-use sparse_matrix::SparseMatrix;
-use fem_domain::Domain;
 use basis::{BasisFnSampler, ShapeFn};
+use fem_domain::Domain;
+use sparse_matrix::SparseMatrix;
 
 use super::Integral;
 
-pub fn fill_matrices<AI, BI, SF>(domain: &Domain, ngq: usize) -> [SparseMatrix; 2] 
-    where 
-        AI: Integral,
-        BI: Integral,
-        SF: ShapeFn,
+pub fn fill_matrices<AI, BI, SF>(domain: &Domain, ngq: usize) -> [SparseMatrix; 2]
+where
+    AI: Integral,
+    BI: Integral,
+    SF: ShapeFn,
 {
     let mut a_mat = SparseMatrix::new(domain.dofs.len());
     let mut b_mat = SparseMatrix::new(domain.dofs.len());
 
     let [i_max, j_max] = domain.mesh.max_expansion_orders();
 
-    let (bs_sampler, [u_weights, v_weights]) : (BasisFnSampler<SF>, _) = BasisFnSampler::with(ngq, ngq, i_max as usize, j_max as usize, false);
+    let (mut bs_sampler, [u_weights, v_weights]): (BasisFnSampler<SF>, _) =
+        BasisFnSampler::with(ngq, ngq, i_max as usize, j_max as usize, false);
 
     let a_integrator = AI::with_weights(&u_weights, &v_weights);
     let b_integrator = BI::with_weights(&u_weights, &v_weights);
@@ -26,11 +27,22 @@ pub fn fill_matrices<AI, BI, SF>(domain: &Domain, ngq: usize) -> [SparseMatrix; 
         let local_basis_specs = domain.local_basis_specs(elem.id).unwrap();
 
         // local - local
-        for (i, (p_orders, p_dir, p_dof_id)) in local_basis_specs.iter().map(|bs_p| bs_p.get_integration_data()).enumerate() {
-            for (q_orders, q_dir, q_dof_id) in local_basis_specs.iter().skip(i).map(|bs_q| bs_q.get_integration_data()) {
-                
-                let a = a_integrator.integrate(p_dir, q_dir, p_orders, q_orders, &bs_local, &bs_local).surface();
-                let b = b_integrator.integrate(p_dir, q_dir, p_orders, q_orders, &bs_local, &bs_local).surface();
+        for (i, (p_orders, p_dir, p_dof_id)) in local_basis_specs
+            .iter()
+            .map(|bs_p| bs_p.get_integration_data())
+            .enumerate()
+        {
+            for (q_orders, q_dir, q_dof_id) in local_basis_specs
+                .iter()
+                .skip(i)
+                .map(|bs_q| bs_q.get_integration_data())
+            {
+                let a = a_integrator
+                    .integrate(p_dir, q_dir, p_orders, q_orders, &bs_local, &bs_local)
+                    .surface();
+                let b = b_integrator
+                    .integrate(p_dir, q_dir, p_orders, q_orders, &bs_local, &bs_local)
+                    .surface();
 
                 a_mat.insert([p_dof_id, q_dof_id], a);
                 b_mat.insert([p_dof_id, q_dof_id], b);
@@ -39,24 +51,32 @@ pub fn fill_matrices<AI, BI, SF>(domain: &Domain, ngq: usize) -> [SparseMatrix; 
 
         let desc_basis_specs = domain.descendant_basis_specs(elem.id).unwrap();
 
-        // local - desc 
-        for (p_orders, p_dir, p_dof_id) in local_basis_specs.iter().map(|bs_p| bs_p.get_integration_data()) {
-            for (q_elem_id, (q_orders, q_dir, q_dof_id)) in desc_basis_specs.iter().flat_map(|(q_elem_id, elem_bs_q)| {
-                elem_bs_q.iter().map(move |bs_q| (*q_elem_id, bs_q.get_integration_data()))
-            }) {
-                
-                let p_sampled = bs_sampler.sample_basis_fn(elem, Some(domain.mesh.elem_diag_points(q_elem_id)));
-                let q_local = bs_sampler.sample_basis_fn(&domain.mesh.elems[q_elem_id], None);
+        // local - desc
+        for (p_orders, p_dir, p_dof_id) in local_basis_specs
+            .iter()
+            .map(|bs_p| bs_p.get_integration_data())
+        {
+            for &(q_elem_id, q_elem_basis_specs) in desc_basis_specs.iter() {
+                let bs_p_sampled =
+                    bs_sampler.sample_basis_fn(elem, Some(domain.mesh.elem_diag_points(q_elem_id)));
+                let bs_q_local = bs_sampler.sample_basis_fn(&domain.mesh.elems[q_elem_id], None);
 
-                let a = a_integrator.integrate(p_dir, q_dir, p_orders, q_orders, &bs_local, &bs_local).surface();
-                let b = b_integrator.integrate(p_dir, q_dir, p_orders, q_orders, &bs_local, &bs_local).surface();
+                for (q_orders, q_dir, q_dof_id) in q_elem_basis_specs
+                    .iter()
+                    .map(|bs_q| bs_q.get_integration_data())
+                {
+                    let a = a_integrator
+                        .integrate(p_dir, q_dir, p_orders, q_orders, &bs_p_sampled, &bs_q_local)
+                        .surface();
+                    let b = b_integrator
+                        .integrate(p_dir, q_dir, p_orders, q_orders, &bs_p_sampled, &bs_q_local)
+                        .surface();
 
-                a_mat.insert([p_dof_id, q_dof_id], a);
-                b_mat.insert([p_dof_id, q_dof_id], b);
+                    a_mat.insert([p_dof_id, q_dof_id], a);
+                    b_mat.insert([p_dof_id, q_dof_id], b);
+                }
             }
         }
-
-
     }
 
     [a_mat, b_mat]

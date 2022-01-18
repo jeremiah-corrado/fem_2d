@@ -4,7 +4,8 @@ mod max_ortho;
 
 use fem_domain::{Elem, Point, M2D, V2D};
 use glq::{gauss_quadrature_points, scale_gauss_quad_points};
-use std::marker::PhantomData;
+use std::collections::HashMap;
+use std::rc::Rc;
 
 pub use kol::KOLShapeFn;
 pub use max_ortho::MaxOrthoShapeFn;
@@ -25,10 +26,7 @@ pub trait ShapeFn {
 }
 
 /// Structure used to generate [BasisFn]'s over [Elem]'s in a Domain.
-/// This structure contains settings for a
 pub struct BasisFnSampler<SF: ShapeFn> {
-    /// Type of [ShapeFn] used in [BasisFn]'s
-    shape_type: PhantomData<SF>,
     /// Maximum u-directed expansion order
     pub i_max: usize,
     /// Maximum v-directed expansion order                
@@ -39,6 +37,14 @@ pub struct BasisFnSampler<SF: ShapeFn> {
     u_points: Vec<f64>,
     /// Gauss Legendre Quadrature points evaluated along v-direction (Defined from -1 to +1)
     v_points: Vec<f64>,
+
+    computed: HashMap<BSDescription, Rc<BasisFn<SF>>>,
+}
+
+#[derive(Hash, PartialEq, Eq, Clone)]
+struct BSDescription {
+    space: [usize; 2],
+    sample: Option<[Point; 2]>,
 }
 
 impl<SF: ShapeFn> BasisFnSampler<SF> {
@@ -51,31 +57,52 @@ impl<SF: ShapeFn> BasisFnSampler<SF> {
     ) -> (Self, [Vec<f64>; 2]) {
         let (u_points, u_weights) = gauss_quadrature_points(num_u_points, compute_2nd_derivs);
         let (v_points, v_weights) = gauss_quadrature_points(num_v_points, compute_2nd_derivs);
-
+        
         (
             Self {
-                shape_type: PhantomData,
                 i_max,
                 j_max,
                 compute_d2: compute_2nd_derivs,
                 u_points,
                 v_points,
+                computed: HashMap::new(),
             },
             [u_weights, v_weights],
         )
     }
 
     /// Generate a [BasisFn] defined over an [Elem]. Can be defined over a subset of the Element.
-    pub fn sample_basis_fn(&self, elem: &Elem, sampled_space: Option<[&Point; 2]>) -> BasisFn<SF> {
-        BasisFn::with(
-            self.i_max,
-            self.j_max,
-            self.compute_d2,
-            &self.u_points,
-            &self.v_points,
-            elem,
-            sampled_space,
-        )
+    pub fn sample_basis_fn(&mut self, elem: &Elem, sampled_space: Option<[&Point; 2]>) -> Rc<BasisFn<SF>> {
+        let desc = match sampled_space {
+            Some(sub_range) => {
+                BSDescription {
+                    space: [elem.nodes[0], elem.nodes[1]],
+                    sample: Some([sub_range[0].clone(), sub_range[1].clone()]),
+                }
+            },
+            None => {
+                BSDescription {
+                    space: [elem.nodes[0], elem.nodes[1]],
+                    sample: None,
+                }
+            }
+        };
+
+        if let Some(computed_bs) = self.computed.get(&desc) {
+            computed_bs.clone()
+        } else {
+            let bs =  BasisFn::with(
+                self.i_max,
+                self.j_max,
+                self.compute_d2,
+                &self.u_points,
+                &self.v_points,
+                elem,
+                sampled_space,
+            );
+            self.computed.insert(desc.clone(), Rc::new(bs));
+            self.computed.get(&desc).unwrap().clone()
+        }
     }
 }
 

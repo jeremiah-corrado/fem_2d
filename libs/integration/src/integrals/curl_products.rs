@@ -1,6 +1,6 @@
 use super::{
-    real_gauss_quad, real_gauss_quad_edge, real_gauss_quad_inner, BasisFn, Integral,
-    IntegralResult, ParaDir, ShapeFn,
+    real_gauss_quad, real_gauss_quad_edge, real_gauss_quad_inner, BasisDir, BasisFn, Integral,
+    IntegralResult, ShapeFn,
 };
 use fem_domain::V2D;
 
@@ -20,8 +20,8 @@ impl Integral for CurlProduct {
 
     fn integrate<SF: ShapeFn>(
         &self,
-        p_dir: ParaDir,
-        q_dir: ParaDir,
+        p_dir: BasisDir,
+        q_dir: BasisDir,
         p_orders: [usize; 2],
         q_orders: [usize; 2],
         p_basis: &BasisFn<SF>,
@@ -31,7 +31,7 @@ impl Integral for CurlProduct {
             p_basis.glq_scale()
                 * q_basis.glq_scale()
                 * match (p_dir, q_dir) {
-                    (ParaDir::U, ParaDir::U) => {
+                    (BasisDir::U, BasisDir::U) => {
                         real_gauss_quad(&self.u_weights, &self.v_weights, |m, n| {
                             let p_curl = p_basis
                                 .f_u_d1(p_orders, [m, n], q_basis.deriv_scale())
@@ -43,7 +43,7 @@ impl Integral for CurlProduct {
                             p_curl * q_curl
                         })
                     }
-                    (ParaDir::U, ParaDir::V) => {
+                    (BasisDir::U, BasisDir::V) => {
                         real_gauss_quad(&self.u_weights, &self.v_weights, |m, n| {
                             let p_curl = p_basis
                                 .f_u_d1(p_orders, [m, n], q_basis.deriv_scale())
@@ -55,7 +55,7 @@ impl Integral for CurlProduct {
                             p_curl * q_curl
                         })
                     }
-                    (ParaDir::V, ParaDir::U) => {
+                    (BasisDir::V, BasisDir::U) => {
                         real_gauss_quad(&self.u_weights, &self.v_weights, |m, n| {
                             let p_curl = p_basis
                                 .f_v_d1(p_orders, [m, n], q_basis.deriv_scale())
@@ -67,7 +67,7 @@ impl Integral for CurlProduct {
                             p_curl * q_curl
                         })
                     }
-                    (ParaDir::V, ParaDir::V) => {
+                    (BasisDir::V, BasisDir::V) => {
                         real_gauss_quad(&self.u_weights, &self.v_weights, |m, n| {
                             let p_curl = p_basis
                                 .f_v_d1(p_orders, [m, n], q_basis.deriv_scale())
@@ -79,14 +79,15 @@ impl Integral for CurlProduct {
                             p_curl * q_curl
                         })
                     }
+                    (_, _) => 0.0,
                 },
         )
     }
 
     fn integrate_by_parts<SF: ShapeFn>(
         &self,
-        p_dir: ParaDir,
-        q_dir: ParaDir,
+        p_dir: BasisDir,
+        q_dir: BasisDir,
         p_orders: [usize; 2],
         q_orders: [usize; 2],
         p_basis: &BasisFn<SF>,
@@ -95,7 +96,7 @@ impl Integral for CurlProduct {
         let surface_term = p_basis.glq_scale()
             * q_basis.glq_scale()
             * match (p_dir, q_dir) {
-                (ParaDir::U, ParaDir::U) => {
+                (BasisDir::U, BasisDir::U) => {
                     real_gauss_quad_inner(&self.u_weights, &self.v_weights, |m, n| {
                         let p_d2 = p_basis.f_u_d2(p_orders, [m, n], q_basis.deriv_scale());
                         let p_dd = p_basis.f_u_dd(p_orders, [m, n], q_basis.deriv_scale());
@@ -106,7 +107,7 @@ impl Integral for CurlProduct {
                         V2D::dot(p, q)
                     }) * -1.0
                 }
-                (ParaDir::U, ParaDir::V) => {
+                (BasisDir::U, BasisDir::V) => {
                     real_gauss_quad_inner(&self.u_weights, &self.v_weights, |m, n| {
                         let p_d2 = p_basis.f_u_d2(p_orders, [m, n], q_basis.deriv_scale());
                         let p_dd = p_basis.f_u_dd(p_orders, [m, n], q_basis.deriv_scale());
@@ -117,7 +118,7 @@ impl Integral for CurlProduct {
                         V2D::dot(p, q)
                     })
                 }
-                (ParaDir::V, ParaDir::U) => {
+                (BasisDir::V, BasisDir::U) => {
                     real_gauss_quad_inner(&self.u_weights, &self.v_weights, |m, n| {
                         let p_d2 = p_basis.f_v_d2(p_orders, [m, n], q_basis.deriv_scale());
                         let p_dd = p_basis.f_v_dd(p_orders, [m, n], q_basis.deriv_scale());
@@ -128,7 +129,7 @@ impl Integral for CurlProduct {
                         V2D::dot(p, q)
                     })
                 }
-                (ParaDir::V, ParaDir::V) => {
+                (BasisDir::V, BasisDir::V) => {
                     real_gauss_quad_inner(&self.u_weights, &self.v_weights, |m, n| {
                         let p_d2 = p_basis.f_v_d2(p_orders, [m, n], q_basis.deriv_scale());
                         let p_dd = p_basis.f_v_dd(p_orders, [m, n], q_basis.deriv_scale());
@@ -139,6 +140,7 @@ impl Integral for CurlProduct {
                         V2D::dot(p, q)
                     }) * -1.0
                 }
+                (_, _) => 0.0,
             };
 
         let edge_terms = (0..4)
@@ -146,7 +148,7 @@ impl Integral for CurlProduct {
                 p_basis.edge_glq_scale(edge_idx)
                     * q_basis.edge_glq_scale(edge_idx)
                     * match (p_dir, q_dir, edge_idx) {
-                        (ParaDir::U, ParaDir::U, 0 | 1) => real_gauss_quad_edge(
+                        (BasisDir::U, BasisDir::U, 0 | 1) => real_gauss_quad_edge(
                             &self.u_weights,
                             &self.v_weights,
                             edge_idx,
@@ -161,7 +163,7 @@ impl Integral for CurlProduct {
                                 p_curl * q
                             },
                         ),
-                        (ParaDir::V, ParaDir::U, 0 | 1) => real_gauss_quad_edge(
+                        (BasisDir::V, BasisDir::U, 0 | 1) => real_gauss_quad_edge(
                             &self.u_weights,
                             &self.v_weights,
                             edge_idx,
@@ -176,7 +178,7 @@ impl Integral for CurlProduct {
                                 p_curl * q
                             },
                         ),
-                        (ParaDir::U, ParaDir::V, 2 | 3) => {
+                        (BasisDir::U, BasisDir::V, 2 | 3) => {
                             real_gauss_quad_edge(
                                 &self.u_weights,
                                 &self.v_weights,
@@ -193,7 +195,7 @@ impl Integral for CurlProduct {
                                 },
                             ) * -1.0
                         }
-                        (ParaDir::V, ParaDir::V, 2 | 3) => {
+                        (BasisDir::V, BasisDir::V, 2 | 3) => {
                             real_gauss_quad_edge(
                                 &self.u_weights,
                                 &self.v_weights,
