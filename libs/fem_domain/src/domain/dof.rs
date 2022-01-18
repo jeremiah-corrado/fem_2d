@@ -1,6 +1,6 @@
 mod basis_spec;
 
-pub use basis_spec::{BasisDir, BasisLoc, BasisSpec, BSAddress};
+pub use basis_spec::{BSAddress, BasisDir, BasisLoc, BasisSpec};
 use smallvec::SmallVec;
 
 /// A single degree of freedom
@@ -33,7 +33,9 @@ impl DoF {
     pub fn basis_spec_addresses(&self) -> SmallVec<[BSAddress; 4]> {
         match self.basis_specs {
             BasisSpecGroup::ELEM(elem_bs_address) => smallvec![elem_bs_address],
-            BasisSpecGroup::EDGE(edge_bs_addresses) => smallvec![edge_bs_addresses[0], edge_bs_addresses[1]],
+            BasisSpecGroup::EDGE(edge_bs_addresses) => {
+                smallvec![edge_bs_addresses[0], edge_bs_addresses[1]]
+            }
             BasisSpecGroup::NODE(node_bs_addresses) => smallvec![
                 node_bs_addresses[0],
                 node_bs_addresses[1],

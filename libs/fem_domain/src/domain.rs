@@ -1,7 +1,7 @@
 mod dof;
 mod mesh;
 
-pub use dof::{BasisDir, DoF, BasisLoc, BasisSpec};
+pub use dof::{BasisDir, BasisLoc, BasisSpec, DoF};
 pub use mesh::*;
 
 use dof::BSAddress;
@@ -65,13 +65,11 @@ impl Domain {
         for (elem_id, mut elem_bs_list) in elem_bs {
             if !self.mesh.elems[elem_id].has_children() {
                 self.basis_specs[elem_id] = Vec::with_capacity(elem_bs_list.len());
-                
+
                 for elem_bs in elem_bs_list.drain(0..) {
                     let address = self.push_basis_spec(elem_bs);
-                    self.dofs.push(DoF::new(
-                        dof_id_tracker.next_id(),
-                        smallvec![address],
-                    ));
+                    self.dofs
+                        .push(DoF::new(dof_id_tracker.next_id(), smallvec![address]));
                 }
             }
         }
@@ -94,7 +92,7 @@ impl Domain {
                         self.basis_specs[elem_id].reserve(num_expected);
                     }
                 }
-                
+
                 // iterate over each pair of BasisSpecs (once) and look for matches
                 let mut active_pairs: Vec<[usize; 2]> = Vec::with_capacity(num_expected);
                 for (a, bs_0) in rel_basis_specs.iter().enumerate() {
@@ -108,15 +106,16 @@ impl Domain {
 
                 // Store the matched BasisSpecs and create new DoFs
                 for pair in active_pairs {
-                    let addresses = pair.iter().map(|rel_idx| {
-                    // TODO: should use MaybeUninit in BasisSpec (or some other method) to avoid expensive Clone  here!
-                        self.push_basis_spec(rel_basis_specs[*rel_idx].clone())
-                    }).collect();
+                    let addresses = pair
+                        .iter()
+                        .map(|rel_idx| {
+                            // TODO: should use MaybeUninit in BasisSpec (or some other method) to avoid expensive Clone  here!
+                            self.push_basis_spec(rel_basis_specs[*rel_idx].clone())
+                        })
+                        .collect();
 
-                    self.dofs.push(DoF::new(
-                        dof_id_tracker.next_id(),
-                        addresses,
-                    ));
+                    self.dofs
+                        .push(DoF::new(dof_id_tracker.next_id(), addresses));
                 }
             }
         }
@@ -241,7 +240,6 @@ impl IdTracker {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -250,16 +248,19 @@ mod tests {
     fn create_dofs() {
         let mut dom_a = Domain::from_mesh_file("../../test_input/test_mesh_a.json").unwrap();
 
-        dom_a.mesh.set_global_expansion_orders([5, 5]);
+        dom_a.mesh.set_global_expansion_orders([5, 5]).unwrap();
         dom_a.gen_dofs();
 
-        dom_a.mesh.global_h_refinement(HRef::T);
+        dom_a.mesh.global_h_refinement(HRef::T).unwrap();
         dom_a.gen_dofs();
 
-        dom_a.mesh.h_refine_elems(vec![4, 5], HRef::T);
-        dom_a.mesh.h_refine_elems(vec![6, 7], HRef::u());
-        dom_a.mesh.h_refine_elems(vec![8, 9], HRef::v());
-        dom_a.mesh.p_refine_elems(vec![10, 11, 12, 13], PRef::from(2, -1));
+        dom_a.mesh.h_refine_elems(vec![4, 5], HRef::T).unwrap();
+        dom_a.mesh.h_refine_elems(vec![6, 7], HRef::u()).unwrap();
+        dom_a.mesh.h_refine_elems(vec![8, 9], HRef::v()).unwrap();
+        dom_a
+            .mesh
+            .p_refine_elems(vec![10, 11, 12, 13], PRef::from(2, -1))
+            .unwrap();
         dom_a.gen_dofs();
     }
 }

@@ -167,6 +167,10 @@ impl HLevels {
             ParaDir::V => [self.u, self.v],
         }
     }
+
+    pub fn node_ranking(self) -> [u8; 2] {
+        [self.u, self.v]
+    }
 }
 
 impl Default for HLevels {

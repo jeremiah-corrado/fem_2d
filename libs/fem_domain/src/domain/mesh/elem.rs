@@ -5,8 +5,8 @@ use super::{
 };
 use json::JsonValue;
 use smallvec::SmallVec;
-use std::rc::Rc;
 use std::fmt;
+use std::rc::Rc;
 
 /*
     Layout of Geometric indices:
@@ -227,11 +227,11 @@ impl ElemUninit {
             node_id,
             self.id
         );
-        
+
         if let Some(current_id) = self.nodes[node_idx] {
             assert_eq!(
-                current_id, 
-                node_id, 
+                current_id,
+                node_id,
                 "Node ({}) has already been set to {} on ElemUninit {}; Cannot set to {}",
                 node_idx,
                 self.nodes[node_idx].unwrap(),
@@ -251,7 +251,7 @@ impl ElemUninit {
             edge_id,
             self.id
         );
-        
+
         assert!(
             self.edges[edge_idx].is_none(),
             "Edge ({}) has already been set to {} on ElemUninit {}; Cannot set to {}",
@@ -315,7 +315,9 @@ impl ElemUninit {
 
 impl fmt::Display for ElemUninit {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "ID: {} \t edges: [{}, {}, {}, {}] \t nodes: [{}, {}, {}, {}]", 
+        write!(
+            f,
+            "ID: {} \t edges: [{}, {}, {}, {}] \t nodes: [{}, {}, {}, {}]",
             self.id,
             self.fmt_edge(0),
             self.fmt_edge(1),

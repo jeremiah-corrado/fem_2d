@@ -110,8 +110,6 @@ pub struct BSAddress {
 
 impl BSAddress {
     pub fn new(elem_id: usize, bs_id: usize) -> Self {
-        Self {
-            elem_id, bs_id,
-        }
+        Self { elem_id, bs_id }
     }
 }

@@ -40,39 +40,37 @@ impl Edge {
         }
     }
 
-    /// Connect an [Elem] to this node based on their relative orientation in space and the h-refinement state of the Elem
-    pub fn connect_elem(&mut self, elem: &Elem) {
-        let index_of_self = match elem.edges.iter().position(|edge_id| edge_id == &self.id) {
-            Some(index) => index,
-            None => panic!(
-                "Elem {} does not have Edge {}; Cannot form connection!",
+    pub(crate) fn connect_elem(&mut self, elem: &Elem) {
+        if let Some(index_of_self) = elem.edges.iter().position(|edge_id| edge_id == &self.id) {
+            let address = elem.h_levels.edge_ranking(self.dir);
+            let side_index = match index_of_self {
+                0 | 2 => 1,
+                    1 | 3 => 0,
+                    _ => unreachable!(),
+            };
+
+            if let Some(prev_elem_id) = self.elems[side_index].insert(address, elem.id) {
+                assert_eq!(
+                    prev_elem_id, elem.id, 
+                    "Edge {} is already connected to Elem {} at {:?} (on side {}); cannot connect to Elem {}",
+                    self.id,
+                    prev_elem_id,
+                    address,
+                    side_index,
+                    elem.id,
+                );
+            }
+
+        } else {
+            panic!(
+                "Elem {} is not connected to Edge {}; cannot reciprocate connection!",
                 elem.id, self.id
-            ),
-        };
-
-        let side_index = match index_of_self {
-            0 | 2 => 1,
-            1 | 3 => 0,
-            _ => unreachable!(),
-        };
-        let address = elem.h_levels.edge_ranking(self.dir);
-
-        if let Some(prev_elem_id) = self.elems[side_index].insert(address, elem.id) {
-            assert_eq!(
-                prev_elem_id, elem.id, 
-                "Edge {} is already connected to Elem {} at {:?} (on side {}); Cannot connect to Elem {}",
-                self.id,
-                prev_elem_id,
-                address,
-                side_index,
-                elem.id,
             );
         }
-
     }
 
     /// Produce two child Edges from this edge and connect them to a new Node along its center
-    pub fn h_refine(
+    pub(crate) fn h_refine(
         &mut self,
         new_ids: [usize; 2],
         new_node_id: usize,
@@ -148,28 +146,31 @@ impl Edge {
     }
 
     /// Attempts to establish an active pair of Elems. Returns false if none can be established
-    pub fn set_activation(&mut self) -> bool {
+    pub(crate) fn set_activation(&mut self) -> bool {
         let (bl_elems, tr_elems) = self.elems.split_at_mut(1);
         match (bl_elems[0].last_entry(), tr_elems[0].last_entry()) {
             (Some(bl_entry), Some(tr_entry)) => {
                 self.active_elems = Some([*bl_entry.get(), *tr_entry.get()]);
                 true
-            },
+            }
             (_, _) => {
                 self.active_elems = None;
                 false
-            },
+            }
         }
     }
 
-    pub fn reset_activation(&mut self) {
+    pub(crate) fn reset_activation(&mut self) {
         self.active_elems = None;
     }
 
     pub fn other_active_elem_id(&self, elem_id: usize) -> Option<usize> {
         match self.active_elems {
             Some(active_elem_ids) => {
-                match active_elem_ids.iter().position(|eid_cmp| eid_cmp == &elem_id) {
+                match active_elem_ids
+                    .iter()
+                    .position(|eid_cmp| eid_cmp == &elem_id)
+                {
                     Some(this_pos) => match this_pos {
                         0 => Some(active_elem_ids[1]),
                         1 => Some(active_elem_ids[0]),
@@ -177,7 +178,7 @@ impl Edge {
                     },
                     None => None,
                 }
-            },
+            }
             None => None,
         }
     }
@@ -194,12 +195,12 @@ impl Edge {
                 Some(child_ids) => array![child_ids[0], child_ids[1]],
                 None => array![],
             },
-            "cells": array![array![], array![]],
+            "elems": array![array![], array![]],
         };
 
         for side_idx in 0..2 {
             for (elem_key, elem_id) in self.elems[side_idx].iter() {
-                edge_json["cells"][side_idx]
+                edge_json["elems"][side_idx]
                     .push(object! {
                         "level_key": array![elem_key[0], elem_key[1]],
                         "cell_id": *elem_id,
@@ -209,7 +210,9 @@ impl Edge {
         }
 
         if let Some([active_elem_bl, active_elem_tr]) = self.active_elems {
-            edge_json["active_cells"] = array![active_elem_bl, active_elem_tr];
+            edge_json["active_elems"] = array![active_elem_bl, active_elem_tr];
+        } else {
+            edge_json["active_elems"] = array![]
         }
 
         edge_json

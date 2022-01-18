@@ -36,31 +36,8 @@ pub struct Mesh {
     pub elems: Vec<Elem>,
     pub nodes: Vec<Node>,
     pub edges: Vec<Edge>,
-    refinement_generations: Vec<RefinementGeneration>,
 }
 
-struct RefinementGeneration {
-    pub open: bool,
-    pub elem_id_range: [usize; 2],
-}
-
-impl RefinementGeneration {
-    pub fn new(starting_id: usize, ending_id: usize) -> Self {
-        Self {
-            open: true,
-            elem_id_range: [starting_id, ending_id],
-        }
-    }
-
-    pub fn next_gen(&mut self) -> Self {
-        self.open = false;
-        Self::new(self.elem_id_range[1], self.elem_id_range[1])
-    }
-
-    pub fn finish_gen(&mut self, last_id: usize) {
-        self.elem_id_range[1] = last_id;
-    }
-}
 
 impl Mesh {
     /// Construct a completely empty Mesh
@@ -70,7 +47,6 @@ impl Mesh {
             elems: Vec::new(),
             nodes: Vec::new(),
             edges: Vec::new(),
-            refinement_generations: Vec::new(),
         }
     }
 
@@ -170,7 +146,7 @@ impl Mesh {
             .collect();
 
         // build a vector of nodes from the above information
-        let nodes: Vec<Node> = points
+        let mut nodes: Vec<Node> = points
             .iter()
             .enumerate()
             .map(|(node_id, point)| Node::new(node_id, *point, boundary_nodes[node_id]))
@@ -281,22 +257,23 @@ impl Mesh {
 
                 let elem = Elem::new(elem_id, node_ids, edge_ids, elements[elem_id].clone());
 
-                for edge_id in edge_ids.iter() {
+                for edge_id in elem.edges.iter() {
                     edges[*edge_id].connect_elem(&elem)
+                }
+
+                for node_id in elem.nodes.iter() {
+                    nodes[*node_id].connect_elem(&elem);
                 }
 
                 elem
             })
             .collect();
 
-        let ref_gen_0 = RefinementGeneration::new(0, elems.len() - 1);
-
         Ok(Self {
             elements,
             elems,
             nodes,
             edges,
-            refinement_generations: vec![ref_gen_0],
         })
     }
 
@@ -368,7 +345,11 @@ impl Mesh {
     }
 
     /// Get a list of an [`Elem`]s ancestors's IDs
-    pub fn ancestor_elems(&self, elem_id: usize, include_starting_elem: bool) -> Result<Vec<usize>, String> {
+    pub fn ancestor_elems(
+        &self,
+        elem_id: usize,
+        include_starting_elem: bool,
+    ) -> Result<Vec<usize>, String> {
         if elem_id >= self.elems.len() {
             Err(format!(
                 "Elem {} doesn't exist; Cannot retrieve ancestor Elems!",
@@ -391,14 +372,16 @@ impl Mesh {
     }
 
     /// Get a list of an [`Edge`]s descendant's IDs
-    pub fn descendant_edges(&self, edge_id: usize, include_starting_edge: bool) -> Result<Vec<usize>, String> {
+    pub fn descendant_edges(
+        &self,
+        edge_id: usize,
+        include_starting_edge: bool,
+    ) -> Result<Vec<usize>, String> {
         if edge_id > self.edges.len() {
-            Err(
-                format!(
-                    "Edge {} does not exist; Cannot retrieve descendant Edges!",
-                    edge_id
-                )
-            )
+            Err(format!(
+                "Edge {} does not exist; Cannot retrieve descendant Edges!",
+                edge_id
+            ))
         } else {
             let mut descendants = Vec::new();
             self.rec_descendant_edges(edge_id, include_starting_edge, &mut descendants);
@@ -467,7 +450,6 @@ impl Mesh {
             }
         }
 
-        self.start_new_refinement_gen();
         let mut refinement_extensions: Vec<(usize, HRef)> = Vec::new();
         let mut elem_id_tracker = self.elems.len();
         let mut node_id_tracker = IdTracker::new(self.nodes.len());
@@ -511,7 +493,6 @@ impl Mesh {
             };
 
             self.elems.extend(new_elems.drain(0..));
-            self.end_refinement_gen();
         }
 
         if refinement_extensions.len() > 0 {
@@ -519,18 +500,6 @@ impl Mesh {
         }
 
         Ok(())
-    }
-
-    fn start_new_refinement_gen(&mut self) {
-        let next_gen = self.refinement_generations.last_mut().unwrap().next_gen();
-        self.refinement_generations.push(next_gen);
-    }
-
-    fn end_refinement_gen(&mut self) {
-        self.refinement_generations
-            .last_mut()
-            .unwrap()
-            .finish_gen(self.elems.len() - 1);
     }
 
     fn execute_t_refinement(
@@ -548,11 +517,8 @@ impl Mesh {
         let center_point = Point::between(parent_elem_points[0], parent_elem_points[3]);
 
         assert_eq!(center_node_id, self.nodes.len());
-        self.nodes.push(Node::new(
-            center_node_id,
-            center_point,
-            false,
-        ));
+        self.nodes
+            .push(Node::new(center_node_id, center_point, false));
 
         // connect the child Elems to the center node and the parents nodes
         for (elem_idx, elem_uninit) in new_elems.iter_mut().enumerate() {
@@ -593,7 +559,7 @@ impl Mesh {
 
             // connect it to the child Elems
             new_elems[adj_child_elem_indices[0]].set_edge(internal_edge_idx[0], new_edge_id);
-            new_elems[adj_child_elem_indices[1]].set_edge(internal_edge_idx[1], new_edge_id);    
+            new_elems[adj_child_elem_indices[1]].set_edge(internal_edge_idx[1], new_edge_id);
         }
 
         // upgrade the ElemUninits to Elems (They should each have 4 node_ids and 4 edge_ids by this point)
@@ -652,8 +618,6 @@ impl Mesh {
         // connect the parents outer unrefined Edges to the child Elems
         new_elems[0].set_edge(2, self.elems[parent_elem_id].edges[2]);
         new_elems[1].set_edge(3, self.elems[parent_elem_id].edges[3]);
-
-
 
         // upgrade the ElemUninits to Elems (They should each have 4 node_ids and 4 edge_ids by this point)
         // connect the Elems to their relevant edges in the process
@@ -737,16 +701,14 @@ impl Mesh {
 
             let parent_edge_points = self.edge_points(parent_edge_id);
             let node_coords = Point::between(parent_edge_points[0], parent_edge_points[1]);
-            
+
             assert_eq!(new_node_id, self.nodes.len());
-            
-            self.nodes.push(
-                Node::new(
-                    new_node_id,
-                    node_coords,
-                    self.edges[parent_edge_id].boundary,
-                )
-            );
+
+            self.nodes.push(Node::new(
+                new_node_id,
+                node_coords,
+                self.edges[parent_edge_id].boundary,
+            ));
 
             (SmallVec::from(new_edge_ids), new_node_id)
         })
@@ -795,6 +757,10 @@ impl Mesh {
             for edge_id in elem.edges {
                 self.edges[edge_id].connect_elem(elem);
             }
+
+            for node_id in elem.nodes {
+                self.nodes[node_id].connect_elem(elem);
+            }
         }
 
         Ok(elems)
@@ -805,14 +771,16 @@ impl Mesh {
             edge.reset_activation();
         }
 
-        let mut base_edge_ids: Vec<usize> = self.edges.iter().filter(|edge| {
-            edge.parent_id().is_none() && !edge.boundary
-        })
-            .map(|edge| edge.id).collect();
+        let mut base_edge_ids: Vec<usize> = self
+            .edges
+            .iter()
+            .filter(|edge| edge.parent_id().is_none() && !edge.boundary)
+            .map(|edge| edge.id)
+            .collect();
 
         for base_edge_id in base_edge_ids.drain(0..) {
             if !self.rec_set_edge_activation_in_tree(base_edge_id) {
-                panic!("Unable to find active Edge Pair over Edge {}; Something must be wrong with the mesh!", base_edge_id);
+                panic!("Unable to find active Edge pair over Edge {}; Something must be wrong with the mesh!", base_edge_id);
             }
         }
     }
@@ -1101,18 +1069,16 @@ mod tests {
         [Some(1), None, Some(2), None],
     ];
 
-
     #[test]
     fn mesh_from_file() {
         let mut mesh_a = Mesh::from_file("../../test_input/test_mesh_a.json").unwrap();
         mesh_a.set_edge_activation();
 
-        for (element, mats_cmp) in mesh_a.elements.iter().zip([
-            [1.0, 1.0],
-            [1.0, 2.0],
-            [2.0, 1.0],
-            [2.0, 2.0],
-        ].iter()) {
+        for (element, mats_cmp) in mesh_a
+            .elements
+            .iter()
+            .zip([[1.0, 1.0], [1.0, 2.0], [2.0, 1.0], [2.0, 2.0]].iter())
+        {
             assert!((element.materials.eps_rel.re - mats_cmp[0]).abs() < 1e-14);
         }
 
@@ -1124,7 +1090,12 @@ mod tests {
                 assert!((p.y - MESH_A_POINTS_Y[elem_id][n_idx]).abs() < 1e-14);
 
                 if let Some(expected_neighbor) = MESH_A_NEIGHBORS[elem_id][n_idx] {
-                    assert_eq!(mesh_a.edges[elem.edges[n_idx]].other_active_elem_id(elem_id).unwrap(), expected_neighbor);
+                    assert_eq!(
+                        mesh_a.edges[elem.edges[n_idx]]
+                            .other_active_elem_id(elem_id)
+                            .unwrap(),
+                        expected_neighbor
+                    );
                 }
             }
         }
@@ -1133,24 +1104,54 @@ mod tests {
     }
 
     #[test]
-    fn basic_h_refinement() {
+    fn basic_h_refinements() {
         let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
-        mesh_c.export_to_json("../../test_output/mesh_c_copy.json").unwrap();
-
-        mesh_c.h_refine_elems(vec![0], HRef::T);
+        mesh_c.h_refine_elems(vec![0], HRef::T).unwrap();
+        mesh_c.h_refine_elems(vec![1, 2], HRef::U(None)).unwrap();
+        mesh_c.h_refine_elems(vec![3, 4], HRef::V(None)).unwrap();
     }
 
     #[test]
-    fn mesh_to_file() {
+    fn basic_p_refinements() {
         let mut mesh_b = Mesh::from_file("../../test_input/test_mesh_b.json").unwrap();
-        mesh_b.export_to_json("../../test_output/mesh_b_copy.json").unwrap();
+        mesh_b.p_refine_elems(vec![0], PRef::from(2, 2)).unwrap();
+        mesh_b.p_refine_elems(vec![1], PRef::from(2, 1)).unwrap();
+        mesh_b.p_refine_elems(vec![2], PRef::from(1, 2)).unwrap();
 
-        mesh_b.execute_p_refinements(vec![(0, PRef::from(3, 3)), (1, PRef::from(2, 3)), (2, PRef::from(3, 2))]).unwrap();
-        mesh_b.execute_h_refinements(vec![(0, HRef::T), (1, HRef::u_extened(0).unwrap()), (2, HRef::v_extened(1).unwrap())]).unwrap();
-        // mesh_b.execute_h_refinements(vec![(0, HRef::T), (1, HRef::u()), (2, HRef::v())]);
+        assert_eq!(mesh_b.elems[0].poly_orders.ni, 3);
+        assert_eq!(mesh_b.elems[0].poly_orders.nj, 3);
+        assert_eq!(mesh_b.elems[1].poly_orders.ni, 3);
+        assert_eq!(mesh_b.elems[1].poly_orders.nj, 2);
+        assert_eq!(mesh_b.elems[2].poly_orders.ni, 2);
+        assert_eq!(mesh_b.elems[2].poly_orders.nj, 3);
+    }
 
+    #[test]
+    fn refined_mesh_to_file() {
+        let mut mesh_b = Mesh::from_file("../../test_input/test_mesh_b.json").unwrap();
+        mesh_b
+            .export_to_json("../../test_output/mesh_b_copy.json")
+            .unwrap();
 
-        mesh_b.export_to_json("../../test_output/mesh_b_refined.json").unwrap();
+        mesh_b
+            .execute_p_refinements(vec![
+                (0, PRef::from(3, 3)),
+                (1, PRef::from(2, 3)),
+                (2, PRef::from(3, 2)),
+            ])
+            .unwrap();
+        mesh_b
+            .execute_h_refinements(vec![
+                (0, HRef::T),
+                (1, HRef::u_extened(0).unwrap()),
+                (2, HRef::v_extened(1).unwrap()),
+            ])
+            .unwrap();
+
+        mesh_b.set_edge_activation();
+        mesh_b
+            .export_to_json("../../test_output/mesh_b_refined.json")
+            .unwrap();
     }
 
     #[test]
@@ -1172,30 +1173,36 @@ mod tests {
     #[should_panic]
     fn double_h_refinement() {
         let mut mesh_a = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
-        mesh_a.execute_h_refinements(vec![(0, HRef::T), (1, HRef::T), (0, HRef::u())]).unwrap();
+        mesh_a
+            .execute_h_refinements(vec![(0, HRef::T), (1, HRef::T), (0, HRef::u())])
+            .unwrap();
     }
 
     #[test]
     #[should_panic]
     fn bad_extended_h_refinement() {
         let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
-        mesh_c.h_refine_elems(vec![0], HRef::u_extened(2).unwrap()).unwrap();
+        mesh_c
+            .h_refine_elems(vec![0], HRef::u_extened(2).unwrap())
+            .unwrap();
     }
 
     #[test]
     #[should_panic]
     fn minimum_edge_length_exceeded() {
         let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
-        
+
         // repeatedly refine the bottom left cell
         for _ in 0..16 {
-            mesh_c.h_refine_with_filter(|elem| {
-                if !elem.has_children() && elem.nodes[0] == 0 {
-                    Some(HRef::T)
-                } else {
-                    None
-                }
-            }).unwrap()
+            mesh_c
+                .h_refine_with_filter(|elem| {
+                    if !elem.has_children() && elem.nodes[0] == 0 {
+                        Some(HRef::T)
+                    } else {
+                        None
+                    }
+                })
+                .unwrap()
         }
     }
 
@@ -1217,7 +1224,7 @@ mod tests {
     #[should_panic]
     fn neg_p_refinement_i() {
         let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
-        mesh_c.set_global_expansion_orders([3, 3]);
+        mesh_c.set_global_expansion_orders([3, 3]).unwrap();
         mesh_c.p_refine_elems(vec![0], PRef::from(-3, 1)).unwrap();
     }
 
@@ -1225,7 +1232,7 @@ mod tests {
     #[should_panic]
     fn neg_p_refinement_j() {
         let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
-        mesh_c.set_global_expansion_orders([3, 3]);
+        mesh_c.set_global_expansion_orders([3, 3]).unwrap();
 
         mesh_c.p_refine_elems(vec![0], PRef::from(1, -3)).unwrap();
     }
@@ -1235,7 +1242,9 @@ mod tests {
     fn p_refinement_over_max_i() {
         let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
         let max_exp_as_i8 = MAX_POLYNOMIAL_ORDER.try_into().unwrap();
-        mesh_c.p_refine_elems(vec![0], PRef::from(max_exp_as_i8, 0)).unwrap();
+        mesh_c
+            .p_refine_elems(vec![0], PRef::from(max_exp_as_i8, 0))
+            .unwrap();
     }
 
     #[test]
@@ -1243,6 +1252,8 @@ mod tests {
     fn p_refinement_over_max_j() {
         let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
         let max_exp_as_i8 = MAX_POLYNOMIAL_ORDER.try_into().unwrap();
-        mesh_c.p_refine_elems(vec![0], PRef::from(0, max_exp_as_i8)).unwrap();
+        mesh_c
+            .p_refine_elems(vec![0], PRef::from(0, max_exp_as_i8))
+            .unwrap();
     }
 }
