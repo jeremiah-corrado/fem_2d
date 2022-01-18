@@ -1,6 +1,6 @@
 use super::{Point, Elem};
 use json::JsonValue;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 /// A point in 2D space.
 /// Pairs of points describe Edges and Groups of 4 points describe Elems.

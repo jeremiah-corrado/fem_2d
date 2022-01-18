@@ -110,20 +110,25 @@ impl Elem {
     ) -> Result<Vec<ElemUninit>, HRefError> {
         match self.children {
             Some(_) => Err(HRefError::ElemHasChildren(self.id)),
-            None => Ok(refinement
-                .indices_and_ids(id_counter)
-                .map(|(elem_idx, elem_id)| {
-                    ElemUninit::new(
-                        elem_id,
-                        elem_idx,
-                        refinement,
-                        self.element.clone(),
-                        self.id,
-                        &self.h_levels,
-                        self.poly_orders,
-                    )
-                })
-                .collect::<Vec<ElemUninit>>()),
+            None => {
+                let children = refinement
+                    .indices_and_ids(id_counter)
+                    .map(|(elem_idx, elem_id)| {
+                        ElemUninit::new(
+                            elem_id,
+                            elem_idx,
+                            refinement,
+                            self.element.clone(),
+                            self.id,
+                            &self.h_levels,
+                            self.poly_orders,
+                        )
+                    }).collect::<Vec<ElemUninit>>();
+
+                self.children = Some((children.iter().map(|ce| ce.id).collect(), refinement));
+
+                Ok(children)
+            },
         }
     }
 

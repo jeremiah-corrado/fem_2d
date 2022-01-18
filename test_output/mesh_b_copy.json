@@ -22,7 +22,7 @@
             "mu_rel_im": 0
         }
     ],
-    "Cells": [
+    "Elems": [
         {
             "id": 0,
             "element_id": 0,
@@ -254,7 +254,7 @@
             ],
             "parent": null,
             "children": [],
-            "cells": [
+            "elems": [
                 [],
                 [
                     {
@@ -266,7 +266,7 @@
                     }
                 ]
             ],
-            "active_cells": []
+            "active_elems": []
         },
         {
             "id": 1,
@@ -278,7 +278,7 @@
             ],
             "parent": null,
             "children": [],
-            "cells": [
+            "elems": [
                 [],
                 [
                     {
@@ -290,7 +290,7 @@
                     }
                 ]
             ],
-            "active_cells": []
+            "active_elems": []
         },
         {
             "id": 2,
@@ -302,7 +302,7 @@
             ],
             "parent": null,
             "children": [],
-            "cells": [
+            "elems": [
                 [],
                 [
                     {
@@ -314,7 +314,7 @@
                     }
                 ]
             ],
-            "active_cells": []
+            "active_elems": []
         },
         {
             "id": 3,
@@ -326,7 +326,7 @@
             ],
             "parent": null,
             "children": [],
-            "cells": [
+            "elems": [
                 [
                     {
                         "level_key": [
@@ -346,7 +346,7 @@
                     }
                 ]
             ],
-            "active_cells": []
+            "active_elems": []
         },
         {
             "id": 4,
@@ -358,7 +358,7 @@
             ],
             "parent": null,
             "children": [],
-            "cells": [
+            "elems": [
                 [
                     {
                         "level_key": [
@@ -370,7 +370,7 @@
                 ],
                 []
             ],
-            "active_cells": []
+            "active_elems": []
         },
         {
             "id": 5,
@@ -382,7 +382,7 @@
             ],
             "parent": null,
             "children": [],
-            "cells": [
+            "elems": [
                 [
                     {
                         "level_key": [
@@ -402,7 +402,7 @@
                     }
                 ]
             ],
-            "active_cells": []
+            "active_elems": []
         },
         {
             "id": 6,
@@ -414,7 +414,7 @@
             ],
             "parent": null,
             "children": [],
-            "cells": [
+            "elems": [
                 [],
                 [
                     {
@@ -426,7 +426,7 @@
                     }
                 ]
             ],
-            "active_cells": []
+            "active_elems": []
         },
         {
             "id": 7,
@@ -438,7 +438,7 @@
             ],
             "parent": null,
             "children": [],
-            "cells": [
+            "elems": [
                 [
                     {
                         "level_key": [
@@ -450,7 +450,7 @@
                 ],
                 []
             ],
-            "active_cells": []
+            "active_elems": []
         },
         {
             "id": 8,
@@ -462,7 +462,7 @@
             ],
             "parent": null,
             "children": [],
-            "cells": [
+            "elems": [
                 [
                     {
                         "level_key": [
@@ -474,7 +474,7 @@
                 ],
                 []
             ],
-            "active_cells": []
+            "active_elems": []
         },
         {
             "id": 9,
@@ -486,7 +486,7 @@
             ],
             "parent": null,
             "children": [],
-            "cells": [
+            "elems": [
                 [
                     {
                         "level_key": [
@@ -498,7 +498,7 @@
                 ],
                 []
             ],
-            "active_cells": []
+            "active_elems": []
         }
     ]
 }

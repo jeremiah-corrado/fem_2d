@@ -214,8 +214,8 @@ impl Mesh {
 
         // invert 'edge_node_pairs' S.T. we have a list of edges associated with each element in the correct order
         let mut elem_edges: Vec<[Option<usize>; 4]> = vec![[None; 4]; elements.len()];
-        for (edge_id, elements) in edge_node_pairs.values().enumerate() {
-            for (elem_side_idx, elem_id) in elements
+        for (edge_id, adj_element_ids) in edge_node_pairs.values().enumerate() {
+            for (elem_side_idx, elem_id) in adj_element_ids
                 .iter()
                 .enumerate()
                 .filter(|(_, adj_elem_id)| adj_elem_id.is_some())
@@ -1140,11 +1140,19 @@ mod tests {
                 (2, PRef::from(3, 2)),
             ])
             .unwrap();
+        // mesh_b
+        //     .execute_h_refinements(vec![
+        //         (0, HRef::T),
+        //         (1, HRef::u_extened(0).unwrap()),
+        //         (2, HRef::v_extened(0).unwrap()),
+        //     ])
+        //     .unwrap();
+
         mesh_b
             .execute_h_refinements(vec![
                 (0, HRef::T),
-                (1, HRef::u_extened(0).unwrap()),
-                (2, HRef::v_extened(1).unwrap()),
+                (1, HRef::u()),
+                (2, HRef::v()),
             ])
             .unwrap();
 
