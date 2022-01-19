@@ -11,7 +11,7 @@ pub use integrals::{
     IntegralResult, L2InnerProduct,
 };
 
-pub use matrix_filling::fill_matrices;
+pub use matrix_filling::{fill_matrices, fill_matrices_parallel};
 
 #[cfg(test)]
 mod tests {

@@ -7,7 +7,7 @@ extern crate integration;
 
 pub use basis::{BasisFn, BasisFnSampler, KOLShapeFn, MaxOrthoShapeFn, ShapeFn};
 pub use fem_domain::{Domain, Mesh, Point, M2D, V2D};
-pub use integration::{CurlProduct, Integral, IntegralResult, L2InnerProduct};
+pub use integration::{CurlProduct, Integral, IntegralResult, L2InnerProduct, fill_matrices, fill_matrices_parallel};
 pub use sparse_matrix::SparseMatrix;
 
 #[cfg(test)]

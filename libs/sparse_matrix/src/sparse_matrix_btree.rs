@@ -2,10 +2,11 @@ use eigensolver::AIJMatrix;
 use std::collections::BTreeMap;
 
 /// Wrapper around a BTreeMap to store square-symmetric matrices in a sparse data structure
+#[derive(Clone)]
 pub struct SparseMatrix {
     /// Size of the square matrix
     pub dimension: usize,
-    // Matrix Entries
+    /// Matrix Entries
     entries: BTreeMap<[u32; 2], f64>,
 }
 
@@ -57,9 +58,8 @@ impl SparseMatrix {
         }
     }
 
-    /// Remove the entries from the matrix, replacing them with an empty BTreeMap.
-    /// The map only contains keys located in the upper triangle of the matrix
-    pub fn take_entries(&mut self) -> BTreeMap<[u32; 2], f64> {
+    // Remove the entries from the matrix, replacing them with an empty BTreeMap.
+    fn take_entries(&mut self) -> BTreeMap<[u32; 2], f64> {
         std::mem::replace(&mut self.entries, BTreeMap::new())
     }
 
@@ -85,48 +85,6 @@ impl SparseMatrix {
         self.entries
             .iter()
             .map(|(coords, value)| ([coords[0] as usize, coords[1] as usize], *value))
-    }
-
-    /// Construct an [AIJMatrix] representation from the values in this matrix
-    pub fn construct_aij_matrix(&self) -> AIJMatrix {
-        // number of entries in each row (indices offset by 1)
-        let mut row_counts = vec![0; self.dimension + 1];
-
-        for [r, c] in self.entries.keys() {
-            if r == c {
-                row_counts[*r as usize + 1] += 1;
-            } else {
-                row_counts[*r as usize + 1] += 1;
-                row_counts[*c as usize + 1] += 1;
-            }
-        }
-
-        // prefix sum on row_counts
-        let mut i = vec![0; self.dimension + 1];
-        for (r, r_count) in row_counts.drain(0..).enumerate().skip(1) {
-            i[r] = r_count + i[r - 1];
-        }
-
-        // upper and lower triangles of matrix; sorted by row then column
-        let mut full_matrix: BTreeMap<[u32; 2], f64> = self
-            .entries
-            .iter()
-            .map(|([r, c], v)| ([*c, *r], *v))
-            .collect();
-        full_matrix.append(&mut self.entries.clone());
-
-        // matrix entries and their associated columns
-        let (j, a) = full_matrix
-            .iter()
-            .map(|([_, c], v)| (*c as i32, *v))
-            .unzip();
-
-        AIJMatrix {
-            a,
-            i,
-            j,
-            dim: self.dimension,
-        }
     }
 }
 

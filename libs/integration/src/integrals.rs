@@ -27,7 +27,7 @@ impl IntegralResult {
 }
 
 /// A trait to describe an "integrator" which can compute 2D integrals over some function of two [BasisFn]'s
-pub trait Integral {
+pub trait Integral: Sync + Send {
     fn with_weights(u_weights: &[f64], v_weights: &[f64]) -> Self;
 
     /// Compute an integral between [BasisFn]'s P and Q, where P and Q both have a parametric direction ([ParaDir]) and orders i and j.

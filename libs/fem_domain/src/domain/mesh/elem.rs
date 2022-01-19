@@ -6,7 +6,7 @@ use super::{
 use json::JsonValue;
 use smallvec::SmallVec;
 use std::fmt;
-use std::rc::Rc;
+use std::sync::Arc;
 
 /*
     Layout of Geometric indices:
@@ -80,7 +80,7 @@ pub struct Elem {
     pub id: usize,
     pub nodes: [usize; 4],
     pub edges: [usize; 4],
-    pub element: Rc<Element>,
+    pub element: Arc<Element>,
     pub h_levels: HLevels,
     pub poly_orders: PolyOrders,
     children: Option<(SmallVec<[usize; 4]>, HRef)>,
@@ -89,7 +89,7 @@ pub struct Elem {
 
 impl Elem {
     /// Construct a new Elem from the relevant associative information
-    pub fn new(id: usize, nodes: [usize; 4], edges: [usize; 4], element: Rc<Element>) -> Self {
+    pub fn new(id: usize, nodes: [usize; 4], edges: [usize; 4], element: Arc<Element>) -> Self {
         Self {
             id,
             nodes,
@@ -197,7 +197,7 @@ pub struct ElemUninit {
     pub id: usize,
     pub nodes: [Option<usize>; 4],
     pub edges: [Option<usize>; 4],
-    pub element: Rc<Element>,
+    pub element: Arc<Element>,
     parent: (usize, HRefLoc),
     h_levels: HLevels,
     poly_orders: PolyOrders,
@@ -208,7 +208,7 @@ impl ElemUninit {
         id: usize,
         idx: usize,
         refinement: HRef,
-        element: Rc<Element>,
+        element: Arc<Element>,
         parent_id: usize,
         parent_h_levels: &HLevels,
         poly_orders: PolyOrders,

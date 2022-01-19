@@ -49,6 +49,7 @@ const Q_WEIGHTS: [&[f64]; 11] = [
 ];
 
 /// An advanced Hierarchical Type Shape Function which maximizes orthogonality between polynomial orders.
+#[derive(Clone)]
 pub struct MaxOrthoShapeFn {
     pub q_fn: QFunction,
     pub l_fn: LegendrePoly,
@@ -84,7 +85,7 @@ impl ShapeFn for MaxOrthoShapeFn {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct QFunction {
     pub q: Vec<Vec<f64>>,
     pub d1: Vec<Vec<f64>>,

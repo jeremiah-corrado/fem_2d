@@ -22,7 +22,7 @@ use std::cmp::Ordering;
 use std::collections::BTreeMap;
 use std::fs::{read_to_string, File};
 use std::io::BufWriter;
-use std::rc::Rc;
+use std::sync::Arc;
 
 /// Minimum Edge length in parametric space. h-Refinements will fail after edges are smaller than this value.
 pub const MIN_EDGE_LENGTH: f64 = 3.0518e-5; // 15ish refinement layers with unit sized cells
@@ -32,7 +32,7 @@ pub const MAX_POLYNOMIAL_ORDER: u8 = 20;
 
 /// Information used to Define the geometric structure and refinement state of a Domain.
 pub struct Mesh {
-    pub elements: Vec<Rc<Element>>,
+    pub elements: Vec<Arc<Element>>,
     pub elems: Vec<Elem>,
     pub nodes: Vec<Node>,
     pub edges: Vec<Edge>,
@@ -108,12 +108,12 @@ impl Mesh {
         let points = parse_node_information(&mesh_file_json);
 
         // build a vector of elements with the specified nodes and material properties
-        let elements: Vec<Rc<Element>> = element_materials
+        let elements: Vec<Arc<Element>> = element_materials
             .drain(0..)
             .zip(element_node_ids.iter())
             .enumerate()
             .map(|(element_id, (materials, node_ids))| {
-                Rc::new(Element::new(
+                Arc::new(Element::new(
                     element_id,
                     [
                         points[node_ids[0]],

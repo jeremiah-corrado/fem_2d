@@ -1,6 +1,7 @@
 use super::ShapeFn;
 
 /// A simple Hierarchical type Shape Function
+#[derive(Clone)]
 pub struct KOLShapeFn {
     pows: Vec<Vec<f64>>,
     pows_d1: Vec<Vec<f64>>,

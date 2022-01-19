@@ -4,7 +4,9 @@ extern crate fem_domain;
 
 mod basis_fn;
 
-pub use basis_fn::{BasisFn, BasisFnSampler, KOLShapeFn, MaxOrthoShapeFn, ShapeFn};
+pub use basis_fn::{
+    BasisFn, BasisFnSampler, KOLShapeFn, MaxOrthoShapeFn, ParBasisFnSampler, ShapeFn,
+};
 
 #[cfg(test)]
 mod tests {
