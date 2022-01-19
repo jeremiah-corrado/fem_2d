@@ -1,4 +1,4 @@
-use eigensolver::AIJMatrix;
+use super::AIJMatrix;
 use std::collections::BTreeMap;
 
 /// Wrapper around a BTreeMap to store square-symmetric matrices in a sparse data structure

@@ -9,9 +9,6 @@ edition = "2021"
 [dependencies.fem_domain]
 path="./libs/fem_domain/"
 
-[dependencies.sparse_matrix]
-path="./libs/sparse_matrix/"
-
 [dependencies.basis]
 path="./libs/basis/"
 

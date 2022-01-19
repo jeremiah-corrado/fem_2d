@@ -1,7 +1,6 @@
 #![feature(const_fn_floating_point_arithmetic)]
 
 extern crate fem_domain;
-
 mod basis_fn;
 
 pub use basis_fn::{

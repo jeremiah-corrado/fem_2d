@@ -111,6 +111,7 @@ impl PRefInt {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+/// Description of a p-Refinement
 pub struct PRef {
     di: PRefInt,
     dj: PRefInt,

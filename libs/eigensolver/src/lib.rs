@@ -1,8 +1,9 @@
 extern crate cxx;
+extern crate rayon;
 
 mod eigenproblem;
 
-pub use eigenproblem::{GEP, AIJMatrix};
+pub use eigenproblem::{GEP, AIJMatrix, SparseMatrix};
 
 #[cfg(test)]
 mod tests {

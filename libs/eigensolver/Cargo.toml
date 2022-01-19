@@ -6,7 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cxx = "1.0.62"
+cxx="1.0.62"
+rayon="1.5.1"
 
 [build-dependencies]
 cxx-build = "1.0.62"

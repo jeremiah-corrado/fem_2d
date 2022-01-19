@@ -1,26 +1,27 @@
 use super::Integral;
 use basis::{BasisFnSampler, ParBasisFnSampler, ShapeFn};
 use fem_domain::Domain;
-use sparse_matrix::SparseMatrix;
+use eigensolver::{SparseMatrix, GEP};
 
 use rayon::prelude::*;
 use std::mem;
 use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
 
-/// Fill two system matrices with the integrals of each pair of overlapping shape functions within a [Domain]
+/// Fill two system matrices for a [Domain] using it's Basis Space as the Testing Space.
+/// 
+/// All pairs of overlapping Shape Functions will be integrated and stored in the matrices by their associated DoF IDs
 ///
-/// * Two [Integral]s: `AI` and `BI` must be specified. Their results are returned in the first and second [SparseMatrix]  
-/// * A [ShapeFn] `SF` must also be specified
-pub fn fill_matrices<AI, BI, SF>(domain: &Domain) -> [SparseMatrix; 2]
+/// * Two [Integral]s: `AI` and `BI` must be specified. These are used to populate the A and B matrices respectively
+/// * A [ShapeFn] `SF` must also be specified. This is used to evaluate the Domains Basis Functions.
+pub fn fill_matrices<AI, BI, SF>(domain: &Domain) -> GEP
 where
     AI: Integral,
     BI: Integral,
     SF: ShapeFn,
 {
-    // construct sparse system matrices
-    let mut a_mat = SparseMatrix::new(domain.dofs.len());
-    let mut b_mat = SparseMatrix::new(domain.dofs.len());
+    // construct an eigenproblem with a and b matrices
+    let mut gep = GEP::new(domain.dofs.len());
 
     // construct basis sampler
     let [i_max, j_max] = domain.mesh.max_expansion_orders();
@@ -50,13 +51,13 @@ where
             {
                 let a = a_integrator
                     .integrate(p_dir, q_dir, p_orders, q_orders, &bs_local, &bs_local)
-                    .surface();
+                    .full_solution();
                 let b = b_integrator
                     .integrate(p_dir, q_dir, p_orders, q_orders, &bs_local, &bs_local)
-                    .surface();
+                    .full_solution();
 
-                a_mat.insert([p_dof_id, q_dof_id], a);
-                b_mat.insert([p_dof_id, q_dof_id], b);
+                gep.a.insert([p_dof_id, q_dof_id], a);
+                gep.b.insert([p_dof_id, q_dof_id], b);
             }
         }
 
@@ -76,30 +77,30 @@ where
                 {
                     let a = a_integrator
                         .integrate(p_dir, q_dir, p_orders, q_orders, &bs_p_sampled, &bs_q_local)
-                        .surface();
+                        .full_solution();
                     let b = b_integrator
                         .integrate(p_dir, q_dir, p_orders, q_orders, &bs_p_sampled, &bs_q_local)
-                        .surface();
+                        .full_solution();
 
-                    a_mat.insert([p_dof_id, q_dof_id], a);
-                    b_mat.insert([p_dof_id, q_dof_id], b);
+                    gep.a.insert([p_dof_id, q_dof_id], a);
+                    gep.b.insert([p_dof_id, q_dof_id], b);
                 }
             }
         }
     }
 
-    [a_mat, b_mat]
+    gep
 }
 
 /// Same as [fill_matrices], except integration is done in parallel using the global Rayon ThreadPool
-pub fn fill_matrices_parallel<AI, BI, SF>(domain: &Domain) -> [SparseMatrix; 2]
+pub fn fill_matrices_parallel<AI, BI, SF>(domain: &Domain) -> GEP
 where
     AI: Integral,
     BI: Integral,
     SF: ShapeFn,
 {
-    // construct sparse system matrices in a matrix collector which can collect and combine sub-matrices from Rayon threads
-    let mut matrix_collector = DoubleMatrixParCollector::new(domain.dofs.len());
+    // construct an eigenproblem with a and b matrices
+    let mut gep = GEP::new(domain.dofs.len());
 
     // construct basis sampler
     let [i_max, j_max] = domain.mesh.max_expansion_orders();
@@ -111,7 +112,7 @@ where
     let a_integrator = AI::with_weights(&u_weights, &v_weights);
     let b_integrator = BI::with_weights(&u_weights, &v_weights);
 
-    matrix_collector.par_extend(domain.mesh.elems.par_iter().map(|elem| {
+    gep.par_extend(domain.mesh.elems.par_iter().map(|elem| {
         let mut local_a = SparseMatrix::new(domain.dofs.len());
         let mut local_b = SparseMatrix::new(domain.dofs.len());
 
@@ -135,10 +136,10 @@ where
             {
                 let a = a_integrator
                     .integrate(p_dir, q_dir, p_orders, q_orders, &bs_local, &bs_local)
-                    .surface();
+                    .full_solution();
                 let b = b_integrator
                     .integrate(p_dir, q_dir, p_orders, q_orders, &bs_local, &bs_local)
-                    .surface();
+                    .full_solution();
 
                 local_a.insert([p_dof_id, q_dof_id], a);
                 local_b.insert([p_dof_id, q_dof_id], b);
@@ -166,10 +167,10 @@ where
                 {
                     let a = a_integrator
                         .integrate(p_dir, q_dir, p_orders, q_orders, &bs_p_sampled, &bs_q_local)
-                        .surface();
+                        .full_solution();
                     let b = b_integrator
                         .integrate(p_dir, q_dir, p_orders, q_orders, &bs_p_sampled, &bs_q_local)
-                        .surface();
+                        .full_solution();
 
                     local_a.insert([p_dof_id, q_dof_id], a);
                     local_b.insert([p_dof_id, q_dof_id], b);
@@ -180,7 +181,7 @@ where
         [local_a, local_b]
     }));
 
-    matrix_collector.yield_matrices()
+    gep
 }
 
 struct DoubleMatrixParCollector {
