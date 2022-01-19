@@ -59,7 +59,7 @@ impl IntegralResult {
 pub trait Integral: Sync + Send {
     /// Construct the Integral with u and v directed Gauss-Leg-Quad weights.
     /// 
-    /// These weight vectors must match the dimension of the [BasisFn]s used in later calls to `integrate` or `integrate_by_parts`
+    /// The weight vectors must match the dimension of the [BasisFn]s used in later calls to `integrate` or `integrate_by_parts`
     fn with_weights(u_weights: &[f64], v_weights: &[f64]) -> Self;
 
     /// Compute an integral between [BasisFn]'s P and Q, where P and Q both have a direction ([BasisDir]) and orders `i` and `j`.
@@ -74,7 +74,8 @@ pub trait Integral: Sync + Send {
     ) -> IntegralResult;
 
     /// Compute an integral-by-parts between [BasisFn]'s P and Q, where P and Q both have a direction ([BasisDir]) and orders `i` and `j`.
-    /// This function may still return a "Full" [IntegralResult] if the solution is known to be zero along the edges.
+    /// 
+    /// This function may still return a the `Full` variant of [IntegralResult] if the solution is known to be zero along the edges.
     fn integrate_by_parts<SF: ShapeFn>(
         &self,
         p_dir: BasisDir,

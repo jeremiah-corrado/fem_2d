@@ -5,7 +5,7 @@ using namespace boost::interprocess;
 
 // function declarations
 void share_mat_data(rust::Vec<double> a, rust::Vec<int32_t> i, rust::Vec<int32_t> j, std::string mat_name);
-int call_eigensolver(double target_eigenvalue);
+int call_eigensolver(double target_eigenvalue, int dimension, int num_values);
 double collect_solution(std::vector<double> &evec);
 
 void clean_memory_channels();
@@ -21,7 +21,7 @@ slepc_wrapper::EigenSolutionInternal slepc_wrapper::slepc_eigenproblem(
     share_mat_data(a_mat.a, a_mat.i, a_mat.j, "A");
     share_mat_data(b_mat.a, b_mat.i, b_mat.j, "B");
 
-    int status = call_eigensolver(target_eigenvalue);
+    int status = call_eigensolver(target_eigenvalue, a_mat.dim, a_mat.a.size());
 
     std::vector<double> eigenvector;
     double eigenvalue = collect_solution(eigenvector);
@@ -59,12 +59,12 @@ void share_mat_data(
     std::memcpy(cols_reg.get_address(), &j[0], j.size() * sizeof(int32_t));
 }
 
-int call_eigensolver(double target_eigenvalue) {
+int call_eigensolver(double target_eigenvalue, int dimension, int num_values) {
     char* eigensolver_path = std::getenv("EIGSOLVER_PATH");
 
     if (eigensolver_path) {
         std::stringstream command;
-        command << "mpiexec -n 1 " << eigensolver_path << "/solve_gep -a " << target_eigenvalue;
+        command << "mpiexec -n 1 " << eigensolver_path << "/solve_gep -a " << target_eigenvalue << " -d " << dimension << " -v " << num_values;
         fflush(stdout);
 
         int status = system(&command.str()[0]);

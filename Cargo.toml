@@ -3,22 +3,16 @@ name = "fem_2d"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-# Data Structures -------------
 [dependencies.fem_domain]
 path="./libs/fem_domain/"
 
 [dependencies.basis]
 path="./libs/basis/"
 
-
-# Data Transformations --------
 [dependencies.integration]
 path="./libs/integration/"
 
 [dependencies.eigensolver]
 path="./libs/eigensolver/"
-
 
 [dependencies]

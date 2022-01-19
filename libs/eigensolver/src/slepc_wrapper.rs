@@ -39,6 +39,7 @@ pub fn solve_gep(gep: GEP, target_eigenvalue: f64) -> Result<EigenPair, String> 
 
 #[cxx::bridge(namespace = slepc_wrapper)]
 pub mod slepc_bridge {
+
     struct AIJMatrix {
         pub a: Vec<f64>,
         pub i: Vec<i32>,
@@ -51,7 +52,8 @@ pub mod slepc_bridge {
         eigenvalue: f64,
         eigenvector: UniquePtr<CxxVector<f64>>,
     }
-
+    
+    
     unsafe extern "C++" {
         include!("eigensolver/cpp_src/slepc_wrapper.h");
 

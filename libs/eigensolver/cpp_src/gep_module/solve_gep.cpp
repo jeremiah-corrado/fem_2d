@@ -13,7 +13,7 @@ void early_exit(int status) {
     exit(status);
 }
 
-std::array<int, 2> get_matrix_data(std::string mat_name, std::vector<PetscScalar> &vals, std::vector<PetscInt> &rows, std::vector<PetscInt> &cols);
+void get_matrix_data(std::string mat_name, std::vector<PetscScalar> &vals, std::vector<PetscInt> &rows, std::vector<PetscInt> &cols, PetscInt dim, PetscInt num_vals);
 void build_matrix(Mat &X, int M, std::vector<PetscScalar> &vals, std::vector<PetscInt> &rows, std::vector<PetscInt> &cols);
 double solve_eigenproblem(Mat& A, Mat& B, Vec& xr, Vec& xi, double target_eval);
 void deposit_solution(std::vector<double> evals);
@@ -24,7 +24,11 @@ int main(int argc, char * argv[]) {
     if (ierr) early_exit(1);
 
     PetscScalar target_eval = 1.00;
+    PetscInt dimension = 0;
+    PetscInt num_values = 0;
     PetscOptionsGetScalar(NULL, NULL, "-a", &target_eval, NULL);
+    PetscOptionsGetInt(NULL, NULL, "-d", &dimension, NULL);
+    PetscOptionsGetInt(NULL, NULL, "-v", &num_values, NULL);
 
     auto a_vals = std::vector<PetscScalar>();
     auto a_rows = std::vector<PetscInt>();
@@ -34,40 +38,25 @@ int main(int argc, char * argv[]) {
     auto b_rows = std::vector<PetscInt>();
     auto b_cols = std::vector<PetscInt>();
 
-    double t1 = MPI_Wtime();
-
-    auto a_sizes = get_matrix_data("A", a_vals, a_rows, a_cols);
-    auto b_sizes = get_matrix_data("B", b_vals, b_rows, b_cols);
-    if (a_sizes[0] != b_sizes[0]) early_exit(2);
-
-    double t2 = MPI_Wtime();
+    get_matrix_data("A", a_vals, a_rows, a_cols, dimension, num_values);
+    get_matrix_data("B", b_vals, b_rows, b_cols, dimension, num_values);
 
     Mat A, B;
-    build_matrix(A, a_sizes[0], a_vals, a_rows, a_cols);
-    build_matrix(B, b_sizes[0], b_vals, b_rows, b_cols);
-    //MatView(B, PETSC_VIEWER_STDOUT_WORLD);
+    build_matrix(A, dimension, a_vals, a_rows, a_cols);
+    build_matrix(B, dimension, b_vals, b_rows, b_cols);
+    MatView(B, PETSC_VIEWER_STDOUT_WORLD);
 
     Vec xr, xi;
     MatCreateVecs(A, NULL, &xr);
     MatCreateVecs(A, NULL, &xi);
-
-    double t3 = MPI_Wtime();
-
     double best_eval = solve_eigenproblem(A, B, xr, xi, target_eval);
-
-    double t4 = MPI_Wtime();
 
     int thread_id;
     MPI_Comm_rank(PETSC_COMM_WORLD, &thread_id);
     if (thread_id == 0) deposit_solution({best_eval});
 
     PetscBarrier(PETSC_NULL);
-
-    deposit_eigenvector(xr, a_sizes[0]);
-
-    PetscPrintf(PETSC_COMM_WORLD,"\tReading Data: %f\n", t2 - t1);
-    PetscPrintf(PETSC_COMM_WORLD,"\tBuilding Mats: %f\n", t3 - t2);
-    PetscPrintf(PETSC_COMM_WORLD,"\tSolving %f\n", t4 - t3);
+    deposit_eigenvector(xr, dimension);
 
     MatDestroy(&A);
     MatDestroy(&B);
@@ -78,18 +67,17 @@ int main(int argc, char * argv[]) {
     return 0;
 }
 
-std::array<std::string, 4> get_mem_names(std::string name) {
+std::array<std::string, 4> mem_channel_names(std::string name) {
     return {
             name + "_mat_vals",
             name + "_mat_rows",
             name + "_mat_cols",
-            name + "_meta_data"
     };
 }
 
-std::array<int, 2> get_matrix_data(std::string mat_name, std::vector<PetscScalar> &vals, std::vector<PetscInt> &rows, std::vector<PetscInt> &cols) {
+void get_matrix_data(std::string mat_name, std::vector<PetscScalar> &vals, std::vector<PetscInt> &rows, std::vector<PetscInt> &cols, PetscInt dim, PetscInt num_vals) {
     using namespace boost::interprocess;
-    auto mem_names = get_mem_names(mat_name);
+    auto mem_names = mem_channel_names(mat_name);
 
     int num_threads;
     int thread_id;
@@ -97,25 +85,16 @@ std::array<int, 2> get_matrix_data(std::string mat_name, std::vector<PetscScalar
     MPI_Comm_rank(PETSC_COMM_WORLD, &thread_id);
 
     if (num_threads > 1) {
-        PetscPrintf(PETSC_COMM_WORLD, "AIJ Solver can only use 1 MPI Thread!");
+        PetscPrintf(PETSC_COMM_WORLD, "AIJ Solver is only setup to use 1 MPI Thread!");
         early_exit(1);
     }
 
     shared_memory_object vals_smo (open_only, &mem_names[0][0], read_only);
     shared_memory_object rows_smo (open_only, &mem_names[1][0], read_only);
     shared_memory_object cols_smo (open_only, &mem_names[2][0], read_only);
-    shared_memory_object meta_smo (open_only, &mem_names[3][0], read_only);
-
-    mapped_region meta_reg (meta_smo, read_only);
-    auto* meta_data = static_cast<int*>(meta_reg.get_address());
-
-    int M = meta_data[0];
-    int num_vals = meta_data[1];
-
-    // PetscPrintf(PETSC_COMM_WORLD, "\nM = %i\nNV = %i\n", M, num_vals);
 
     mapped_region vals_reg (vals_smo, read_only, 0, num_vals * sizeof(double));
-    mapped_region rows_reg (rows_smo, read_only, 0, (M + 1) * sizeof(int));
+    mapped_region rows_reg (rows_smo, read_only, 0, (dim + 1) * sizeof(int));
     mapped_region cols_reg (cols_smo, read_only, 0, num_vals * sizeof(int));
 
     auto* vals_array = static_cast<double*>(vals_reg.get_address());
@@ -138,8 +117,6 @@ std::array<int, 2> get_matrix_data(std::string mat_name, std::vector<PetscScalar
     //         PetscPrintf(PETSC_COMM_WORLD, "%d \t %g\n", cols[c], vals[c]);
     //     }
     // }
-
-    return {M, num_vals};
 }
 
 void build_matrix(Mat &X, int M, std::vector<PetscScalar> &vals, std::vector<PetscInt> &rows, std::vector<PetscInt> &cols) {

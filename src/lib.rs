@@ -1,6 +1,5 @@
 extern crate basis;
 extern crate fem_domain;
-
 extern crate eigensolver;
 extern crate integration;
 
@@ -11,9 +10,21 @@ pub use eigensolver::{GEP, SparseMatrix, solve_gep, EigenPair};
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
+    fn basic_problem() {
+        let mut domain = Domain::from_mesh_file("./test_input/test_mesh_b.json").unwrap();
+
+        domain.mesh.global_p_refinement(PRef::from(1, 1)).unwrap();
+        // domain.mesh.global_h_refinement(HRef::T).unwrap();
+        domain.gen_dofs();
+
+        println!("Num DoFs: {}", domain.dofs.len());
+
+        let eigenproblem = fill_matrices::<CurlProduct, L2InnerProduct, KOLShapeFn>(&domain);
+        let eigen_pair = solve_gep(eigenproblem, 1.475).unwrap();
+
+        println!("Solution: {:.10}", eigen_pair.value);
     }
 }
