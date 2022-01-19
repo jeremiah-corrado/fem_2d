@@ -4,11 +4,9 @@ use fem_domain::Domain;
 use eigensolver::{SparseMatrix, GEP};
 
 use rayon::prelude::*;
-use std::mem;
-use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
 
-/// Fill two system matrices for a [Domain] using it's Basis Space as the Testing Space.
+/// Fill two system matrices for a [Domain] using it's Basis Space as the Testing Space. Return a Generalized Eigenproblem ([GEP])
 /// 
 /// All pairs of overlapping Shape Functions will be integrated and stored in the matrices by their associated DoF IDs
 ///
@@ -41,13 +39,13 @@ where
         // local - local
         for (i, (p_orders, p_dir, p_dof_id)) in local_basis_specs
             .iter()
-            .map(|bs_p| bs_p.get_integration_data())
+            .map(|bs_p| bs_p.integration_data())
             .enumerate()
         {
             for (q_orders, q_dir, q_dof_id) in local_basis_specs
                 .iter()
                 .skip(i)
-                .map(|bs_q| bs_q.get_integration_data())
+                .map(|bs_q| bs_q.integration_data())
             {
                 let a = a_integrator
                     .integrate(p_dir, q_dir, p_orders, q_orders, &bs_local, &bs_local)
@@ -64,7 +62,7 @@ where
         // local - desc
         for (p_orders, p_dir, p_dof_id) in local_basis_specs
             .iter()
-            .map(|bs_p| bs_p.get_integration_data())
+            .map(|bs_p| bs_p.integration_data())
         {
             for &(q_elem_id, q_elem_basis_specs) in desc_basis_specs.iter() {
                 let bs_p_sampled =
@@ -73,7 +71,7 @@ where
 
                 for (q_orders, q_dir, q_dof_id) in q_elem_basis_specs
                     .iter()
-                    .map(|bs_q| bs_q.get_integration_data())
+                    .map(|bs_q| bs_q.integration_data())
                 {
                     let a = a_integrator
                         .integrate(p_dir, q_dir, p_orders, q_orders, &bs_p_sampled, &bs_q_local)
@@ -126,13 +124,13 @@ where
         // local - local
         for (i, (p_orders, p_dir, p_dof_id)) in local_basis_specs
             .iter()
-            .map(|bs_p| bs_p.get_integration_data())
+            .map(|bs_p| bs_p.integration_data())
             .enumerate()
         {
             for (q_orders, q_dir, q_dof_id) in local_basis_specs
                 .iter()
                 .skip(i)
-                .map(|bs_q| bs_q.get_integration_data())
+                .map(|bs_q| bs_q.integration_data())
             {
                 let a = a_integrator
                     .integrate(p_dir, q_dir, p_orders, q_orders, &bs_local, &bs_local)
@@ -149,7 +147,7 @@ where
         // local - desc
         for (p_orders, p_dir, p_dof_id) in local_basis_specs
             .iter()
-            .map(|bs_p| bs_p.get_integration_data())
+            .map(|bs_p| bs_p.integration_data())
         {
             for &(q_elem_id, q_elem_basis_specs) in desc_basis_specs.iter() {
                 let bs_p_sampled = bs_sampler_elem
@@ -163,7 +161,7 @@ where
 
                 for (q_orders, q_dir, q_dof_id) in q_elem_basis_specs
                     .iter()
-                    .map(|bs_q| bs_q.get_integration_data())
+                    .map(|bs_q| bs_q.integration_data())
                 {
                     let a = a_integrator
                         .integrate(p_dir, q_dir, p_orders, q_orders, &bs_p_sampled, &bs_q_local)
@@ -182,48 +180,4 @@ where
     }));
 
     gep
-}
-
-struct DoubleMatrixParCollector {
-    a: SparseMatrix,
-    b: SparseMatrix,
-}
-
-impl DoubleMatrixParCollector {
-    pub fn new(dimension: usize) -> Self {
-        Self {
-            a: SparseMatrix::new(dimension),
-            b: SparseMatrix::new(dimension),
-        }
-    }
-
-    pub fn yield_matrices(self) -> [SparseMatrix; 2] {
-        [self.a, self.b]
-    }
-}
-
-impl ParallelExtend<[SparseMatrix; 2]> for DoubleMatrixParCollector {
-    fn par_extend<I>(&mut self, elem_matrices_iter: I)
-    where
-        I: IntoParallelIterator<Item = [SparseMatrix; 2]>,
-    {
-        let (sender, receiver) = channel();
-
-        elem_matrices_iter
-            .into_par_iter()
-            .for_each_with(sender, |s, mut elem_matrices| {
-                s.send([
-                    mem::replace(&mut elem_matrices[0], SparseMatrix::new(0)),
-                    mem::replace(&mut elem_matrices[0], SparseMatrix::new(0)),
-                ])
-                .expect("Failed to send sub-matrices over MSPC channel; cannot construct Matrices!")
-            });
-
-        receiver
-            .iter()
-            .for_each(|[mut elem_a_mat, mut elem_b_mat]| {
-                self.a.consume_matrix(&mut elem_a_mat);
-                self.b.consume_matrix(&mut elem_b_mat);
-            });
-    }
 }

@@ -80,7 +80,7 @@ impl BasisSpec {
         self.dof_id = Some(dof_id);
     }
 
-    pub fn get_integration_data(&self) -> ([usize; 2], BasisDir, usize) {
+    pub fn integration_data(&self) -> ([usize; 2], BasisDir, usize) {
         debug_assert!(self.dof_id.is_some(), "Cannot get integration data for unmatched BasisSpec: {}", self.id);
         (
             [self.i as usize, self.j as usize],

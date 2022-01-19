@@ -1,5 +1,5 @@
-use super::AIJMatrix;
 use std::collections::BTreeMap;
+use crate::slepc_wrapper::slepc_bridge::AIJMatrix;
 
 /// Wrapper around a BTreeMap to store square-symmetric matrices in a sparse data structure
 #[derive(Clone)]

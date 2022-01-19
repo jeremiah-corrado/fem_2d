@@ -1,15 +1,15 @@
-mod aij_matrix;
 mod sparse_matrix;
 
-pub use aij_matrix::AIJMatrix;
 pub use sparse_matrix::SparseMatrix;
 
 use rayon::prelude::*;
 use std::sync::mpsc::channel;
+use crate::slepc_wrapper::slepc_bridge::AIJMatrix;
 
 /// Generalized Eigenproblem 
 /// 
 /// Au = λBu
+#[derive(Clone)]
 pub struct GEP {
     /// A Matrix
     pub a: SparseMatrix,
@@ -23,6 +23,13 @@ impl GEP {
             a: SparseMatrix::new(num_dofs),
             b: SparseMatrix::new(num_dofs),
         }
+    }
+
+    pub(crate) fn to_aij_mats(self) -> [AIJMatrix; 2] {
+        [
+            self.a.into(),
+            self.b.into(),
+        ]
     }
 }
 

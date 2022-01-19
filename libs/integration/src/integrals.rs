@@ -31,7 +31,7 @@ impl IntegralResult {
     /// get the `face` and `edge` solutions, panicking if the variant is Full
     pub fn unwrap_parts(self) -> (f64, [f64; 4]) {
         match self {
-            Self::Full(_) => panic!("Integral solution was computed in one part; cannot get By-Pars solution!"),
+            Self::Full(_) => panic!("Integral solution was computed in one part; cannot get By-Parts solution!"),
             Self::ByParts(face, edges) => (face, edges),
         }
     }
@@ -57,9 +57,12 @@ impl IntegralResult {
 
 /// A trait to describe an "integrator" which can compute 2D integrals over some function of two [BasisFn]'s
 pub trait Integral: Sync + Send {
+    /// Construct the Integral with u and v directed Gauss-Leg-Quad weights.
+    /// 
+    /// These weight vectors must match the dimension of the [BasisFn]s used in later calls to `integrate` or `integrate_by_parts`
     fn with_weights(u_weights: &[f64], v_weights: &[f64]) -> Self;
 
-    /// Compute an integral between [BasisFn]'s P and Q, where P and Q both have a parametric direction ([ParaDir]) and orders i and j.
+    /// Compute an integral between [BasisFn]'s P and Q, where P and Q both have a direction ([BasisDir]) and orders `i` and `j`.
     fn integrate<SF: ShapeFn>(
         &self,
         p_dir: BasisDir,
@@ -70,7 +73,7 @@ pub trait Integral: Sync + Send {
         q_basis: &BasisFn<SF>,
     ) -> IntegralResult;
 
-    /// Compute an integral-by-parts between [BasisFn]'s P and Q, where P and Q both have a parametric direction ([ParaDir]) and orders i and j.
+    /// Compute an integral-by-parts between [BasisFn]'s P and Q, where P and Q both have a direction ([BasisDir]) and orders `i` and `j`.
     /// This function may still return a "Full" [IntegralResult] if the solution is known to be zero along the edges.
     fn integrate_by_parts<SF: ShapeFn>(
         &self,
