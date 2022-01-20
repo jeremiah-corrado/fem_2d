@@ -14,7 +14,7 @@ mod tests {
 
     #[test]
     fn basic_problem() {
-        let mut domain = Domain::from_mesh_file("./test_input/test_mesh_b.json").unwrap();
+        let mut domain = Domain::from_mesh_file("./test_input/test_mesh_c.json").unwrap();
 
         domain.mesh.global_p_refinement(PRef::from(1, 1)).unwrap();
         // domain.mesh.global_h_refinement(HRef::T).unwrap();
@@ -23,6 +23,10 @@ mod tests {
         println!("Num DoFs: {}", domain.dofs.len());
         for dof in domain.dofs.iter() {
             println!("{}", dof);
+        }
+
+        for bs in domain.basis_specs.iter().flatten() {
+            println!("{}", bs);
         }
 
         let eigenproblem = fill_matrices::<CurlProduct, L2InnerProduct, MaxOrthoShapeFn>(&domain);

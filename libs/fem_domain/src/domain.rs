@@ -15,7 +15,7 @@ pub struct Domain {
     /// Degrees of Freedom (collections of BasisSpecs matched via Tangential Continuity)
     pub dofs: Vec<DoF>,
     /// Individual BasisSpecs sorted by Elem
-    basis_specs: Vec<Vec<BasisSpec>>,
+    pub basis_specs: Vec<Vec<BasisSpec>>,
 }
 
 impl Domain {

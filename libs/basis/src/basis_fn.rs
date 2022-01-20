@@ -363,7 +363,7 @@ impl<SF: ShapeFn> BasisFn<SF> {
 
     #[inline]
     pub fn glq_scale(&self) -> f64 {
-        self.para_scale.dot_with(&V2D::from([1.0, 1.0]))
+        self.para_scale[0] * self.para_scale[1]
     }
 
     #[inline]

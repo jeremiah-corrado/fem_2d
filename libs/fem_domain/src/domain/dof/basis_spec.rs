@@ -1,4 +1,5 @@
 use crate::domain::mesh::Elem;
+use std::fmt;
 
 #[derive(Clone, Debug)]
 pub struct BasisSpec {
@@ -90,11 +91,27 @@ impl BasisSpec {
     }
 }
 
+impl fmt::Display for BasisSpec {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} \t [{}, {}] \t {} \t {}", self.id, self.i, self.j, self.dir, self.elem_id)
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BasisDir {
     U,
     V,
     W,
+}
+
+impl fmt::Display for BasisDir {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            BasisDir::U => write!(f, "U"),
+            BasisDir::V => write!(f, "V"),
+            BasisDir::W => write!(f, "W"),
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
