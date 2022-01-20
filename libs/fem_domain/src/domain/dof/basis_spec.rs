@@ -90,7 +90,7 @@ impl BasisSpec {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BasisDir {
     U,
     V,
@@ -116,8 +116,8 @@ impl BasisLoc {
 
 #[derive(Clone, Copy, Debug)]
 pub struct BSAddress {
-    elem_id: usize,
-    bs_id: usize,
+    pub elem_id: usize,
+    pub bs_id: usize,
 }
 
 impl BSAddress {

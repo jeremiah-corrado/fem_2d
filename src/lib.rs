@@ -21,8 +21,11 @@ mod tests {
         domain.gen_dofs();
 
         println!("Num DoFs: {}", domain.dofs.len());
+        for dof in domain.dofs.iter() {
+            println!("{}", dof);
+        }
 
-        let eigenproblem = fill_matrices::<CurlProduct, L2InnerProduct, KOLShapeFn>(&domain);
+        let eigenproblem = fill_matrices::<CurlProduct, L2InnerProduct, MaxOrthoShapeFn>(&domain);
         let eigen_pair = solve_gep(eigenproblem, 1.475).unwrap();
 
         println!("Solution: {:.10}", eigen_pair.value);

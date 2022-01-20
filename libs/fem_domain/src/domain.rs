@@ -66,7 +66,7 @@ impl Domain {
             if !self.mesh.elems[elem_id].has_children() {
                 self.basis_specs[elem_id] = Vec::with_capacity(elem_bs_list.len());
 
-                for elem_bs in elem_bs_list.drain(0..) {
+                for elem_bs in elem_bs_list.drain(0..).filter(|bs| bs.dir == BasisDir::U || bs.dir == BasisDir::V) {
                     let dof_id = dof_id_tracker.next_id();
                     let address = self.push_basis_spec(elem_bs, dof_id);
                     self.dofs.push(DoF::new(dof_id, smallvec![address]));
@@ -80,7 +80,7 @@ impl Domain {
                 // only basis specs associated with the active pair of Elems need to be considered here
                 let rel_basis_specs: Vec<BasisSpec> = edge_bs_list
                     .drain(0..)
-                    .filter(|bs| active_elem_ids.contains(&bs.elem_id))
+                    .filter(|bs| (bs.dir == BasisDir::U || bs.dir == BasisDir::V) && active_elem_ids.contains(&bs.elem_id))
                     .collect();
 
                 // allocate space for the new basis specs

@@ -85,14 +85,11 @@ impl<SF: ShapeFn> BasisFnSampler<SF> {
         elem: &Elem,
         sampled_space: Option<[&Point; 2]>,
     ) -> Rc<BasisFn<SF>> {
-        let desc = match sampled_space {
-            Some(sub_range) => BSDescription {
-                space: [elem.nodes[0], elem.nodes[1]],
-                sample: Some([sub_range[0].clone(), sub_range[1].clone()]),
-            },
-            None => BSDescription {
-                space: [elem.nodes[0], elem.nodes[1]],
-                sample: None,
+        let desc = BSDescription {
+            space: [elem.nodes[0], elem.nodes[1]],
+            sample: match sampled_space {
+                Some(sub_space) => Some([sub_space[0].clone(), sub_space[1].clone()]),
+                None => None,
             },
         };
 
@@ -261,7 +258,7 @@ impl<SF: ShapeFn> BasisFn<SF> {
 
                 [
                     scale_gauss_quad_points(raw_u_points, para_min[0], para_max[0]),
-                    scale_gauss_quad_points(raw_u_points, para_min[1], para_max[1]),
+                    scale_gauss_quad_points(raw_v_points, para_min[1], para_max[1]),
                 ]
             }
             None => [(1.0, raw_u_points.to_vec()), (1.0, raw_v_points.to_vec())],
@@ -289,6 +286,8 @@ impl<SF: ShapeFn> BasisFn<SF> {
         } else {
             vec![vec![1.0; raw_v_points.len()]; raw_u_points.len()]
         };
+
+        println!("t: {} \t ti: {} \t dt: {} \t UScale: {} \t VScale: {}", t[0][0], ti[0][0], dt[0][0], v_glq_scale, u_glq_scale);
 
         Self {
             t,

@@ -1114,6 +1114,20 @@ mod tests {
             }
         }
 
+        for element in mesh_a.elements.iter() {
+            assert!(element.points[3].x > element.points[0].x);
+            assert!(element.points[3].x >= element.points[1].x);
+            assert!(element.points[3].x > element.points[2].x);
+
+            assert!(element.points[3].y > element.points[0].y);
+            assert!(element.points[3].y > element.points[1].y);
+            assert!(element.points[3].y >= element.points[2].y);
+
+            assert!(element.points[0].x < element.points[1].x);
+            assert!(element.points[0].y < element.points[2].y);
+            
+        }
+
         let _ = Mesh::from_file("../../test_input/test_mesh_b.json").unwrap();
     }
 
