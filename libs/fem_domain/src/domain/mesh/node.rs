@@ -1,4 +1,4 @@
-use super::{Point, Elem};
+use super::{Elem, Point};
 use json::JsonValue;
 use std::collections::BTreeMap;
 
@@ -22,9 +22,9 @@ impl Node {
             boundary,
             elems: [
                 BTreeMap::new(),
-                BTreeMap::new(), 
-                BTreeMap::new(), 
-                BTreeMap::new(), 
+                BTreeMap::new(),
+                BTreeMap::new(),
+                BTreeMap::new(),
             ],
             active_elems: None,
         }
@@ -36,18 +36,21 @@ impl Node {
 
             if let Some(prev_elem_id) = self.elems[index_of_self].insert(address, elem.id) {
                 assert_eq!(
-                    prev_elem_id, elem.id, 
+                    prev_elem_id, elem.id,
                     "Node {} is already connected to Elem {} at {:?} ({}); cannot connect to Elem {}",
                     self.id,
                     prev_elem_id,
                     address,
                     index_of_self,
-                    elem.id, 
+                    elem.id,
 
                 );
             }
         } else {
-            panic!("Elem {} is not connected to Node {}; cannot reciprocate connection!", elem.id, self.id);
+            panic!(
+                "Elem {} is not connected to Node {}; cannot reciprocate connection!",
+                elem.id, self.id
+            );
         }
     }
 
@@ -76,7 +79,8 @@ impl Node {
             for (key_0, elem_id_0) in self.elems[elem_indices[0]].iter() {
                 for (key_1, elem_id_1) in self.elems[elem_indices[1]].iter() {
                     if key_0[check_index] == key_1[check_index] {
-                        combination_sets[edge_idx].insert([*elem_id_0, *elem_id_1], key_0[check_index]);
+                        combination_sets[edge_idx]
+                            .insert([*elem_id_0, *elem_id_1], key_0[check_index]);
                     }
                 }
             }

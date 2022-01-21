@@ -9,7 +9,7 @@ mod space;
 pub use edge::Edge;
 pub use elem::{Elem, ElemUninit};
 pub use element::{Element, Materials};
-pub use h_refinement::{Bisection, HLevels, HRef, HRefError, HRefLoc, Quadrant};
+pub use h_refinement::{HLevels, HRef, HRefError, HRefLoc};
 pub use node::Node;
 pub use p_refinement::{PRef, PRefError, PolyOrders};
 pub use space::{ParaDir, Point, M2D, V2D};
@@ -27,6 +27,9 @@ use std::sync::Arc;
 /// Minimum Edge length in parametric space. h-Refinements will fail after edges are smaller than this value.
 pub const MIN_EDGE_LENGTH: f64 = 3.0518e-5; // 15ish refinement layers with unit sized cells
 
+/// The expected "h-Refinement" depth. This determines the stack allocation size of some `SmallVec`s related to h-Refinement
+pub const EXPECTED_NUM_H_REFINEMENTS: usize = 5;
+
 /// Maximum Polynomial expansion. p-Refinements will fail when Elem's expansion orders exceed this value.
 pub const MAX_POLYNOMIAL_ORDER: u8 = 20;
 
@@ -37,7 +40,6 @@ pub struct Mesh {
     pub nodes: Vec<Node>,
     pub edges: Vec<Edge>,
 }
-
 
 impl Mesh {
     /// Construct a completely empty Mesh
@@ -409,9 +411,9 @@ impl Mesh {
     }
 
     pub fn max_expansion_orders(&self) -> [u8; 2] {
-        self.elems.iter().fold([0; 2], |acc, elem| {
-            elem.poly_orders.max_with(acc)
-        })
+        self.elems
+            .iter()
+            .fold([0; 2], |acc, elem| elem.poly_orders.max_with(acc))
     }
 
     // ----------------------------------------------------------------------------------------------------
@@ -487,8 +489,8 @@ impl Mesh {
                         &mut node_id_tracker,
                         &mut edge_id_tracker,
                     )?;
-                    if let Some(v_ref) = extension {
-                        refinement_extensions.push((new_u_elems[v_ref.index()].id, HRef::V(None)))
+                    if let Some(child_idx) = extension {
+                        refinement_extensions.push((new_u_elems[child_idx].id, HRef::V(None)))
                     }
                     new_u_elems
                 }
@@ -499,8 +501,8 @@ impl Mesh {
                         &mut node_id_tracker,
                         &mut edge_id_tracker,
                     )?;
-                    if let Some(u_ref) = extension {
-                        refinement_extensions.push((new_v_elems[u_ref.index()].id, HRef::U(None)))
+                    if let Some(child_idx) = extension {
+                        refinement_extensions.push((new_v_elems[child_idx].id, HRef::U(None)))
                     }
                     new_v_elems
                 }
@@ -1125,7 +1127,6 @@ mod tests {
 
             assert!(element.points[0].x < element.points[1].x);
             assert!(element.points[0].y < element.points[2].y);
-            
         }
 
         let _ = Mesh::from_file("../../test_input/test_mesh_b.json").unwrap();
@@ -1176,7 +1177,9 @@ mod tests {
             ])
             .unwrap();
 
-        mesh_b.p_refine_elems(vec![3, 4, 5], PRef::from(-1, -1)).unwrap();
+        mesh_b
+            .p_refine_elems(vec![3, 4, 5], PRef::from(-1, -1))
+            .unwrap();
         mesh_b.h_refine_elems(vec![6, 14, 12], HRef::T).unwrap();
 
         mesh_b.set_edge_activation();

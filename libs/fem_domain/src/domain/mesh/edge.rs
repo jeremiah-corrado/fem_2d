@@ -1,7 +1,4 @@
-use super::{
-    h_refinement::{Bisection, HRefError},
-    Elem, Node, ParaDir, MIN_EDGE_LENGTH,
-};
+use super::{h_refinement::HRefError, Elem, Node, ParaDir, MIN_EDGE_LENGTH};
 use json::JsonValue;
 use smallvec::SmallVec;
 use std::collections::BTreeMap;
@@ -15,7 +12,7 @@ pub struct Edge {
     pub dir: ParaDir,
     pub length: f64,
     children: Option<[usize; 2]>,
-    parent: Option<(usize, Bisection)>,
+    parent: Option<usize>,
     elems: [BTreeMap<[u8; 2], usize>; 2],
     active_elems: Option<[usize; 2]>,
     child_node: Option<usize>,
@@ -45,13 +42,13 @@ impl Edge {
             let address = elem.h_levels.edge_ranking(self.dir);
             let side_index = match index_of_self {
                 0 | 2 => 1,
-                    1 | 3 => 0,
-                    _ => unreachable!(),
+                1 | 3 => 0,
+                _ => unreachable!(),
             };
 
             if let Some(prev_elem_id) = self.elems[side_index].insert(address, elem.id) {
                 assert_eq!(
-                    prev_elem_id, elem.id, 
+                    prev_elem_id, elem.id,
                     "Edge {} is already connected to Elem {} at {:?} (on side {}); cannot connect to Elem {}",
                     self.id,
                     prev_elem_id,
@@ -60,7 +57,6 @@ impl Edge {
                     elem.id,
                 );
             }
-
         } else {
             panic!(
                 "Elem {} is not connected to Edge {}; cannot reciprocate connection!",
@@ -93,7 +89,7 @@ impl Edge {
                             dir: self.dir,
                             length: child_edge_length,
                             children: None,
-                            parent: Some((self.id, Bisection::BL)),
+                            parent: Some(self.id),
                             elems: [BTreeMap::new(), BTreeMap::new()],
                             active_elems: None,
                             child_node: None,
@@ -105,7 +101,7 @@ impl Edge {
                             dir: self.dir,
                             length: child_edge_length,
                             children: None,
-                            parent: Some((self.id, Bisection::TR)),
+                            parent: Some(self.id),
                             elems: [BTreeMap::new(), BTreeMap::new()],
                             active_elems: None,
                             child_node: None,
@@ -118,10 +114,7 @@ impl Edge {
 
     /// Id of the Parent Edge if this Edge has a parent
     pub fn parent_id(&self) -> Option<usize> {
-        match self.parent {
-            Some((parent_id, _)) => Some(parent_id),
-            None => None,
-        }
+        self.parent
     }
 
     /// Returns a vector of child Edge ids. Will return an empty vector if this Edge has no children.

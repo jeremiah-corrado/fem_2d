@@ -57,7 +57,6 @@ impl PolyOrders {
         }
     }
 
-
     pub fn max_with(&self, orders: [u8; 2]) -> [u8; 2] {
         [
             std::cmp::max(self.ni, orders[0]),

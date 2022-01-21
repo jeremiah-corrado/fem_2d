@@ -76,24 +76,51 @@ impl BasisSpec {
         }
     }
 
+    pub fn assign_dof_id(&mut self, dof_id: usize) {
+        assert!(
+            self.dof_id.is_none(),
+            "BasisSpec {} is already connected to DoF {}; cannot connect to {}!",
+            self.id,
+            self.dof_id.unwrap(),
+            dof_id
+        );
+        self.dof_id = Some(dof_id);
+    }
+
     pub fn update_ids(&mut self, new_id: usize, dof_id: usize) {
         self.id = new_id;
         self.dof_id = Some(dof_id);
     }
 
     pub fn integration_data(&self) -> ([usize; 2], BasisDir, usize) {
-        debug_assert!(self.dof_id.is_some(), "Cannot get integration data for unmatched BasisSpec: {}", self.id);
+        debug_assert!(
+            self.dof_id.is_some(),
+            "Cannot get integration data for unmatched BasisSpec: {}",
+            self.id
+        );
         (
             [self.i as usize, self.j as usize],
             self.dir,
-            self.dof_id.unwrap()
+            self.dof_id.unwrap(),
         )
     }
 }
 
 impl fmt::Display for BasisSpec {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} \t [{}, {}] \t {} \t {}", self.id, self.i, self.j, self.dir, self.elem_id)
+        write!(
+            f,
+            "id:{} \t [{}, {}] - {} dir \t elem id: {} \t dof_id: {}",
+            self.id,
+            self.i,
+            self.j,
+            self.dir,
+            self.elem_id,
+            match self.dof_id {
+                Some(id) => id.to_string(),
+                None => String::from("_"),
+            }
+        )
     }
 }
 

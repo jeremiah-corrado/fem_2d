@@ -26,6 +26,8 @@ where
     let (mut bs_sampler, [u_weights, v_weights]): (BasisFnSampler<SF>, _) =
         BasisFnSampler::with(i_max as usize, j_max as usize, None, None, false);
 
+    println!("Sampler: {:?}", bs_sampler);
+
     // setup integration
     let a_integrator = AI::with_weights(&u_weights, &v_weights);
     let b_integrator = BI::with_weights(&u_weights, &v_weights);
@@ -66,7 +68,7 @@ where
         {
             for &(q_elem_id, q_elem_basis_specs) in desc_basis_specs.iter() {
                 let bs_p_sampled =
-                    bs_sampler.sample_basis_fn(elem, Some(domain.mesh.elem_diag_points(q_elem_id)));
+                    bs_sampler.sample_basis_fn(elem, Some(&domain.mesh.elems[q_elem_id]));
                 let bs_q_local = bs_sampler.sample_basis_fn(&domain.mesh.elems[q_elem_id], None);
 
                 for (q_orders, q_dir, q_dof_id) in q_elem_basis_specs
@@ -153,7 +155,7 @@ where
                 let bs_p_sampled = bs_sampler_elem
                     .lock()
                     .unwrap()
-                    .sample_basis_fn(elem, Some(domain.mesh.elem_diag_points(q_elem_id)));
+                    .sample_basis_fn(elem, Some(&domain.mesh.elems[q_elem_id]));
                 let bs_q_local = bs_sampler_elem
                     .lock()
                     .unwrap()

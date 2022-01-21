@@ -145,7 +145,7 @@ impl Integral for CurlProduct {
 
         let edge_terms = (0..4)
             .map(|edge_idx| {
-                p_basis.edge_glq_scale(edge_idx)
+                -1.0 * p_basis.edge_glq_scale(edge_idx)
                     * q_basis.edge_glq_scale(edge_idx)
                     * match (p_dir, q_dir, edge_idx) {
                         (BasisDir::U, BasisDir::U, 0 | 1) => real_gauss_quad_edge(

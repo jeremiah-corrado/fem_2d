@@ -196,6 +196,44 @@ mod tests {
         assert!(sm_a_entries.get(&[3, 1]).is_none());
     }
 
+    const AIJ_TEST_A: [f64; 11] = [1.0, 0.05125, 0.25, 2.0, 0.125, 0.05125, 3.0, 0.125, 4.0, 0.25, 5.0];
+    const AIJ_TEST_J: [i32; 11] = [0, 2, 4, 1, 3, 0, 2, 1, 3, 0, 4];
+    const AIJ_TEST_I: [i32; 6] = [0, 3, 5, 7, 9, 11];
+
+    #[test]
+    fn into_aij_format() {
+        let mut sm = SparseMatrix::new(5);
+        sm.insert([0, 0], 1.0);
+        sm.insert([1, 1], 2.0);
+        sm.insert([2, 2], 3.0);
+        sm.insert([3, 3], 4.0);
+        sm.insert([4, 4], 5.0);
+
+        sm.insert([0, 4], 0.25);
+        sm.insert([1, 3], 0.125);
+        sm.insert([2, 0], 0.05125);
+
+        // println!("sparse_map: {:?}", sm.iter_upper_tri().collect::<Vec<([usize; 2], f64)>>());
+
+        let aij: AIJMatrix = sm.into();
+
+        // println!("a: {:?}", aij.a);
+        // println!("j: {:?}", aij.j);
+        // println!("i: {:?}", aij.i);
+
+        for (a, a_cmp) in aij.a.iter().zip(AIJ_TEST_A.iter()) {
+            assert!((a - a_cmp).abs() < 1e-15);
+        }
+
+        for (j, j_cmp) in aij.j.iter().zip(AIJ_TEST_J.iter()) {
+            assert_eq!(j, j_cmp);
+        }
+
+        for (i, i_cmp) in aij.i.iter().zip(AIJ_TEST_I.iter()) {
+            assert_eq!(i, i_cmp);
+        }
+    }
+
     #[test]
     #[should_panic]
     fn consume_matrix_of_different_dim() {

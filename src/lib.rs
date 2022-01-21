@@ -14,10 +14,11 @@ mod tests {
 
     #[test]
     fn basic_problem() {
-        let mut domain = Domain::from_mesh_file("./test_input/test_mesh_c.json").unwrap();
+        let mut domain = Domain::from_mesh_file("./test_input/test_mesh_b.json").unwrap();
 
         domain.mesh.global_p_refinement(PRef::from(1, 1)).unwrap();
-        // domain.mesh.global_h_refinement(HRef::T).unwrap();
+        domain.mesh.global_h_refinement(HRef::T).unwrap();
+        domain.mesh.h_refine_elems(vec![6, 9, 11], HRef::T).unwrap();
         domain.gen_dofs();
 
         println!("Num DoFs: {}", domain.dofs.len());
@@ -29,7 +30,7 @@ mod tests {
             println!("{}", bs);
         }
 
-        let eigenproblem = fill_matrices::<CurlProduct, L2InnerProduct, MaxOrthoShapeFn>(&domain);
+        let eigenproblem = fill_matrices::<CurlProduct, L2InnerProduct, KOLShapeFn>(&domain);
         let eigen_pair = solve_gep(eigenproblem, 1.475).unwrap();
 
         println!("Solution: {:.10}", eigen_pair.value);

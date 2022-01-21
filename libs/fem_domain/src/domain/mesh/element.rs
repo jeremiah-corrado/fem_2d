@@ -22,27 +22,20 @@ impl Element {
         }
     }
 
-    pub fn parametric_projection(&self, real: &Point) -> V2D {
-        assert!(
-            real.x < self.points[3].x && real.x > self.points[0].x,
-            "Real Point is outside Elem {}'s X Bounds; Cannot project onto Parametric Space!",
-            self.id
-        );
-        assert!(
-            real.y < self.points[3].y && real.y > self.points[0].y,
-            "Real Point is outside Elem {}'s Y Bounds; Cannot project onto Parametric Space!",
-            self.id
-        );
+    // TODO: update this method to support curvilinear Elements
+    pub fn parametric_mapping(
+        &self,
+        _: V2D,
+        child_para_range: [[f64; 2]; 2],
+    ) -> M2D {
+        let real_x_min = map_range(child_para_range[0][0], -1.0, 1.0, self.points[0].x, self.points[3].x);
+        let real_x_max = map_range(child_para_range[0][1], -1.0, 1.0, self.points[0].x, self.points[3].x);
 
-        V2D::from([
-            map_range(real.x, self.points[0].x, self.points[3].x, -1.0, 1.0),
-            map_range(real.y, self.points[0].y, self.points[3].y, -1.0, 1.0),
-        ])
-    }
+        let real_y_min = map_range(child_para_range[1][0], -1.0, 1.0, self.points[0].y, self.points[3].y);
+        let real_y_max = map_range(child_para_range[1][1], -1.0, 1.0, self.points[0].y, self.points[3].y);
 
-    pub fn parametric_gradient(&self, _: V2D) -> M2D {
-        let dx_du = (self.points[3].x - self.points[0].x) / 2.0;
-        let dy_dv = (self.points[3].y - self.points[0].y) / 2.0;
+        let dx_du = (real_x_max - real_x_min) / (child_para_range[0][1] - child_para_range[0][0]);
+        let dy_dv = (real_y_max - real_y_min) / (child_para_range[1][1] - child_para_range[1][0]);
 
         M2D::from([dx_du, 0.0], [0.0, dy_dv])
     }

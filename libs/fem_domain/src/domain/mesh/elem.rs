@@ -1,7 +1,7 @@
 use super::{
     h_refinement::{HLevels, HRefError, HRefLoc},
     p_refinement::PolyOrders,
-    Element, HRef, Point, M2D, V2D,
+    Element, HRef, EXPECTED_NUM_H_REFINEMENTS, M2D, V2D,
 };
 use json::JsonValue;
 use smallvec::SmallVec;
@@ -83,8 +83,8 @@ pub struct Elem {
     pub element: Arc<Element>,
     pub h_levels: HLevels,
     pub poly_orders: PolyOrders,
-    children: Option<(SmallVec<[usize; 4]>, HRef)>,
-    parent: Option<(usize, HRefLoc)>,
+    children: Option<SmallVec<[usize; 4]>>,
+    ancestors: SmallVec<[(usize, HRefLoc); EXPECTED_NUM_H_REFINEMENTS]>,
 }
 
 impl Elem {
@@ -96,7 +96,7 @@ impl Elem {
             edges,
             element: element.clone(),
             children: None,
-            parent: None,
+            ancestors: SmallVec::new(),
             h_levels: HLevels::default(),
             poly_orders: PolyOrders::default(),
         }
@@ -120,50 +120,67 @@ impl Elem {
                             refinement,
                             self.element.clone(),
                             self.id,
+                            self.loc_stack(),
                             &self.h_levels,
                             self.poly_orders,
                         )
-                    }).collect::<Vec<ElemUninit>>();
+                    })
+                    .collect::<Vec<ElemUninit>>();
 
-                self.children = Some((children.iter().map(|ce| ce.id).collect(), refinement));
-
+                self.children = Some(children.iter().map(|ce| ce.id).collect());
                 Ok(children)
-            },
+            }
         }
     }
 
     /// Id of the Parent Elem if this Elem has a parent
     pub fn parent_id(&self) -> Option<usize> {
-        match self.parent {
-            Some((parent_id, _)) => Some(parent_id),
+        match self.ancestors.last() {
+            Some((parent_id, _)) => Some(*parent_id),
             None => None,
         }
     }
 
-    /// Location ([HRefLoc]) of this Elem relative to its parent if this Elem has a parent
-    pub fn relative_location(&self) -> Option<HRefLoc> {
-        match self.parent {
-            Some((_, rel_loc)) => Some(rel_loc),
-            None => None,
+    /// Get the stack of [HRefLoc]s and Elem-IDs back to this `Elem`s ancestor on the base layer of the mesh
+    pub fn loc_stack<'a>(&'a self) -> &'a [(usize, HRefLoc)] {
+        &self.ancestors
+    }
+
+    /// Get the bounds of this `Elem` in parametric space relative to one of its ancestor `Elem`s
+    pub fn relative_parametric_range(&self, from_ancestor: usize) -> [[f64; 2]; 2] {
+        match self
+            .ancestors
+            .iter()
+            .position(|(ancestor_id, _)| ancestor_id == &from_ancestor)
+        {
+            Some(starting_index) => self
+                .ancestors
+                .iter()
+                .skip(starting_index)
+                .fold([[-1.0, 1.0], [-1.0, 1.0]], |acc, (_, href_loc)| {
+                    href_loc.sub_range(acc)
+                }),
+            None => panic!(
+                "{} is not an ancestor of Elem {}; cannot compute relative parametric range!",
+                from_ancestor, self.id
+            ),
         }
     }
 
-    /// Projection of a real [Point] on to parametric space (via this Elem's parent [Element])
-    pub fn parametric_projection(&self, real: &Point) -> V2D {
-        self.element.parametric_projection(real)
+    pub fn parametric_range(&self) -> [[f64; 2]; 2] {
+        self.ancestors.iter().fold([[-1.0, 1.0], [-1.0, 1.0]], |acc, (_, href_loc)| {
+            href_loc.sub_range(acc)
+        })
     }
 
     /// Gradients of a parametric point (as a [V2D]) through real space (via this Elem's parent [Element])
-    pub fn parametric_gradient(&self, parametric_coords: V2D) -> M2D {
-        self.element.parametric_gradient(parametric_coords)
+    pub fn parametric_mapping(&self, parametric_point: V2D, over_range: [[f64; 2]; 2]) -> M2D {
+        self.element.parametric_mapping(parametric_point, over_range)
     }
 
     /// Returns a vector of child Elem ids. Will return an empty vector if this Elem has no children.
     pub fn child_ids(&self) -> Option<SmallVec<[usize; 4]>> {
-        match &self.children {
-            Some((child_elem_ids, _)) => Some(child_elem_ids.clone()),
-            None => None,
-        }
+        self.children.clone()
     }
 
     pub fn has_children(&self) -> bool {
@@ -183,7 +200,7 @@ impl Elem {
             "h_levels": self.h_levels,
             "children": JsonValue::from(
                 match &self.children {
-                    Some((ids, _)) => ids.to_vec(),
+                    Some(ids) => ids.to_vec(),
                     None => Vec::new(),
                 }
             )
@@ -198,7 +215,7 @@ pub struct ElemUninit {
     pub nodes: [Option<usize>; 4],
     pub edges: [Option<usize>; 4],
     pub element: Arc<Element>,
-    parent: (usize, HRefLoc),
+    ancestors: SmallVec<[(usize, HRefLoc); EXPECTED_NUM_H_REFINEMENTS]>,
     h_levels: HLevels,
     poly_orders: PolyOrders,
 }
@@ -210,15 +227,19 @@ impl ElemUninit {
         refinement: HRef,
         element: Arc<Element>,
         parent_id: usize,
+        parents_ancestors: &[(usize, HRefLoc)],
         parent_h_levels: &HLevels,
         poly_orders: PolyOrders,
     ) -> Self {
+        let mut ancestors = SmallVec::from(parents_ancestors);
+        ancestors.push((parent_id, refinement.loc(idx)));
+
         Self {
             id,
             nodes: [None; 4],
             edges: [None; 4],
             element,
-            parent: (parent_id, refinement.location(idx)),
+            ancestors,
             h_levels: parent_h_levels.refined(refinement),
             poly_orders,
         }
@@ -294,7 +315,7 @@ impl ElemUninit {
                     .unwrap(),
                 element: self.element,
                 children: None,
-                parent: Some(self.parent),
+                ancestors: self.ancestors,
                 h_levels: self.h_levels,
                 poly_orders: self.poly_orders,
             })

@@ -49,12 +49,7 @@ impl DoF {
 
 impl fmt::Display for DoF {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{} \t {}",
-            self.id,
-            self.basis_specs,
-        )
+        write!(f, "{} \t {}", self.id, self.basis_specs,)
     }
 }
 
@@ -68,24 +63,23 @@ impl fmt::Display for BasisSpecGroup {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::ELEM(address) => write!(f, "Elem[{}, ({})]", address.elem_id, address.bs_id),
-            Self::EDGE([address_0, address_1]) => write!(f, "Edge[{}, {}, ({}, {})]", address_0.elem_id, address_1.elem_id, address_0.bs_id, address_1.bs_id),
-            Self::NODE([
-                address_0, 
-                address_1,
-                address_2,
-                address_3,
-                ]) => write!(
-                    f, 
-                    "Elem[{}, {}, {}, {}, ({}, {}, {}, {})]", 
-                    address_0.elem_id,
-                    address_1.elem_id,
-                    address_2.elem_id,
-                    address_3.elem_id,
-                    address_0.bs_id,
-                    address_1.bs_id,
-                    address_2.bs_id,
-                    address_3.bs_id,
-                ),
+            Self::EDGE([address_0, address_1]) => write!(
+                f,
+                "Edge[elem_ids: {}, {}, bs_ids: ({}, {})]",
+                address_0.elem_id, address_1.elem_id, address_0.bs_id, address_1.bs_id
+            ),
+            Self::NODE([address_0, address_1, address_2, address_3]) => write!(
+                f,
+                "Elem[elem_ids: {}, {}, {}, {}, bs_ids: ({}, {}, {}, {})]",
+                address_0.elem_id,
+                address_1.elem_id,
+                address_2.elem_id,
+                address_3.elem_id,
+                address_0.bs_id,
+                address_1.bs_id,
+                address_2.bs_id,
+                address_3.bs_id,
+            ),
         }
     }
 }
