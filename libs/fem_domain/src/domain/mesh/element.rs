@@ -26,16 +26,16 @@ impl Element {
     pub fn parametric_mapping(
         &self,
         _: V2D,
-        child_para_range: [[f64; 2]; 2],
+        [[u_min, u_max], [v_min, v_max]] : [[f64; 2]; 2],
     ) -> M2D {
-        let real_x_min = map_range(child_para_range[0][0], -1.0, 1.0, self.points[0].x, self.points[3].x);
-        let real_x_max = map_range(child_para_range[0][1], -1.0, 1.0, self.points[0].x, self.points[3].x);
+        let real_x_min = map_range(u_min, -1.0, 1.0, self.points[0].x, self.points[3].x);
+        let real_x_max = map_range(u_max, -1.0, 1.0, self.points[0].x, self.points[3].x);
 
-        let real_y_min = map_range(child_para_range[1][0], -1.0, 1.0, self.points[0].y, self.points[3].y);
-        let real_y_max = map_range(child_para_range[1][1], -1.0, 1.0, self.points[0].y, self.points[3].y);
+        let real_y_min = map_range(v_min, -1.0, 1.0, self.points[0].y, self.points[3].y);
+        let real_y_max = map_range(v_max, -1.0, 1.0, self.points[0].y, self.points[3].y);
 
-        let dx_du = (real_x_max - real_x_min) / (child_para_range[0][1] - child_para_range[0][0]);
-        let dy_dv = (real_y_max - real_y_min) / (child_para_range[1][1] - child_para_range[1][0]);
+        let dx_du = (real_x_max - real_x_min) / 2.0;
+        let dy_dv = (real_y_max - real_y_min) / 2.0;
 
         M2D::from([dx_du, 0.0], [0.0, dy_dv])
     }

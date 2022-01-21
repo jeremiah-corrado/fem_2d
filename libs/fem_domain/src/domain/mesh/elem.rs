@@ -10,14 +10,16 @@ use std::sync::Arc;
 
 /*
     Layout of Geometric indices:
-    2 --------- 3
-    |     1     |
-    |           |
-    |2         3|
-    |           |
-    |     0     |
-    0 --------- 1
 
+                  N
+            2 --------- 3
+            |     1     |
+            |           |
+         W  |2         3|  E
+            |           |
+            |     0     |
+            0 --------- 1
+                  S
 
     Layout of Geometric indices relative to Child indices (for each type of h-refinement):
 

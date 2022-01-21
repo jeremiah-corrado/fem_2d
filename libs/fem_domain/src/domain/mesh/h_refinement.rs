@@ -137,10 +137,10 @@ pub enum HRefLoc {
     NW,
     /// North East: T(3)
     NE,
-    /// East: U(0)
-    E,
-    /// West: U(1)
+    /// West: U(0)
     W,
+    /// East: U(1)
+    E,
     /// South: V(0)
     S,
     /// North: V(1)
@@ -155,8 +155,8 @@ impl HRefLoc {
             Self::SE => 1,
             Self::NW => 2,
             Self::NE => 3,
-            Self::E => 0,
-            Self::W => 1,
+            Self::W => 0,
+            Self::E => 1,
             Self::S => 0,
             Self::N => 1,
         }
@@ -175,8 +175,8 @@ impl HRefLoc {
             Self::SE => [middle, max_u],
             Self::NW => [min_u, middle],
             Self::NE => [middle, max_u],
-            Self::E => [min_u, middle],
-            Self::W => [middle, max_u],
+            Self::W => [min_u, middle],
+            Self::E => [middle, max_u],
             Self::S => [min_u, max_u],
             Self::N => [min_u, max_u],
         }
@@ -190,8 +190,8 @@ impl HRefLoc {
             Self::SE => [min_v, middle],
             Self::NW => [middle, max_v],
             Self::NE => [middle, max_v],
-            Self::E => [min_v, max_v],
             Self::W => [min_v, max_v],
+            Self::E => [min_v, max_v],
             Self::S => [min_v, middle],
             Self::N => [middle, max_v],
         }

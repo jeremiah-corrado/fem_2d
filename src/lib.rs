@@ -17,8 +17,8 @@ mod tests {
         let mut domain = Domain::from_mesh_file("./test_input/test_mesh_b.json").unwrap();
 
         domain.mesh.global_p_refinement(PRef::from(1, 1)).unwrap();
-        domain.mesh.global_h_refinement(HRef::T).unwrap();
-        domain.mesh.h_refine_elems(vec![6, 9, 11], HRef::T).unwrap();
+        // domain.mesh.global_h_refinement(HRef::T).unwrap();
+        domain.mesh.h_refine_elems(vec![0], HRef::T).unwrap();
         domain.gen_dofs();
 
         println!("Num DoFs: {}", domain.dofs.len());

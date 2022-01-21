@@ -103,5 +103,5 @@ impl Integral for L2InnerProduct {
 }
 
 fn partial_min(v1: f64, v2: f64) -> f64 {
-    std::cmp::min_by(v1, v2, |a, b| a.partial_cmp(b).unwrap())
+    std::cmp::max_by(v1, v2, |a, b| a.partial_cmp(b).unwrap())
 }
