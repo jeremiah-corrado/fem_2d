@@ -34,6 +34,8 @@ impl Element {
         let real_y_min = map_range(v_min, -1.0, 1.0, self.points[0].y, self.points[3].y);
         let real_y_max = map_range(v_max, -1.0, 1.0, self.points[0].y, self.points[3].y);
 
+        // println!("{} \t min (x: {:.5} y: {:.5})  max (x: {:.5} y: {:.5})", self.id, real_x_min, real_y_min, real_x_max, real_y_max);
+
         let dx_du = (real_x_max - real_x_min) / 2.0;
         let dy_dv = (real_y_max - real_y_min) / 2.0;
 

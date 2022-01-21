@@ -248,3 +248,59 @@ impl fmt::Display for HRefError {
         }
     }
 }
+
+mod tests {
+    use super::*;
+
+    const EXPECTED_ANISO_COORDS: [[[f64; 2]; 2]; 5] = [
+        [[-1.0, 1.0], [-1.0, 1.0]],
+        [[-1.0, 1.0], [0.0, 1.0]],
+        [[0.0, 1.0], [0.0, 1.0]],
+        [[0.0, 1.0], [0.0, 0.5]],
+        [[0.0, 0.5], [0.0, 0.5]],
+    ];
+
+    const EXPECTED_ISO_COORDS: [[[f64; 2]; 2]; 5] = [
+        [[-1.0, 1.0], [-1.0, 1.0]],
+        [[-1.0, 0.0], [-1.0, 0.0]],
+        [[-0.5, 0.0], [-1.0, -0.5]],
+        [[-0.5, -0.25], [-0.75, -0.5]],
+        [[-0.375, -0.25], [-0.625, -0.5]],
+    ];
+
+    #[test]
+    fn h_ref_loc() {
+        let loc_stack_aniso = vec![HRefLoc::N, HRefLoc::E, HRefLoc::S, HRefLoc::W];
+        let loc_stack_iso = vec![HRefLoc::SW, HRefLoc::SE, HRefLoc::NW, HRefLoc::NE];
+
+        let final_aniso = loc_stack_aniso.iter().enumerate().fold([[-1.0, 1.0], [-1.0, 1.0]], |acc, (i, loc)| {
+            for uv in 0..2 {
+                for mm in 0..2 {
+                    assert!((acc[uv][mm] - EXPECTED_ANISO_COORDS[i][uv][mm]).abs() < 1e-14);
+                }
+            }
+            loc.sub_range(acc)
+        });
+
+        for uv in 0..2 {
+            for mm in 0..2 {
+                assert!((final_aniso[uv][mm] - EXPECTED_ANISO_COORDS.last().unwrap()[uv][mm]).abs() < 1e-14);
+            }
+        }
+
+        let final_iso = loc_stack_iso.iter().enumerate().fold([[-1.0, 1.0], [-1.0, 1.0]], |acc, (i, loc)| {
+            for uv in 0..2 {
+                for mm in 0..2 {
+                    assert!((acc[uv][mm] - EXPECTED_ISO_COORDS[i][uv][mm]).abs() < 1e-14);
+                }
+            }
+            loc.sub_range(acc)
+        });
+
+        for uv in 0..2 {
+            for mm in 0..2 {
+                assert!((final_iso[uv][mm] - EXPECTED_ISO_COORDS.last().unwrap()[uv][mm]).abs() < 1e-14);
+            }
+        }
+    }
+}
