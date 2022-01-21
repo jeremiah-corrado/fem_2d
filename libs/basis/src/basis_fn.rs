@@ -252,24 +252,21 @@ impl<SF: ShapeFn> BasisFn<SF> {
         elem: &Elem,
         over_child_elem: Option<&Elem>,
     ) -> Self {
-        let (
+        let [
             (u_glq_scale, u_points_scaled), 
             (v_glq_scale, v_points_scaled),
-            rel_parametric_range,
-         ) = match over_child_elem {
+         ] = match over_child_elem {
             Some(child_elem) => {
                 let child_parametric_range = child_elem.relative_parametric_range(elem.id);
-                (
+                [
                     scale_gauss_quad_points(raw_u_points, child_parametric_range[0][0], child_parametric_range[0][1]),
                     scale_gauss_quad_points(raw_v_points, child_parametric_range[1][0], child_parametric_range[1][1]),
-                    child_parametric_range
-                )
+                ]
             }
-            None => (
+            None => [
                 (1.0, raw_u_points.to_vec()), 
                 (1.0, raw_v_points.to_vec()),
-                [[-1.0, 1.0], [-1.0, 1.0]],
-            ),
+            ],
         };
 
         let t: Vec<Vec<M2D>> = u_points_scaled

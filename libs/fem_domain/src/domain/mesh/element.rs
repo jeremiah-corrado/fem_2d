@@ -42,6 +42,7 @@ impl Element {
         M2D::from([dx_du, 0.0], [0.0, dy_dv])
     }
 
+    // TODO: update this method to support curvilinear Elements
     pub fn order_points(&self, p0: &Point, p1: &Point) -> std::cmp::Ordering {
         match p0.orientation_with(p1) {
             ParaDir::U => p0.x_order(p1),

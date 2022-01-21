@@ -39,8 +39,8 @@ impl Integral for CurlProduct {
                             let q_curl = q_basis
                                 .f_u_d1(q_orders, [m, n], p_basis.deriv_scale())
                                 .dot_with(&CURL_OP);
-
-                            p_curl * q_curl
+                                
+                            p_curl * q_curl / p_basis.glq_scale() / q_basis.glq_scale()
                         })
                     }
                     (BasisDir::U, BasisDir::V) => {
@@ -52,7 +52,7 @@ impl Integral for CurlProduct {
                                 .f_v_d1(q_orders, [m, n], p_basis.deriv_scale())
                                 .dot_with(&CURL_OP);
 
-                            p_curl * q_curl
+                            p_curl * q_curl / p_basis.glq_scale() / q_basis.glq_scale()
                         })
                     }
                     (BasisDir::V, BasisDir::U) => {
@@ -64,7 +64,7 @@ impl Integral for CurlProduct {
                                 .f_u_d1(q_orders, [m, n], p_basis.deriv_scale())
                                 .dot_with(&CURL_OP);
 
-                            p_curl * q_curl
+                            p_curl * q_curl / p_basis.glq_scale() / q_basis.glq_scale()
                         })
                     }
                     (BasisDir::V, BasisDir::V) => {
@@ -76,7 +76,7 @@ impl Integral for CurlProduct {
                                 .f_v_d1(q_orders, [m, n], p_basis.deriv_scale())
                                 .dot_with(&CURL_OP);
 
-                            p_curl * q_curl
+                            p_curl * q_curl / p_basis.glq_scale() / q_basis.glq_scale()
                         })
                     }
                     (_, _) => 0.0,
@@ -231,3 +231,8 @@ const EDGE_UNIT_VECTORS: [V2D; 4] = [
     V2D::from([0.0, -1.0]),
     V2D::from([0.0, 1.0]),
 ];
+
+
+fn partial_min(v1: f64, v2: f64) -> f64 {
+    std::cmp::min_by(v1, v2, |a, b| a.partial_cmp(b).unwrap())
+}
