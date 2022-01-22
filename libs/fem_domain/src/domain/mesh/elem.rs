@@ -163,7 +163,7 @@ impl Elem {
                     href_loc.sub_range(acc)
                 }),
             None => panic!(
-                "{} is not an ancestor of Elem {}; cannot compute relative parametric range!",
+                "Elem {} is not an ancestor of Elem {}; cannot compute relative parametric range!",
                 from_ancestor, self.id
             ),
         }

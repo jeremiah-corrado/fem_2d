@@ -113,8 +113,8 @@ impl HRef {
                 _ => unreachable!(),
             },
             Self::U(_) => match idx {
-                0 => HRefLoc::E,
-                1 => HRefLoc::W,
+                0 => HRefLoc::W, 
+                1 => HRefLoc::E,
                 _ => unreachable!(),
             },
             Self::V(_) => match idx {
@@ -162,7 +162,7 @@ impl HRefLoc {
         }
     }
 
-    /// given an input range in the parents parametric space, what sup range does the child `Elem` occupy?
+    /// given an input range in the parents parametric space, what sub space does the child `Elem` occupy?
     pub fn sub_range(&self, [u_range, v_range]: [[f64; 2]; 2]) -> [[f64; 2]; 2] {
         [self.sub_u_range(u_range), self.sub_v_range(v_range)]
     }
@@ -249,27 +249,28 @@ impl fmt::Display for HRefError {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
-
-    const EXPECTED_ANISO_COORDS: [[[f64; 2]; 2]; 5] = [
-        [[-1.0, 1.0], [-1.0, 1.0]],
-        [[-1.0, 1.0], [0.0, 1.0]],
-        [[0.0, 1.0], [0.0, 1.0]],
-        [[0.0, 1.0], [0.0, 0.5]],
-        [[0.0, 0.5], [0.0, 0.5]],
-    ];
-
-    const EXPECTED_ISO_COORDS: [[[f64; 2]; 2]; 5] = [
-        [[-1.0, 1.0], [-1.0, 1.0]],
-        [[-1.0, 0.0], [-1.0, 0.0]],
-        [[-0.5, 0.0], [-1.0, -0.5]],
-        [[-0.5, -0.25], [-0.75, -0.5]],
-        [[-0.375, -0.25], [-0.625, -0.5]],
-    ];
-
     #[test]
     fn h_ref_loc() {
+        const EXPECTED_ANISO_COORDS: [[[f64; 2]; 2]; 5] = [
+            [[-1.0, 1.0], [-1.0, 1.0]],
+            [[-1.0, 1.0], [0.0, 1.0]],
+            [[0.0, 1.0], [0.0, 1.0]],
+            [[0.0, 1.0], [0.0, 0.5]],
+            [[0.0, 0.5], [0.0, 0.5]],
+        ];
+    
+        const EXPECTED_ISO_COORDS: [[[f64; 2]; 2]; 5] = [
+            [[-1.0, 1.0], [-1.0, 1.0]],
+            [[-1.0, 0.0], [-1.0, 0.0]],
+            [[-0.5, 0.0], [-1.0, -0.5]],
+            [[-0.5, -0.25], [-0.75, -0.5]],
+            [[-0.375, -0.25], [-0.625, -0.5]],
+        ];
+    
+
         let loc_stack_aniso = vec![HRefLoc::N, HRefLoc::E, HRefLoc::S, HRefLoc::W];
         let loc_stack_iso = vec![HRefLoc::SW, HRefLoc::SE, HRefLoc::NW, HRefLoc::NE];
 

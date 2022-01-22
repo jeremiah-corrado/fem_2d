@@ -1,0 +1,1237 @@
+{
+    "Elements": [
+        {
+            "id": 0,
+            "eps_rel": 1,
+            "mu_rel": 1,
+            "eps_rel_im": 0,
+            "mu_rel_im": 0
+        }
+    ],
+    "Elems": [
+        {
+            "id": 0,
+            "element_id": 0,
+            "parent": null,
+            "active": false,
+            "nodes": [
+                0,
+                1,
+                2,
+                3
+            ],
+            "edges": [
+                0,
+                3,
+                1,
+                2
+            ],
+            "expansion": {
+                "u": 2,
+                "v": 2
+            },
+            "h_levels": {
+                "u": 0,
+                "v": 0
+            },
+            "children": [
+                1,
+                2,
+                3,
+                4
+            ]
+        },
+        {
+            "id": 1,
+            "element_id": 0,
+            "parent": 0,
+            "active": false,
+            "nodes": [
+                0,
+                5,
+                7,
+                4
+            ],
+            "edges": [
+                4,
+                12,
+                10,
+                6
+            ],
+            "expansion": {
+                "u": 2,
+                "v": 2
+            },
+            "h_levels": {
+                "u": 1,
+                "v": 1
+            },
+            "children": [
+                5,
+                6
+            ]
+        },
+        {
+            "id": 2,
+            "element_id": 0,
+            "parent": 0,
+            "active": true,
+            "nodes": [
+                5,
+                1,
+                4,
+                8
+            ],
+            "edges": [
+                5,
+                15,
+                6,
+                13
+            ],
+            "expansion": {
+                "u": 2,
+                "v": 2
+            },
+            "h_levels": {
+                "u": 1,
+                "v": 1
+            },
+            "children": []
+        },
+        {
+            "id": 3,
+            "element_id": 0,
+            "parent": 0,
+            "active": true,
+            "nodes": [
+                7,
+                4,
+                2,
+                6
+            ],
+            "edges": [
+                12,
+                7,
+                11,
+                9
+            ],
+            "expansion": {
+                "u": 2,
+                "v": 2
+            },
+            "h_levels": {
+                "u": 1,
+                "v": 1
+            },
+            "children": []
+        },
+        {
+            "id": 4,
+            "element_id": 0,
+            "parent": 0,
+            "active": true,
+            "nodes": [
+                4,
+                8,
+                6,
+                3
+            ],
+            "edges": [
+                15,
+                8,
+                9,
+                14
+            ],
+            "expansion": {
+                "u": 2,
+                "v": 2
+            },
+            "h_levels": {
+                "u": 1,
+                "v": 1
+            },
+            "children": []
+        },
+        {
+            "id": 5,
+            "element_id": 0,
+            "parent": 1,
+            "active": true,
+            "nodes": [
+                0,
+                9,
+                7,
+                10
+            ],
+            "edges": [
+                16,
+                18,
+                10,
+                20
+            ],
+            "expansion": {
+                "u": 2,
+                "v": 2
+            },
+            "h_levels": {
+                "u": 2,
+                "v": 1
+            },
+            "children": []
+        },
+        {
+            "id": 6,
+            "element_id": 0,
+            "parent": 1,
+            "active": false,
+            "nodes": [
+                9,
+                5,
+                10,
+                4
+            ],
+            "edges": [
+                17,
+                19,
+                20,
+                6
+            ],
+            "expansion": {
+                "u": 2,
+                "v": 2
+            },
+            "h_levels": {
+                "u": 2,
+                "v": 1
+            },
+            "children": [
+                7,
+                8
+            ]
+        },
+        {
+            "id": 7,
+            "element_id": 0,
+            "parent": 6,
+            "active": true,
+            "nodes": [
+                9,
+                5,
+                11,
+                12
+            ],
+            "edges": [
+                17,
+                25,
+                21,
+                23
+            ],
+            "expansion": {
+                "u": 2,
+                "v": 2
+            },
+            "h_levels": {
+                "u": 2,
+                "v": 2
+            },
+            "children": []
+        },
+        {
+            "id": 8,
+            "element_id": 0,
+            "parent": 6,
+            "active": true,
+            "nodes": [
+                11,
+                12,
+                10,
+                4
+            ],
+            "edges": [
+                25,
+                19,
+                22,
+                24
+            ],
+            "expansion": {
+                "u": 2,
+                "v": 2
+            },
+            "h_levels": {
+                "u": 2,
+                "v": 2
+            },
+            "children": []
+        }
+    ],
+    "Nodes": [
+        {
+            "id": 0,
+            "boundary": true,
+            "point": {
+                "x": -2.1,
+                "y": -2.1
+            },
+            "elems": [
+                [
+                    0,
+                    1,
+                    5
+                ],
+                [],
+                [],
+                []
+            ]
+        },
+        {
+            "id": 1,
+            "boundary": true,
+            "point": {
+                "x": 2.1,
+                "y": -2.1
+            },
+            "elems": [
+                [],
+                [
+                    0,
+                    2
+                ],
+                [],
+                []
+            ]
+        },
+        {
+            "id": 2,
+            "boundary": true,
+            "point": {
+                "x": -2.1,
+                "y": 2.1
+            },
+            "elems": [
+                [],
+                [],
+                [
+                    0,
+                    3
+                ],
+                []
+            ]
+        },
+        {
+            "id": 3,
+            "boundary": true,
+            "point": {
+                "x": 2.1,
+                "y": 2.1
+            },
+            "elems": [
+                [],
+                [],
+                [],
+                [
+                    0,
+                    4
+                ]
+            ]
+        },
+        {
+            "id": 4,
+            "boundary": false,
+            "point": {
+                "x": 0,
+                "y": 0
+            },
+            "elems": [
+                [
+                    4
+                ],
+                [
+                    3
+                ],
+                [
+                    2
+                ],
+                [
+                    1,
+                    6,
+                    8
+                ]
+            ]
+        },
+        {
+            "id": 5,
+            "boundary": true,
+            "point": {
+                "x": 0,
+                "y": -2.1
+            },
+            "elems": [
+                [
+                    2
+                ],
+                [
+                    1,
+                    6,
+                    7
+                ],
+                [],
+                []
+            ]
+        },
+        {
+            "id": 6,
+            "boundary": true,
+            "point": {
+                "x": 0,
+                "y": 2.1
+            },
+            "elems": [
+                [],
+                [],
+                [
+                    4
+                ],
+                [
+                    3
+                ]
+            ]
+        },
+        {
+            "id": 7,
+            "boundary": true,
+            "point": {
+                "x": -2.1,
+                "y": 0
+            },
+            "elems": [
+                [
+                    3
+                ],
+                [],
+                [
+                    1,
+                    5
+                ],
+                []
+            ]
+        },
+        {
+            "id": 8,
+            "boundary": true,
+            "point": {
+                "x": 2.1,
+                "y": 0
+            },
+            "elems": [
+                [],
+                [
+                    4
+                ],
+                [],
+                [
+                    2
+                ]
+            ]
+        },
+        {
+            "id": 9,
+            "boundary": true,
+            "point": {
+                "x": -1.05,
+                "y": -2.1
+            },
+            "elems": [
+                [
+                    6,
+                    7
+                ],
+                [
+                    5
+                ],
+                [],
+                []
+            ]
+        },
+        {
+            "id": 10,
+            "boundary": false,
+            "point": {
+                "x": -1.05,
+                "y": 0
+            },
+            "elems": [
+                [],
+                [],
+                [
+                    6,
+                    8
+                ],
+                [
+                    5
+                ]
+            ]
+        },
+        {
+            "id": 11,
+            "boundary": false,
+            "point": {
+                "x": -1.05,
+                "y": -1.05
+            },
+            "elems": [
+                [
+                    8
+                ],
+                [],
+                [
+                    7
+                ],
+                []
+            ]
+        },
+        {
+            "id": 12,
+            "boundary": false,
+            "point": {
+                "x": 0,
+                "y": -1.05
+            },
+            "elems": [
+                [],
+                [
+                    8
+                ],
+                [],
+                [
+                    7
+                ]
+            ]
+        }
+    ],
+    "Edges": [
+        {
+            "id": 0,
+            "boundary": true,
+            "direction": "U-Dir",
+            "nodes": [
+                0,
+                1
+            ],
+            "parent": null,
+            "children": [
+                4,
+                5
+            ],
+            "elems": [
+                [],
+                [
+                    {
+                        "level_key": [
+                            0,
+                            0
+                        ],
+                        "cell_id": 0
+                    }
+                ]
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 1,
+            "boundary": true,
+            "direction": "V-Dir",
+            "nodes": [
+                0,
+                2
+            ],
+            "parent": null,
+            "children": [
+                10,
+                11
+            ],
+            "elems": [
+                [],
+                [
+                    {
+                        "level_key": [
+                            0,
+                            0
+                        ],
+                        "cell_id": 0
+                    }
+                ]
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 2,
+            "boundary": true,
+            "direction": "V-Dir",
+            "nodes": [
+                1,
+                3
+            ],
+            "parent": null,
+            "children": [
+                13,
+                14
+            ],
+            "elems": [
+                [
+                    {
+                        "level_key": [
+                            0,
+                            0
+                        ],
+                        "cell_id": 0
+                    }
+                ],
+                []
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 3,
+            "boundary": true,
+            "direction": "U-Dir",
+            "nodes": [
+                2,
+                3
+            ],
+            "parent": null,
+            "children": [
+                7,
+                8
+            ],
+            "elems": [
+                [
+                    {
+                        "level_key": [
+                            0,
+                            0
+                        ],
+                        "cell_id": 0
+                    }
+                ],
+                []
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 4,
+            "boundary": true,
+            "direction": "U-Dir",
+            "nodes": [
+                0,
+                5
+            ],
+            "parent": 0,
+            "children": [
+                16,
+                17
+            ],
+            "elems": [
+                [],
+                [
+                    {
+                        "level_key": [
+                            1,
+                            1
+                        ],
+                        "cell_id": 1
+                    }
+                ]
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 5,
+            "boundary": true,
+            "direction": "U-Dir",
+            "nodes": [
+                5,
+                1
+            ],
+            "parent": 0,
+            "children": [],
+            "elems": [
+                [],
+                [
+                    {
+                        "level_key": [
+                            1,
+                            1
+                        ],
+                        "cell_id": 2
+                    }
+                ]
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 6,
+            "boundary": false,
+            "direction": "V-Dir",
+            "nodes": [
+                5,
+                4
+            ],
+            "parent": null,
+            "children": [
+                23,
+                24
+            ],
+            "elems": [
+                [
+                    {
+                        "level_key": [
+                            1,
+                            1
+                        ],
+                        "cell_id": 1
+                    },
+                    {
+                        "level_key": [
+                            2,
+                            1
+                        ],
+                        "cell_id": 6
+                    }
+                ],
+                [
+                    {
+                        "level_key": [
+                            1,
+                            1
+                        ],
+                        "cell_id": 2
+                    }
+                ]
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 7,
+            "boundary": true,
+            "direction": "U-Dir",
+            "nodes": [
+                2,
+                6
+            ],
+            "parent": 3,
+            "children": [],
+            "elems": [
+                [
+                    {
+                        "level_key": [
+                            1,
+                            1
+                        ],
+                        "cell_id": 3
+                    }
+                ],
+                []
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 8,
+            "boundary": true,
+            "direction": "U-Dir",
+            "nodes": [
+                6,
+                3
+            ],
+            "parent": 3,
+            "children": [],
+            "elems": [
+                [
+                    {
+                        "level_key": [
+                            1,
+                            1
+                        ],
+                        "cell_id": 4
+                    }
+                ],
+                []
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 9,
+            "boundary": false,
+            "direction": "V-Dir",
+            "nodes": [
+                4,
+                6
+            ],
+            "parent": null,
+            "children": [],
+            "elems": [
+                [
+                    {
+                        "level_key": [
+                            1,
+                            1
+                        ],
+                        "cell_id": 3
+                    }
+                ],
+                [
+                    {
+                        "level_key": [
+                            1,
+                            1
+                        ],
+                        "cell_id": 4
+                    }
+                ]
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 10,
+            "boundary": true,
+            "direction": "V-Dir",
+            "nodes": [
+                0,
+                7
+            ],
+            "parent": 1,
+            "children": [],
+            "elems": [
+                [],
+                [
+                    {
+                        "level_key": [
+                            1,
+                            1
+                        ],
+                        "cell_id": 1
+                    },
+                    {
+                        "level_key": [
+                            2,
+                            1
+                        ],
+                        "cell_id": 5
+                    }
+                ]
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 11,
+            "boundary": true,
+            "direction": "V-Dir",
+            "nodes": [
+                7,
+                2
+            ],
+            "parent": 1,
+            "children": [],
+            "elems": [
+                [],
+                [
+                    {
+                        "level_key": [
+                            1,
+                            1
+                        ],
+                        "cell_id": 3
+                    }
+                ]
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 12,
+            "boundary": false,
+            "direction": "U-Dir",
+            "nodes": [
+                7,
+                4
+            ],
+            "parent": null,
+            "children": [
+                18,
+                19
+            ],
+            "elems": [
+                [
+                    {
+                        "level_key": [
+                            1,
+                            1
+                        ],
+                        "cell_id": 1
+                    }
+                ],
+                [
+                    {
+                        "level_key": [
+                            1,
+                            1
+                        ],
+                        "cell_id": 3
+                    }
+                ]
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 13,
+            "boundary": true,
+            "direction": "V-Dir",
+            "nodes": [
+                1,
+                8
+            ],
+            "parent": 2,
+            "children": [],
+            "elems": [
+                [
+                    {
+                        "level_key": [
+                            1,
+                            1
+                        ],
+                        "cell_id": 2
+                    }
+                ],
+                []
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 14,
+            "boundary": true,
+            "direction": "V-Dir",
+            "nodes": [
+                8,
+                3
+            ],
+            "parent": 2,
+            "children": [],
+            "elems": [
+                [
+                    {
+                        "level_key": [
+                            1,
+                            1
+                        ],
+                        "cell_id": 4
+                    }
+                ],
+                []
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 15,
+            "boundary": false,
+            "direction": "U-Dir",
+            "nodes": [
+                4,
+                8
+            ],
+            "parent": null,
+            "children": [],
+            "elems": [
+                [
+                    {
+                        "level_key": [
+                            1,
+                            1
+                        ],
+                        "cell_id": 2
+                    }
+                ],
+                [
+                    {
+                        "level_key": [
+                            1,
+                            1
+                        ],
+                        "cell_id": 4
+                    }
+                ]
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 16,
+            "boundary": true,
+            "direction": "U-Dir",
+            "nodes": [
+                0,
+                9
+            ],
+            "parent": 4,
+            "children": [],
+            "elems": [
+                [],
+                [
+                    {
+                        "level_key": [
+                            1,
+                            2
+                        ],
+                        "cell_id": 5
+                    }
+                ]
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 17,
+            "boundary": true,
+            "direction": "U-Dir",
+            "nodes": [
+                9,
+                5
+            ],
+            "parent": 4,
+            "children": [],
+            "elems": [
+                [],
+                [
+                    {
+                        "level_key": [
+                            1,
+                            2
+                        ],
+                        "cell_id": 6
+                    },
+                    {
+                        "level_key": [
+                            2,
+                            2
+                        ],
+                        "cell_id": 7
+                    }
+                ]
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 18,
+            "boundary": false,
+            "direction": "U-Dir",
+            "nodes": [
+                7,
+                10
+            ],
+            "parent": 12,
+            "children": [],
+            "elems": [
+                [
+                    {
+                        "level_key": [
+                            1,
+                            2
+                        ],
+                        "cell_id": 5
+                    }
+                ],
+                []
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 19,
+            "boundary": false,
+            "direction": "U-Dir",
+            "nodes": [
+                10,
+                4
+            ],
+            "parent": 12,
+            "children": [],
+            "elems": [
+                [
+                    {
+                        "level_key": [
+                            1,
+                            2
+                        ],
+                        "cell_id": 6
+                    },
+                    {
+                        "level_key": [
+                            2,
+                            2
+                        ],
+                        "cell_id": 8
+                    }
+                ],
+                []
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 20,
+            "boundary": false,
+            "direction": "V-Dir",
+            "nodes": [
+                9,
+                10
+            ],
+            "parent": null,
+            "children": [
+                21,
+                22
+            ],
+            "elems": [
+                [
+                    {
+                        "level_key": [
+                            2,
+                            1
+                        ],
+                        "cell_id": 5
+                    }
+                ],
+                [
+                    {
+                        "level_key": [
+                            2,
+                            1
+                        ],
+                        "cell_id": 6
+                    }
+                ]
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 21,
+            "boundary": false,
+            "direction": "V-Dir",
+            "nodes": [
+                9,
+                11
+            ],
+            "parent": 20,
+            "children": [],
+            "elems": [
+                [],
+                [
+                    {
+                        "level_key": [
+                            2,
+                            2
+                        ],
+                        "cell_id": 7
+                    }
+                ]
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 22,
+            "boundary": false,
+            "direction": "V-Dir",
+            "nodes": [
+                11,
+                10
+            ],
+            "parent": 20,
+            "children": [],
+            "elems": [
+                [],
+                [
+                    {
+                        "level_key": [
+                            2,
+                            2
+                        ],
+                        "cell_id": 8
+                    }
+                ]
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 23,
+            "boundary": false,
+            "direction": "V-Dir",
+            "nodes": [
+                5,
+                12
+            ],
+            "parent": 6,
+            "children": [],
+            "elems": [
+                [
+                    {
+                        "level_key": [
+                            2,
+                            2
+                        ],
+                        "cell_id": 7
+                    }
+                ],
+                []
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 24,
+            "boundary": false,
+            "direction": "V-Dir",
+            "nodes": [
+                12,
+                4
+            ],
+            "parent": 6,
+            "children": [],
+            "elems": [
+                [
+                    {
+                        "level_key": [
+                            2,
+                            2
+                        ],
+                        "cell_id": 8
+                    }
+                ],
+                []
+            ],
+            "active_elems": []
+        },
+        {
+            "id": 25,
+            "boundary": false,
+            "direction": "U-Dir",
+            "nodes": [
+                11,
+                12
+            ],
+            "parent": null,
+            "children": [],
+            "elems": [
+                [
+                    {
+                        "level_key": [
+                            2,
+                            2
+                        ],
+                        "cell_id": 7
+                    }
+                ],
+                [
+                    {
+                        "level_key": [
+                            2,
+                            2
+                        ],
+                        "cell_id": 8
+                    }
+                ]
+            ],
+            "active_elems": []
+        }
+    ]
+}

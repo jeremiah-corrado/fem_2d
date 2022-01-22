@@ -45,8 +45,8 @@ int main(int argc, char * argv[]) {
     build_matrix(A, dimension, a_vals, a_rows, a_cols);
     build_matrix(B, dimension, b_vals, b_rows, b_cols);
     
-    MatView(A, PETSC_VIEWER_STDOUT_WORLD);
-    MatView(B, PETSC_VIEWER_STDOUT_WORLD);
+    // MatView(A, PETSC_VIEWER_STDOUT_WORLD);
+    // MatView(B, PETSC_VIEWER_STDOUT_WORLD);
 
     Vec xr, xi;
     MatCreateVecs(A, NULL, &xr);

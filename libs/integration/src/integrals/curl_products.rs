@@ -231,8 +231,3 @@ const EDGE_UNIT_VECTORS: [V2D; 4] = [
     V2D::from([0.0, -1.0]),
     V2D::from([0.0, 1.0]),
 ];
-
-
-fn partial_min(v1: f64, v2: f64) -> f64 {
-    std::cmp::min_by(v1, v2, |a, b| a.partial_cmp(b).unwrap())
-}

@@ -287,25 +287,17 @@ impl<SF: ShapeFn> BasisFn<SF> {
             .map(|row| row.iter().map(|v| v.inverse()).collect())
             .collect();
 
-        // let dt = if sampled_space.is_some() {
-        //     t.iter()
-        //         .map(|row| row.iter().map(|v| v.det()).collect())
-        //         .collect()
-        // } else {
-        //     vec![vec![1.0; raw_v_points.len()]; raw_u_points.len()]
-        // };
-
         let dt: Vec<Vec<f64>> = t.iter()
             .map(|row| row.iter().map(|v| v.det()).collect())
             .collect();
 
-        println!("t: {} \t ti: {} \t dt: {} \t UScale: {} \t VScale: {}", t[0][0], ti[0][0], dt[0][0], v_glq_scale, u_glq_scale);
+        // println!("t: {} \t ti: {} \t dt: {} \t UScale: {} \t VScale: {}", t[0][0], ti[0][0], dt[0][0], v_glq_scale, u_glq_scale);
 
         Self {
             t,
             ti,
             dt,
-            para_scale: V2D::from([v_glq_scale, u_glq_scale]),
+            para_scale: V2D::from([u_glq_scale, v_glq_scale]),
             u_shapes: SF::with(i_max, &u_points_scaled, compute_d2),
             v_shapes: SF::with(j_max, &v_points_scaled, compute_d2),
         }
@@ -362,7 +354,7 @@ impl<SF: ShapeFn> BasisFn<SF> {
             * self.u_shapes.power_d1(i, m)
             * self.v_shapes.poly_d1(j, n)
             * para_scale[0]
-            * self.para_scale[1]
+            * para_scale[1]
     }
 
     pub fn f_v_dd(&self, [i, j]: [usize; 2], [m, n]: [usize; 2], para_scale: &V2D) -> V2D {
@@ -370,7 +362,7 @@ impl<SF: ShapeFn> BasisFn<SF> {
             * self.u_shapes.poly_d1(i, m)
             * self.v_shapes.power_d1(j, n)
             * para_scale[0]
-            * self.para_scale[1]
+            * para_scale[1]
     }
 
     #[inline]
@@ -389,12 +381,12 @@ impl<SF: ShapeFn> BasisFn<SF> {
 
     #[inline]
     pub fn u_glq_scale(&self) -> f64 {
-        self.para_scale[1]
+        self.para_scale[0]
     }
 
     #[inline]
     pub fn v_glq_scale(&self) -> f64 {
-        self.para_scale[0]
+        self.para_scale[1]
     }
 
     #[inline]
