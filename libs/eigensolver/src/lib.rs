@@ -4,7 +4,7 @@ extern crate rayon;
 mod eigenproblem;
 mod slepc_wrapper;
 
-pub use eigenproblem::{GEP, SparseMatrix};
+pub use eigenproblem::{SparseMatrix, GEP};
 pub use slepc_wrapper::{solve_gep, EigenPair};
 
 #[cfg(test)]

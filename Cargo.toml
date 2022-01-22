@@ -16,3 +16,6 @@ path="./libs/integration/"
 path="./libs/eigensolver/"
 
 [dependencies]
+
+[dev-dependencies]
+rayon="1.5.1"

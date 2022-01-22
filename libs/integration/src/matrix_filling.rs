@@ -36,6 +36,9 @@ where
         let desc_basis_specs = domain.descendant_basis_specs(elem.id).unwrap();
         let bs_local = bs_sampler.sample_basis_fn(elem, None);
 
+        let mut local_a_entries: Vec<([usize; 2], f64)> = Vec::with_capacity(local_basis_specs.len() * local_basis_specs.len() / 2);
+        let mut local_b_entries: Vec<([usize; 2], f64)> = Vec::with_capacity(local_basis_specs.len() * local_basis_specs.len() / 2);
+
         // local - local
         for (i, (p_orders, p_dir, p_dof_id)) in local_basis_specs
             .iter()
@@ -54,10 +57,16 @@ where
                     .integrate(p_dir, q_dir, p_orders, q_orders, &bs_local, &bs_local)
                     .full_solution();
 
-                gep.a.insert([p_dof_id, q_dof_id], a);
-                gep.b.insert([p_dof_id, q_dof_id], b);
+                local_a_entries.push(([p_dof_id, q_dof_id], a));
+                local_b_entries.push(([p_dof_id, q_dof_id], b));
             }
         }
+
+        gep.a.insert_group(local_a_entries);
+        gep.b.insert_group(local_b_entries);
+
+        let mut desc_a_entries: Vec<([usize; 2], f64)> = Vec::with_capacity(local_basis_specs.len() * desc_basis_specs.len());
+        let mut desc_b_entries: Vec<([usize; 2], f64)> = Vec::with_capacity(local_basis_specs.len() * desc_basis_specs.len());
 
         // local - desc
         for (p_orders, p_dir, p_dof_id) in local_basis_specs
@@ -81,11 +90,15 @@ where
                         .integrate(p_dir, q_dir, p_orders, q_orders, &bs_p_sampled, &bs_q_local)
                         .full_solution();
 
-                    gep.a.insert([p_dof_id, q_dof_id], a);
-                    gep.b.insert([p_dof_id, q_dof_id], b);
+                    desc_a_entries.push(([p_dof_id, q_dof_id], a));
+                    desc_b_entries.push(([p_dof_id, q_dof_id], b));
                 }
             }
         }
+
+        gep.a.insert_group(desc_a_entries);
+        gep.b.insert_group(desc_b_entries);
+
     }
 
     gep
@@ -122,6 +135,9 @@ where
         let local_basis_specs = domain.local_basis_specs(elem.id).unwrap();
         let desc_basis_specs = domain.descendant_basis_specs(elem.id).unwrap();
 
+        let mut local_a_entries: Vec<([usize; 2], f64)> = Vec::with_capacity(local_basis_specs.len() * local_basis_specs.len() / 2);
+        let mut local_b_entries: Vec<([usize; 2], f64)> = Vec::with_capacity(local_basis_specs.len() * local_basis_specs.len() / 2);
+
         // local - local
         for (i, (p_orders, p_dir, p_dof_id)) in local_basis_specs
             .iter()
@@ -140,10 +156,16 @@ where
                     .integrate(p_dir, q_dir, p_orders, q_orders, &bs_local, &bs_local)
                     .full_solution();
 
-                local_a.insert([p_dof_id, q_dof_id], a);
-                local_b.insert([p_dof_id, q_dof_id], b);
+                local_a_entries.push(([p_dof_id, q_dof_id], a));
+                local_b_entries.push(([p_dof_id, q_dof_id], b));
             }
         }
+
+        local_a.insert_group(local_a_entries);
+        local_b.insert_group(local_b_entries);
+
+        let mut desc_a_entries: Vec<([usize; 2], f64)> = Vec::with_capacity(local_basis_specs.len() * desc_basis_specs.len());
+        let mut desc_b_entries: Vec<([usize; 2], f64)> = Vec::with_capacity(local_basis_specs.len() * desc_basis_specs.len());
 
         // local - desc
         for (p_orders, p_dir, p_dof_id) in local_basis_specs
@@ -171,11 +193,14 @@ where
                         .integrate(p_dir, q_dir, p_orders, q_orders, &bs_p_sampled, &bs_q_local)
                         .full_solution();
 
-                    local_a.insert([p_dof_id, q_dof_id], a);
-                    local_b.insert([p_dof_id, q_dof_id], b);
+                    desc_a_entries.push(([p_dof_id, q_dof_id], a));
+                    desc_b_entries.push(([p_dof_id, q_dof_id], b));
                 }
             }
         }
+
+        local_a.insert_group(desc_a_entries);
+        local_b.insert_group(desc_b_entries);
 
         [local_a, local_b]
     }));

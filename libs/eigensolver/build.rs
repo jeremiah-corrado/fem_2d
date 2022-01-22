@@ -1,11 +1,12 @@
 use cxx_build::CFG;
-use std::path::Path;
 use std::env;
+use std::path::Path;
 use std::process::Command;
 
 fn main() {
-    // build and link slepc_wrapper 
-    let boost_root =  env::var("BOOST_ROOT").expect("Environment Variable 'BOOST_ROOT' is not defined!");
+    // build and link slepc_wrapper
+    let boost_root =
+        env::var("BOOST_ROOT").expect("Environment Variable 'BOOST_ROOT' is not defined!");
     CFG.exported_header_dirs.push(Path::new(&boost_root));
     cxx_build::bridge("./src/slepc_wrapper.rs")
         .file("./cpp_src/slepc_wrapper.cc")
@@ -14,7 +15,10 @@ fn main() {
         .compile("eigensolver");
 
     // build eigensolver (using makefile)
-    Command::new("make").current_dir("./cpp_src/gep_module/").spawn().expect("Error running Makefile for GEP solver!");
+    Command::new("make")
+        .current_dir("./cpp_src/gep_module/")
+        .spawn()
+        .expect("Error running Makefile for GEP solver!");
 
     // mark reruns
     println!("cargo:rerun-if-changed=/src/slepc_wrapper.rs");

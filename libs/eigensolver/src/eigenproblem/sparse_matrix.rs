@@ -1,5 +1,5 @@
-use std::collections::BTreeMap;
 use crate::slepc_wrapper::slepc_bridge::AIJMatrix;
+use std::collections::BTreeMap;
 
 /// Wrapper around a BTreeMap to store square-symmetric matrices in a sparse data structure
 #[derive(Clone)]
@@ -55,6 +55,30 @@ impl SparseMatrix {
             *current_value += value;
         } else {
             self.entries.insert(coordinates, value);
+        }
+    }
+
+    pub fn insert_group(&mut self, mut entry_group: Vec<([usize; 2], f64)>) {
+        for (rc, value) in entry_group.drain(0..).map(|([r, c], v)| {
+            (
+                if r <= c {
+                    [
+                        r.try_into().expect("Row Idx was too large!"),
+                        c.try_into().expect("Col Idx was too large!"),
+                    ]
+                } else {
+                    [
+                        r.try_into().expect("Row Idx was too large!"),
+                        c.try_into().expect("Col Idx was too large!"),
+                    ]
+                },
+                v,
+            )
+        }) {
+            self.entries
+                .entry(rc)
+                .and_modify(|curr_val| *curr_val += value)
+                .or_insert(value);
         }
     }
 
@@ -196,7 +220,9 @@ mod tests {
         assert!(sm_a_entries.get(&[3, 1]).is_none());
     }
 
-    const AIJ_TEST_A: [f64; 11] = [1.0, 0.05125, 0.25, 2.0, 0.125, 0.05125, 3.0, 0.125, 4.0, 0.25, 5.0];
+    const AIJ_TEST_A: [f64; 11] = [
+        1.0, 0.05125, 0.25, 2.0, 0.125, 0.05125, 3.0, 0.125, 4.0, 0.25, 5.0,
+    ];
     const AIJ_TEST_J: [i32; 11] = [0, 2, 4, 1, 3, 0, 2, 1, 3, 0, 4];
     const AIJ_TEST_I: [i32; 6] = [0, 3, 5, 7, 9, 11];
 

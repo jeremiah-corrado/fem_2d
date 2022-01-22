@@ -164,6 +164,7 @@ dependencies = [
  "eigensolver",
  "fem_domain",
  "integration",
+ "rayon",
 ]
 
 [[package]]

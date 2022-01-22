@@ -2,12 +2,12 @@ mod sparse_matrix;
 
 pub use sparse_matrix::SparseMatrix;
 
+use crate::slepc_wrapper::slepc_bridge::AIJMatrix;
 use rayon::prelude::*;
 use std::sync::mpsc::channel;
-use crate::slepc_wrapper::slepc_bridge::AIJMatrix;
 
-/// Generalized Eigenproblem 
-/// 
+/// Generalized Eigenproblem
+///
 /// Au = λBu
 #[derive(Clone)]
 pub struct GEP {
@@ -26,13 +26,9 @@ impl GEP {
     }
 
     pub(crate) fn to_aij_mats(self) -> [AIJMatrix; 2] {
-        [
-            self.a.into(),
-            self.b.into(),
-        ]
+        [self.a.into(), self.b.into()]
     }
 }
-
 
 impl ParallelExtend<[SparseMatrix; 2]> for GEP {
     fn par_extend<I>(&mut self, elem_matrices_iter: I)
@@ -43,12 +39,10 @@ impl ParallelExtend<[SparseMatrix; 2]> for GEP {
 
         elem_matrices_iter
             .into_par_iter()
-            .for_each_with(sender, |s, mut elem_matrices| {
-                s.send([
-                    std::mem::replace(&mut elem_matrices[0], SparseMatrix::new(0)),
-                    std::mem::replace(&mut elem_matrices[0], SparseMatrix::new(0)),
-                ])
-                .expect("Failed to send sub-matrices over MSPC channel; cannot construct Matrices!")
+            .for_each_with(sender, |s, elem_matrices| {
+                s.send(elem_matrices).expect(
+                    "Failed to send sub-matrices over MSPC channel; cannot construct Matrices!",
+                )
             });
 
         receiver

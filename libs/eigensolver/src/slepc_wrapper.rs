@@ -16,24 +16,20 @@ impl EigenPair {
     }
 }
 
-/// Solve a Generalized Eigenvalue Problem. 
-/// 
+/// Solve a Generalized Eigenvalue Problem.
+///
 /// A `target_eigenvalue` is used for spectral decomposition and solution selection
 pub fn solve_gep(gep: GEP, target_eigenvalue: f64) -> Result<EigenPair, String> {
     let [a_aij, b_aij] = gep.to_aij_mats();
 
-    let sol = slepc_bridge::slepc_eigenproblem(
-        target_eigenvalue,
-        a_aij,
-        b_aij,
-    );
+    let sol = slepc_bridge::slepc_eigenproblem(target_eigenvalue, a_aij, b_aij);
 
     match sol.status {
         0 => Ok(EigenPair {
             value: sol.eigenvalue,
             vector: Vec::from(sol.eigenvector.as_slice()),
         }),
-        i => Err(format!("SLEPC EigenSolver failed with error code: {}", i))
+        i => Err(format!("SLEPC EigenSolver failed with error code: {}", i)),
     }
 }
 
@@ -46,14 +42,13 @@ pub mod slepc_bridge {
         pub j: Vec<i32>,
         pub dim: usize,
     }
-    
+
     struct EigenSolutionInternal {
         status: i32,
         eigenvalue: f64,
         eigenvector: UniquePtr<CxxVector<f64>>,
     }
-    
-    
+
     unsafe extern "C++" {
         include!("eigensolver/cpp_src/slepc_wrapper.h");
 

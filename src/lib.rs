@@ -10,6 +10,7 @@ pub use eigensolver::{GEP, SparseMatrix, solve_gep, EigenPair};
 
 #[cfg(test)]
 mod tests {
+    use rayon::prelude::*;
     use super::*;
 
     #[test]
@@ -84,6 +85,26 @@ mod tests {
         domain.gen_dofs();
 
         let eigenproblem = fill_matrices::<CurlProduct, L2InnerProduct, KOLShapeFn>(&domain);
+        let eigen_pair = solve_gep(eigenproblem, 1.475).unwrap();
+
+        assert!((eigen_pair.value - 1.4745880937_f64).abs() < 1e-9);
+    }
+
+    #[test]
+    fn basic_problem_par() {
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(4)
+            .build_global()
+            .unwrap();
+
+        let mut domain = Domain::from_mesh_file("./test_input/test_mesh_b.json").unwrap();
+
+        domain.mesh.global_p_refinement(PRef::from(3, 3)).unwrap();
+        domain.mesh.global_h_refinement(HRef::T).unwrap();
+        domain.mesh.h_refine_elems(vec![6, 9, 12], HRef::T).unwrap();
+        domain.gen_dofs();
+
+        let eigenproblem = fill_matrices_parallel::<CurlProduct, L2InnerProduct, KOLShapeFn>(&domain);
         let eigen_pair = solve_gep(eigenproblem, 1.475).unwrap();
 
         assert!((eigen_pair.value - 1.4745880937_f64).abs() < 1e-9);
