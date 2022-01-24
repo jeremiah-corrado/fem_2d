@@ -7,11 +7,11 @@ mod fields;
 mod integrals;
 mod matrix_filling;
 
+pub use fields::UniformFieldSpace;
 pub use integrals::{
     real_gauss_quad, real_gauss_quad_edge, real_gauss_quad_inner, CurlProduct, Integral,
     IntegralResult, L2InnerProduct,
 };
-
 pub use matrix_filling::{fill_matrices, fill_matrices_parallel};
 
 #[cfg(test)]

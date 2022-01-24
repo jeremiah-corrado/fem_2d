@@ -97,7 +97,7 @@ impl<SF: ShapeFn> BasisFnSampler<SF> {
         if let Some(computed_bs) = self.computed.get(&desc) {
             computed_bs.clone()
         } else {
-            let bs = BasisFn::over_desc(
+            let bs = BasisFn::mapped_over_desc(
                 self.i_max,
                 self.j_max,
                 self.compute_d2,
@@ -184,7 +184,7 @@ impl<SF: ShapeFn> ParBasisFnSampler<SF> {
                 if let Some(computed_bs) = comp_guard.get(&desc) {
                     computed_bs.clone()
                 } else {
-                    let bs = BasisFn::over_desc(
+                    let bs = BasisFn::mapped_over_desc(
                         self.i_max,
                         self.j_max,
                         self.compute_d2,
@@ -198,7 +198,7 @@ impl<SF: ShapeFn> ParBasisFnSampler<SF> {
                 }
             }
             // fallback on computing directly, if MutexGuard is not available.
-            Err(_) => Arc::new(BasisFn::over_desc(
+            Err(_) => Arc::new(BasisFn::mapped_over_desc(
                 self.i_max,
                 self.j_max,
                 self.compute_d2,
@@ -243,89 +243,10 @@ pub struct BasisFn<SF: ShapeFn> {
 }
 
 impl<SF: ShapeFn> BasisFn<SF> {
-    pub fn over_anc(
-        i_max: usize,
-        j_max: usize,
-        compute_d2: bool,
-        raw_u_points: &[f64],
-        raw_v_points: &[f64],
-        elem: &Elem,
-        anc_elem: &Elem,
-    ) -> (Self, [[usize; 2]; 2]) {
-        let [
-            (u_points_subset, u_point_indices),
-            (v_points_subset, v_point_indices),
-        ] = if elem.id == anc_elem.id {
-            [
-                (raw_u_points.to_vec(), [0, raw_u_points.len()]),
-                (raw_v_points.to_vec(), [0, raw_v_points.len()]),
-            ]
-        } else {
-            let [u_range, v_range] = elem.relative_parametric_range(anc_elem.id);
-            let mut min_u_idx = u_range.len();
-            let mut max_u_idx = 0;
-            let mut min_reached = false;
-
-            for (u_idx, &u_point) in raw_u_points.iter().enumerate() {
-                if u_point <= u_range[1] {
-                    max_u_idx = u_idx;
-                }
-                if !min_reached && u_point >= u_range[0] {
-                    min_reached = true;
-                    min_u_idx = u_idx;
-                }
-            }
-
-            assert!(min_u_idx < raw_u_points.len());
-            assert!(max_u_idx < raw_u_points.len());
-
-            [
-                (raw_u_points[min_u_idx..=max_u_idx].to_vec(), [min_u_idx, max_u_idx]),
-                (raw_v_points.to_vec(), [0, raw_v_points.len()]),
-            ]
-        };
-
-        let t: Vec<Vec<M2D>> = u_points_subset
-            .iter()
-            .map(|u| {
-                v_points_subset
-                    .iter()
-                    .map(|v| elem.parametric_mapping(
-                        V2D::from([*u, *v]),
-                        elem.parametric_range(),
-                    ))
-                    .collect()
-            })
-            .collect();
-
-        let ti: Vec<Vec<M2D>> = t
-            .iter()
-            .map(|row| row.iter().map(|v| v.inverse()).collect())
-            .collect();
-
-        let dt: Vec<Vec<f64>> = t.iter()
-            .map(|row| row.iter().map(|v| v.det()).collect())
-            .collect();
-
-        // println!("t: {} \t ti: {} \t dt: {} \t UScale: {} \t VScale: {}", t[0][0], ti[0][0], dt[0][0], v_glq_scale, u_glq_scale);
-
-        (
-            Self {
-                t,
-                ti,
-                dt,
-                para_scale: V2D::from([1.0, 1.0]),
-                u_shapes: SF::with(i_max, &u_points_subset, compute_d2),
-                v_shapes: SF::with(j_max, &v_points_subset, compute_d2),
-            },
-            [
-                u_point_indices,
-                v_point_indices
-            ]
-        )
-    }
-
-    pub fn over_desc(
+    /// create a Basis Function instance defined over some Elem, and mapped over some descendant Elem
+    /// 
+    /// `raw_points` are mapped (according to GLQ rules) to match the parametric bounds of the descendant Elem
+    pub fn mapped_over_desc(
         i_max: usize,
         j_max: usize,
         compute_d2: bool,
@@ -384,6 +305,91 @@ impl<SF: ShapeFn> BasisFn<SF> {
             v_shapes: SF::with(j_max, &v_points_scaled, compute_d2),
         }
     }
+    
+    // /// create a Basis Function instance defined over some Elem, and sampled over some descendant Elem
+    // /// 
+    // /// a subset of `raw_points` defined over both Elems are used 
+    // pub fn sampled_over_desc(
+    //     i_max: usize,
+    //     j_max: usize,
+    //     compute_d2: bool,
+    //     raw_u_points: &[f64],
+    //     raw_v_points: &[f64],
+    //     elem: &Elem,
+    //     desc_elem: &Elem,
+    // ) -> (Self, [[usize; 2]; 2]) {
+    //     let [
+    //         (u_points_subset, u_point_indices),
+    //         (v_points_subset, v_point_indices),
+    //     ] = if elem.id == desc_elem.id {
+    //         [
+    //             (raw_u_points.to_vec(), [0, raw_u_points.len()]),
+    //             (raw_v_points.to_vec(), [0, raw_v_points.len()]),
+    //         ]
+    //     } else {
+    //         let [u_range, v_range] = elem.relative_parametric_range(anc_elem.id);
+    //         let mut min_u_idx = u_range.len();
+    //         let mut max_u_idx = 0;
+    //         let mut min_reached = false;
+
+    //         for (u_idx, &u_point) in raw_u_points.iter().enumerate() {
+    //             if u_point <= u_range[1] {
+    //                 max_u_idx = u_idx;
+    //             }
+    //             if !min_reached && u_point >= u_range[0] {
+    //                 min_reached = true;
+    //                 min_u_idx = u_idx;
+    //             }
+    //         }
+
+    //         assert!(min_u_idx < raw_u_points.len());
+    //         assert!(max_u_idx < raw_u_points.len());
+
+    //         [
+    //             (raw_u_points[min_u_idx..=max_u_idx].to_vec(), [min_u_idx, max_u_idx]),
+    //             (raw_v_points.to_vec(), [0, raw_v_points.len()]),
+    //         ]
+    //     };
+
+    //     let t: Vec<Vec<M2D>> = u_points_subset
+    //         .iter()
+    //         .map(|u| {
+    //             v_points_subset
+    //                 .iter()
+    //                 .map(|v| elem.parametric_mapping(
+    //                     V2D::from([*u, *v]),
+    //                     elem.parametric_range(),
+    //                 ))
+    //                 .collect()
+    //         })
+    //         .collect();
+
+    //     let ti: Vec<Vec<M2D>> = t
+    //         .iter()
+    //         .map(|row| row.iter().map(|v| v.inverse()).collect())
+    //         .collect();
+
+    //     let dt: Vec<Vec<f64>> = t.iter()
+    //         .map(|row| row.iter().map(|v| v.det()).collect())
+    //         .collect();
+
+    //     // println!("t: {} \t ti: {} \t dt: {} \t UScale: {} \t VScale: {}", t[0][0], ti[0][0], dt[0][0], v_glq_scale, u_glq_scale);
+
+    //     (
+    //         Self {
+    //             t,
+    //             ti,
+    //             dt,
+    //             para_scale: V2D::from([1.0, 1.0]),
+    //             u_shapes: SF::with(i_max, &u_points_subset, compute_d2),
+    //             v_shapes: SF::with(j_max, &v_points_subset, compute_d2),
+    //         },
+    //         [
+    //             u_point_indices,
+    //             v_point_indices
+    //         ]
+    //     )
+    // }
 
     pub fn f_u(&self, [i, j]: [usize; 2], [m, n]: [usize; 2]) -> V2D {
         self.ti[m][n].u * self.u_shapes.power(i, m) * self.v_shapes.poly(j, n)
