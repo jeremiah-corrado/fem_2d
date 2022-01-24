@@ -1,8 +1,9 @@
 extern crate basis;
+extern crate eigensolver;
 extern crate fem_domain;
 extern crate rayon;
-extern crate eigensolver;
 
+mod fields;
 mod integrals;
 mod matrix_filling;
 

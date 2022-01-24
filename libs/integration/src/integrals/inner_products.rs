@@ -28,30 +28,42 @@ impl Integral for L2InnerProduct {
     ) -> IntegralResult {
         IntegralResult::Full(
             p_basis.glq_scale()
-                * q_basis.glq_scale() *
-                match (p_dir, q_dir) {
+                * q_basis.glq_scale()
+                * match (p_dir, q_dir) {
                     (BasisDir::U, BasisDir::U) => {
                         real_gauss_quad(&self.u_weights, &self.v_weights, |m, n| {
                             V2D::dot(p_basis.f_u(p_orders, [m, n]), q_basis.f_u(q_orders, [m, n]))
-                                * partial_max(p_basis.sample_scale([m, n]),q_basis.sample_scale([m, n]))
+                                * partial_max(
+                                    p_basis.sample_scale([m, n]),
+                                    q_basis.sample_scale([m, n]),
+                                )
                         })
                     }
                     (BasisDir::U, BasisDir::V) => {
                         real_gauss_quad(&self.u_weights, &self.v_weights, |m, n| {
                             V2D::dot(p_basis.f_u(p_orders, [m, n]), q_basis.f_v(q_orders, [m, n]))
-                                * partial_max(p_basis.sample_scale([m, n]),q_basis.sample_scale([m, n]))
+                                * partial_max(
+                                    p_basis.sample_scale([m, n]),
+                                    q_basis.sample_scale([m, n]),
+                                )
                         })
                     }
                     (BasisDir::V, BasisDir::U) => {
                         real_gauss_quad(&self.u_weights, &self.v_weights, |m, n| {
                             V2D::dot(p_basis.f_v(p_orders, [m, n]), q_basis.f_u(q_orders, [m, n]))
-                                * partial_max(p_basis.sample_scale([m, n]),q_basis.sample_scale([m, n]))
+                                * partial_max(
+                                    p_basis.sample_scale([m, n]),
+                                    q_basis.sample_scale([m, n]),
+                                )
                         })
                     }
                     (BasisDir::V, BasisDir::V) => {
                         real_gauss_quad(&self.u_weights, &self.v_weights, |m, n| {
                             V2D::dot(p_basis.f_v(p_orders, [m, n]), q_basis.f_v(q_orders, [m, n]))
-                                * partial_max(p_basis.sample_scale([m, n]),q_basis.sample_scale([m, n]))
+                                * partial_max(
+                                    p_basis.sample_scale([m, n]),
+                                    q_basis.sample_scale([m, n]),
+                                )
                         })
                     }
                     (_, _) => 0.0,
@@ -75,25 +87,37 @@ impl Integral for L2InnerProduct {
                     (BasisDir::U, BasisDir::U) => {
                         real_gauss_quad_inner(&self.u_weights, &self.v_weights, |m, n| {
                             V2D::dot(p_basis.f_u(p_orders, [m, n]), q_basis.f_u(q_orders, [m, n]))
-                                * partial_max(p_basis.sample_scale([m, n]),q_basis.sample_scale([m, n]))
+                                * partial_max(
+                                    p_basis.sample_scale([m, n]),
+                                    q_basis.sample_scale([m, n]),
+                                )
                         })
                     }
                     (BasisDir::U, BasisDir::V) => {
                         real_gauss_quad_inner(&self.u_weights, &self.v_weights, |m, n| {
                             V2D::dot(p_basis.f_u(p_orders, [m, n]), q_basis.f_v(q_orders, [m, n]))
-                                * partial_max(p_basis.sample_scale([m, n]),q_basis.sample_scale([m, n]))
+                                * partial_max(
+                                    p_basis.sample_scale([m, n]),
+                                    q_basis.sample_scale([m, n]),
+                                )
                         })
                     }
                     (BasisDir::V, BasisDir::U) => {
                         real_gauss_quad_inner(&self.u_weights, &self.v_weights, |m, n| {
                             V2D::dot(p_basis.f_v(p_orders, [m, n]), q_basis.f_u(q_orders, [m, n]))
-                                * partial_max(p_basis.sample_scale([m, n]),q_basis.sample_scale([m, n]))
+                                * partial_max(
+                                    p_basis.sample_scale([m, n]),
+                                    q_basis.sample_scale([m, n]),
+                                )
                         })
                     }
                     (BasisDir::V, BasisDir::V) => {
                         real_gauss_quad_inner(&self.u_weights, &self.v_weights, |m, n| {
                             V2D::dot(p_basis.f_v(p_orders, [m, n]), q_basis.f_v(q_orders, [m, n]))
-                                * partial_max(p_basis.sample_scale([m, n]),q_basis.sample_scale([m, n]))
+                                * partial_max(
+                                    p_basis.sample_scale([m, n]),
+                                    q_basis.sample_scale([m, n]),
+                                )
                         })
                     }
                     (_, _) => 0.0,
