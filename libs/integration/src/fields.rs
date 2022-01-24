@@ -7,7 +7,11 @@ use std::io::{BufWriter, Write};
 use std::time::SystemTime;
 
 // TODO: rework UniformFieldSpace and print_to_vtk functions to support curvilinear elements
+// TODO: implement a constant (over x and y) density FieldSpace structure which supports field image exports
 
+/// A collection of Field Solutions over a [Domain]. 
+/// 
+/// Solutions can be operated on and printed to VTK files for visualization.
 pub struct UniformFieldSpace<'d> {
     quantities: HashMap<String, FieldQuantity>,
     parametric_points: [Vec<f64>; 2],
@@ -17,6 +21,9 @@ pub struct UniformFieldSpace<'d> {
 
 impl<'d> UniformFieldSpace<'d> {
     /// Generate a FieldSpace over a [Domain]
+    /// 
+    /// * `domain`: is a reference to a Domain which must outlive this Structure. It is used for all further computations
+    /// * `densities`: the number of evaluation points in the u and v directions respectively. These values apply to Elems on the shell of the Domain (their ancestor Elems will have more evaluation points)
     pub fn new(domain: &'d Domain, densities: [usize; 2]) -> Self {
         Self {
             quantities: HashMap::new(),
@@ -102,7 +109,7 @@ impl<'d> UniformFieldSpace<'d> {
 
     /// create a VTK file at the designated `path` (with the file `name.vtk`) including all Field Quantities
     /// 
-    /// These files can be plotted using (Visit)[https://wci.llnl.gov/simulation/computer-codes/visit]
+    /// These files can be plotted using [Visit](https://wci.llnl.gov/simulation/computer-codes/visit)
     pub fn print_all_to_vtk(
         &self,
         path: impl AsRef<str>,
@@ -113,7 +120,7 @@ impl<'d> UniformFieldSpace<'d> {
 
     /// create a VTK file at the designated `path` (with the file `name.vtk`) including a list of Field Quantities
     /// 
-    /// These files can be plotted using (Visit)[https://wci.llnl.gov/simulation/computer-codes/visit]
+    /// These files can be plotted using [Visit](https://wci.llnl.gov/simulation/computer-codes/visit)
     pub fn print_quantities_to_vkt(
         &self,
         path: impl AsRef<str>,
@@ -232,13 +239,12 @@ impl<'d> UniformFieldSpace<'d> {
         if !self.quantities.contains_key(&op_a) || !self.quantities.contains_key(&op_b) {
             Err(format!("FieldSpace does not have quantities {} and {}; cannot apply operation!", op_a, op_b))
         } else {
-            let q_new = FieldQuantity::new(&q_new_key);
+            let mut q_new = FieldQuantity::new(&q_new_key);
             let q_a = self.quantities.get(&op_a).unwrap();
             let q_b = self.quantities.get(&op_b).unwrap();
             
             for ((shell_elem_id, elem_values_a), elem_values_b) in q_a.values.iter().zip(q_b.values.values()) {
                 let mut result_values = vec![vec![0.0; self.densities[0]]; self.densities[1]];
-
                 for m in 0..self.densities[0] {
                     for n in 0..self.densities[1] {
                         result_values[m][n] = expression(elem_values_a[m][n], elem_values_b[m][n]);
@@ -249,10 +255,11 @@ impl<'d> UniformFieldSpace<'d> {
             }
 
             self.quantities.insert(q_new_key, q_new);
-
             Ok(())
         }
     }
+
+    // TODO: implement 3arg, Narg, and convolution. 
 }
 
 struct FieldQuantity {
