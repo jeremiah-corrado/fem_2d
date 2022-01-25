@@ -1,17 +1,22 @@
 extern crate basis;
-extern crate fem_domain;
 extern crate eigensolver;
+extern crate fem_domain;
 extern crate integration;
 
 pub use basis::{BasisFn, BasisFnSampler, KOLShapeFn, MaxOrthoShapeFn, ShapeFn};
-pub use fem_domain::{Domain, Mesh, Point, M2D, V2D, DoF, HRef, PRef, HRefError, PRefError, BasisDir};
-pub use integration::{CurlProduct, Integral, IntegralResult, L2InnerProduct, fill_matrices, fill_matrices_parallel};
-pub use eigensolver::{GEP, SparseMatrix, solve_gep, EigenPair};
+pub use eigensolver::{solve_gep, EigenPair, SparseMatrix, GEP};
+pub use fem_domain::{
+    BasisDir, DoF, Domain, HRef, HRefError, Mesh, PRef, PRefError, Point, M2D, V2D,
+};
+pub use integration::{
+    fill_matrices, fill_matrices_parallel, CurlProduct, Integral, IntegralResult, L2InnerProduct,
+    UniformFieldSpace,
+};
 
 #[cfg(test)]
 mod tests {
-    use rayon::prelude::*;
     use super::*;
+    use rayon::prelude::*;
 
     // #[test]
     // fn integration_correctness() {
@@ -48,7 +53,7 @@ mod tests {
     //                 for p_j in 0..=j_max {
     //                     for q_i in 0..=i_max {
     //                         for q_j in 0..=j_max {
-                                
+
     //                             let a = a_integ
     //                                 .integrate(p_dir, q_dir, [p_i, p_j], [q_i, q_j], &bs_p, &bs_q)
     //                                 .full_solution();
@@ -74,7 +79,6 @@ mod tests {
     //         }
     //     }
     // }
-
     #[test]
     fn basic_problem_seq() {
         let mut domain = Domain::from_mesh_file("./test_input/test_mesh_b.json").unwrap();
@@ -104,7 +108,8 @@ mod tests {
         domain.mesh.h_refine_elems(vec![6, 9, 12], HRef::T).unwrap();
         domain.gen_dofs();
 
-        let eigenproblem = fill_matrices_parallel::<CurlProduct, L2InnerProduct, KOLShapeFn>(&domain);
+        let eigenproblem =
+            fill_matrices_parallel::<CurlProduct, L2InnerProduct, KOLShapeFn>(&domain);
         let eigen_pair = solve_gep(eigenproblem, 1.475).unwrap();
 
         assert!((eigen_pair.value - 1.4745880937_f64).abs() < 1e-9);

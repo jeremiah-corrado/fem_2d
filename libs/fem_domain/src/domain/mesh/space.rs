@@ -25,6 +25,14 @@ impl V2D {
     pub fn dot(a: Self, b: Self) -> f64 {
         a[0] * b[0] + a[1] * b[1]
     }
+
+    pub fn x(&self) -> f64 {
+        self.inner[0]
+    }
+
+    pub fn y(&self) -> f64 {
+        self.inner[1]
+    }
 }
 
 impl Default for V2D {

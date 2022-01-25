@@ -39,7 +39,7 @@ impl Integral for CurlProduct {
                             let q_curl = q_basis
                                 .f_u_d1(q_orders, [m, n], p_basis.deriv_scale())
                                 .dot_with(&CURL_OP);
-                                
+
                             p_curl * q_curl / p_basis.glq_scale() / q_basis.glq_scale()
                         })
                     }
