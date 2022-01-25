@@ -1,6 +1,6 @@
 mod sparse_matrix;
 
-pub use sparse_matrix::SparseMatrix;
+pub use sparse_matrix::{SparseMatrix, AIJMatrixBinary};
 
 use crate::slepc_wrapper::slepc_bridge::AIJMatrix;
 use rayon::prelude::*;
@@ -27,6 +27,12 @@ impl GEP {
 
     pub(crate) fn to_aij_mats(self) -> [AIJMatrix; 2] {
         [self.a.into(), self.b.into()]
+    }
+
+    pub fn to_petsc_binary_files(self, prefix: impl AsRef<str>) -> std::io::Result<()> {
+        let [a, b] : [AIJMatrixBinary; 2] = [self.a.into(), self.b.into()];
+        a.to_petsc_binary_format(format!("{}_a.dat", prefix.as_ref()))?;
+        b.to_petsc_binary_format(format!("{}_b.dat", prefix.as_ref()))
     }
 }
 

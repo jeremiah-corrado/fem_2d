@@ -1,5 +1,9 @@
 use crate::slepc_wrapper::slepc_bridge::AIJMatrix;
 use std::collections::BTreeMap;
+use std::fs::File;
+use std::io::{Write, BufWriter};
+
+use bytes::{BufMut, BytesMut};
 
 /// Wrapper around a BTreeMap to store square-symmetric matrices in a sparse data structure
 #[derive(Clone)]
@@ -68,8 +72,8 @@ impl SparseMatrix {
                     ]
                 } else {
                     [
-                        r.try_into().expect("Row Idx was too large!"),
                         c.try_into().expect("Col Idx was too large!"),
+                        r.try_into().expect("Row Idx was too large!"),
                     ]
                 },
                 v,
@@ -109,6 +113,42 @@ impl SparseMatrix {
         self.entries
             .iter()
             .map(|(coords, value)| ([coords[0] as usize, coords[1] as usize], *value))
+    }
+
+    pub fn write_to_petsc_binary_format(&self, path: impl AsRef<str>) -> std::io::Result<()> {
+        let file = File::create(path.as_ref())?;
+        let mut writer = BufWriter::new(file);
+
+        let mut full_sparse: BTreeMap<[u32; 2], f64> = self.entries.iter().map(|([r,c], v)| {
+            ([*c, *r], *v)
+        }).collect();
+        full_sparse.append(&mut self.entries.clone());
+
+        let nnz = full_sparse.len();
+        let mut i = Vec::with_capacity(nnz);
+        let mut j = Vec::with_capacity(nnz);
+        let mut v = Vec::with_capacity(nnz);
+
+        for ([r, c], value) in full_sparse {
+            i.push(r);
+            j.push(c);
+            v.push(value);
+        }
+        let nnz = v.len();
+
+        // Write the header
+        writer.write_all(format!("1211216 {} {} {}\n", self.dimension, self.dimension, nnz).as_bytes())?;
+        let mut row_nnz = vec![0; self.dimension];
+        for (coordinates, _) in self.iter_upper_tri() {
+            row_nnz[coordinates[0]] += 1;
+        }
+        for rnz in row_nnz.iter() {
+            writer.write_all(format!("{} ", rnz).as_bytes())?;
+        }
+        
+
+
+        Ok(())
     }
 }
 
@@ -155,9 +195,107 @@ impl Into<AIJMatrix> for SparseMatrix {
     }
 }
 
+impl Into<AIJMatrixBinary> for SparseMatrix {
+    fn into(mut self) -> AIJMatrixBinary {
+        // number of entries in each row 
+        let mut row_counts = vec![0; self.dimension];
+
+        for [r, c] in self.entries.keys() {
+            if r == c {
+                row_counts[*r as usize] += 1;
+            } else {
+                row_counts[*r as usize] += 1;
+                row_counts[*c as usize] += 1;
+            }
+        }
+
+        // upper and lower triangles of matrix; sorted by row then column
+        let mut full_matrix: BTreeMap<[u32; 2], f64> = self
+            .entries
+            .iter()
+            .map(|([r, c], v)| ([*c, *r], *v))
+            .collect();
+        full_matrix.append(&mut self.entries);
+
+        // matrix entries and their associated columns
+        let (j, a) = full_matrix
+            .iter()
+            .map(|([_, c], v)| (*c as i32, *v))
+            .unzip();
+
+        AIJMatrixBinary {
+            a, 
+            i: row_counts,
+            j,
+            dim: self.dimension,
+        }
+    }
+}
+
+pub struct AIJMatrixBinary {
+    pub a: Vec<f64>,
+    pub i: Vec<i32>,
+    pub j: Vec<i32>,
+    pub dim: usize,
+}
+
+impl AIJMatrixBinary {
+    pub fn to_petsc_binary_format(&self, path: impl AsRef<str>) -> std::io::Result<()> {
+        let file = File::create(path.as_ref())?;
+        let mut writer = BufWriter::new(file);
+
+        // header
+        let mut header_buf = BytesMut::with_capacity(31);
+        header_buf.put_slice(b"1211216");
+        header_buf.put_u32(self.dim as u32);
+        header_buf.put_u32(self.dim as u32);
+        header_buf.put_u32(self.a.len() as u32);
+        writer.write_all(header_buf.as_ref())?;
+
+        // num-non-zero entries on each row
+        let mut rnnz_buf = BytesMut::with_capacity(self.i.len() * 4);
+        for &rnz in self.i.iter() {
+            rnnz_buf.put_u32(rnz as u32);
+        }
+        writer.write_all(rnnz_buf.as_ref())?;
+
+        // column indices of non-zero entries
+        let mut j_buf = BytesMut::with_capacity(self.j.len() * 4);
+        for &j in self.j.iter() {
+            j_buf.put_u32(j as u32);
+        }
+        writer.write_all(j_buf.as_ref())?;
+
+        // non-zero entries
+        let mut a_buf = BytesMut::with_capacity(self.a.len() * 8);
+        for &a in self.a.iter() {
+            a_buf.put_f64(a);
+        }
+        writer.write_all(a_buf.as_ref())?;
+
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn petsc_binary_format() {
+        let mut sm = SparseMatrix::new(10);
+
+        sm.insert([0, 0], 1.0);
+        sm.insert([0, 0], 1.0);
+        sm.insert([9, 9], 10.0);
+        sm.insert([4, 3], 0.25);
+        sm.insert([0, 8], 0.125);
+        sm.insert([8, 0], 0.125);
+
+        let sm_bin: AIJMatrixBinary = sm.into();
+
+        sm_bin.to_petsc_binary_format("../../test_output/test.bin").unwrap();
+    }
 
     #[test]
     fn value_insertion() {
