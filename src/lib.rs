@@ -13,7 +13,7 @@ mod tests {
     use rayon::prelude::*;
     use super::*;
 
-    #[test]
+    // #[test]
     // fn integration_correctness() {
     //     let i_max: usize = 2;
     //     let j_max: usize = 2;
@@ -76,7 +76,7 @@ mod tests {
     // }
 
     #[test]
-    fn basic_problem() {
+    fn basic_problem_seq() {
         let mut domain = Domain::from_mesh_file("./test_input/test_mesh_b.json").unwrap();
 
         domain.mesh.global_p_refinement(PRef::from(3, 3)).unwrap();
