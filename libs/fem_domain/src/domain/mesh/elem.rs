@@ -75,7 +75,7 @@ use std::sync::Arc;
                 0
 */
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 /// Basic unit of the FEM Domain which describes some rectangular area in parametric space.
 /// Stores associative relationships with neighboring Nodes and Edge as well as h-- and p--refinement information
 pub struct Elem {

@@ -3,7 +3,7 @@ use json::JsonValue;
 use smallvec::SmallVec;
 use std::collections::BTreeMap;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 /// The connection between two neighboring [Elem]s. Defined by two points in real space.
 pub struct Edge {
     pub id: usize,

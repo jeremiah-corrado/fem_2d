@@ -34,6 +34,7 @@ pub const EXPECTED_NUM_H_REFINEMENTS: usize = 5;
 pub const MAX_POLYNOMIAL_ORDER: u8 = 20;
 
 /// Information used to Define the geometric structure and refinement state of a Domain.
+#[derive(Debug, Clone)]
 pub struct Mesh {
     pub elements: Vec<Arc<Element>>,
     pub elems: Vec<Elem>,

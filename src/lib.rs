@@ -84,15 +84,15 @@ mod tests {
     // }
     #[test]
     fn basic_problem_seq() {
-        let mut domain = Domain::from_mesh_file("./test_input/test_mesh_b.json").unwrap();
+        let mut mesh = Mesh::from_file("./test_input/test_mesh_b.json").unwrap();
+        mesh.global_p_refinement(PRef::from(3, 3)).unwrap();
+        mesh.global_h_refinement(HRef::T).unwrap();
+        mesh.h_refine_elems(vec![6, 9, 12], HRef::T).unwrap();
 
-        domain.mesh.global_p_refinement(PRef::from(3, 3)).unwrap();
-        domain.mesh.global_h_refinement(HRef::T).unwrap();
-        domain.mesh.h_refine_elems(vec![6, 9, 12], HRef::T).unwrap();
-        domain.gen_dofs();
+        let domain = Domain::from_mesh(mesh);
 
         let eigenproblem = fill_matrices::<CurlProduct, L2InnerProduct, KOLShapeFn>(&domain);
-        let eigen_pair = solve_gep(eigenproblem, 1.475).unwrap();
+        let eigen_pair = solve_eigenproblem(eigenproblem, 1.475).unwrap();
 
         assert!((eigen_pair.value - 1.4745880937_f64).abs() < 1e-9);
     }
@@ -104,18 +104,17 @@ mod tests {
             .build_global()
             .unwrap();
 
-        let mut domain = Domain::from_mesh_file("./test_input/test_mesh_b.json").unwrap();
+        let mut mesh = Mesh::from_file("./test_input/test_mesh_b.json").unwrap();
+        mesh.global_p_refinement(PRef::from(3, 3)).unwrap();
+        mesh.global_h_refinement(HRef::T).unwrap();
+        mesh.h_refine_elems(vec![6, 9, 12], HRef::T).unwrap();
 
-        domain.mesh.global_p_refinement(PRef::from(3, 3)).unwrap();
-        domain.mesh.global_h_refinement(HRef::T).unwrap();
-        domain.mesh.h_refine_elems(vec![6, 9, 12], HRef::T).unwrap();
-        domain.gen_dofs();
+        let domain = Domain::from_mesh(mesh);
 
         println!("NDOFS: {}", domain.dofs.len());
 
         let eigenproblem =
             fill_matrices_parallel::<CurlProduct, L2InnerProduct, KOLShapeFn>(&domain);
-        // let eigen_pair = solve_gep(eigenproblem, 1.475).unwrap();
         let eigen_pair = solve_eigenproblem(eigenproblem, 1.475).unwrap();
 
         assert!((eigen_pair.value - 1.4745880937_f64).abs() < 1e-9);

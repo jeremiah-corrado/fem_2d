@@ -12,7 +12,7 @@ pub struct PolyOrders {
 }
 
 impl PolyOrders {
-    const fn from(i: u8, j: u8) -> Self {
+    pub const fn from(i: u8, j: u8) -> Self {
         Self { ni: i, nj: j }
     }
 

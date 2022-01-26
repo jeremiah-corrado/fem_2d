@@ -27,12 +27,16 @@ impl Domain {
         }
     }
 
-    pub fn from_mesh_file(path: impl AsRef<str>) -> std::io::Result<Self> {
-        Ok(Self {
-            mesh: Mesh::from_file(path)?,
+    pub fn from_mesh(mesh: Mesh) -> Self {
+        let mut dom = Self {
+            mesh,
             dofs: Vec::new(),
             basis_specs: Vec::new(),
-        })
+        };
+
+        dom.gen_dofs();
+
+        dom
     }
 
     /// Iterate over all [Elem]s in the mesh
@@ -51,7 +55,7 @@ impl Domain {
     }
 
     /// Generate Degrees of Freedom over the mesh according to the Polynomial Expansion orders on each [Elem]
-    pub fn gen_dofs(&mut self) {
+    fn gen_dofs(&mut self) {
         // prepare for fresh set of DoFs and BasisSpecs
         self.basis_specs = vec![Vec::new(); self.mesh.elems.len()];
         self.dofs.clear();
@@ -212,18 +216,6 @@ impl Domain {
         }
     }
 
-    // // push a new BasisSpec onto the list, updating its ID to match its position in its elem's list
-    // // return its [elem_id, elem_list_position]
-    // fn push_basis_spec(&mut self, mut bs: BasisSpec, dof_id: usize) -> BSAddress {
-    //     let new_id = self.basis_specs[bs.elem_id].len();
-    //     let elem_id = bs.elem_id;
-
-    //     bs.update_ids(new_id, dof_id);
-    //     self.basis_specs[elem_id].push(bs);
-
-    //     BSAddress::new(elem_id, new_id)
-    // }
-
     // push a new BasisSpec onto the list, updating its ID to match its position in its elem's list
     // return its [elem_id, elem_list_position]
     fn push_basis_spec(&mut self, mut bs: BasisSpec, dof_id: usize) -> BSAddress {
@@ -265,21 +257,14 @@ mod tests {
 
     #[test]
     fn create_dofs() {
-        let mut dom_a = Domain::from_mesh_file("../../test_input/test_mesh_a.json").unwrap();
+        let mut mesh = Mesh::from_file("../../test_input/test_mesh_a.json").unwrap();
+        mesh.set_global_expansion_orders([5, 5]).unwrap();
+        mesh.global_h_refinement(HRef::T).unwrap();
+        mesh.h_refine_elems(vec![4, 5], HRef::T).unwrap();
+        mesh.h_refine_elems(vec![6, 7], HRef::u()).unwrap();
+        mesh.h_refine_elems(vec![8, 9], HRef::v()).unwrap();
+        mesh.p_refine_elems(vec![10, 11, 12, 13], PRef::from(2, -1)).unwrap();
 
-        dom_a.mesh.set_global_expansion_orders([5, 5]).unwrap();
-        dom_a.gen_dofs();
-
-        dom_a.mesh.global_h_refinement(HRef::T).unwrap();
-        dom_a.gen_dofs();
-
-        dom_a.mesh.h_refine_elems(vec![4, 5], HRef::T).unwrap();
-        dom_a.mesh.h_refine_elems(vec![6, 7], HRef::u()).unwrap();
-        dom_a.mesh.h_refine_elems(vec![8, 9], HRef::v()).unwrap();
-        dom_a
-            .mesh
-            .p_refine_elems(vec![10, 11, 12, 13], PRef::from(2, -1))
-            .unwrap();
-        dom_a.gen_dofs();
+        let dom = Domain::from_mesh(mesh);
     }
 }
