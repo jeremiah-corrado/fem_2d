@@ -106,7 +106,7 @@ pub fn solve_eigenproblem(gep: GEP, target_eigenvalue: f64) -> Result<EigenPair,
                         Some(3) => Err(Box::new(EigenSolverError::FailedToInitializeMatrices)),
                         Some(4 | 5 | 6) => Err(Box::new(EigenSolverError::FailedToInitializeEPS)),
                         Some(7) => Err(Box::new(EigenSolverError::FailedToConverge)),
-                        Some(8) => Err(Box::new(EigenSolverError::FailedToRetreiveSolution)),
+                        Some(8) => Err(Box::new(EigenSolverError::FailedToReturnSolution)),
                         _ => Err(Box::new(EigenSolverError::UnknownError)),
                     }
                 }
@@ -130,7 +130,7 @@ pub enum EigenSolverError {
     FailedToInitializeMatrices,
     FailedToInitializeEPS,
     FailedToConverge,
-    FailedToRetreiveSolution,
+    FailedToReturnSolution,
     UnknownError
 }
 
@@ -139,12 +139,12 @@ impl std::fmt::Display for EigenSolverError {
         match self {
             EigenSolverError::SolverNotFound => write!(f, "Solver not found; please set the GEP_SOLVE_DIR environment variable to the directory containing the solver executable"),
             EigenSolverError::FailedToExecute => write!(f, "Failed to execute solve_gep with MPIEXEC!"),
-            EigenSolverError::FailedToInitializeSlepc => write!(f, "Failed to initialize Slepc!"),
+            EigenSolverError::FailedToInitializeSlepc => write!(f, "Slepc failed to initialize!"),
             EigenSolverError::BadArguments => write!(f, "Bad arguments passed to solve_gep!"),
-            EigenSolverError::FailedToInitializeMatrices => write!(f, "Failed to initialize matrices!"),
-            EigenSolverError::FailedToInitializeEPS => write!(f, "Failed to initialize EPS object!"),
-            EigenSolverError::FailedToConverge => write!(f, "Failed to converge on the Target Eigenvalue!"),
-            EigenSolverError::FailedToRetreiveSolution => write!(f, "Failed to retrieve the solution from solve_gep!"),
+            EigenSolverError::FailedToInitializeMatrices => write!(f, "Slepc Failed to initialize matrices!"),
+            EigenSolverError::FailedToInitializeEPS => write!(f, "Slepc Failed to initialize Eigenproblem object!"),
+            EigenSolverError::FailedToConverge => write!(f, "Slepc Failed to converge on the Target Eigenvalue!"),
+            EigenSolverError::FailedToReturnSolution => write!(f, "Slepc Failed to return solution files!"),
             EigenSolverError::UnknownError => write!(f, "Unknown solve_gep error!"),
         }
     }
