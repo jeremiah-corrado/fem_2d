@@ -26,7 +26,7 @@ int main(int argc, char * argv[]) {
     PetscScalar target_eval = 1.00;
     PetscInt dimension = 0;
     PetscInt num_values = 0;
-    char file_name_nonce[PETSC_MAX_PATH_LEN];
+    
     PetscOptionsGetScalar(NULL, NULL, "-a", &target_eval, NULL);
     PetscOptionsGetInt(NULL, NULL, "-d", &dimension, NULL);
     PetscOptionsGetInt(NULL, NULL, "-v", &num_values, NULL);

@@ -89,6 +89,9 @@ mod tests {
         domain.gen_dofs();
 
         let eigenproblem = fill_matrices::<CurlProduct, L2InnerProduct, KOLShapeFn>(&domain);
+
+        eigenproblem.clone().to_petsc_binary_files("./test_output/test").unwrap();
+
         let eigen_pair = solve_gep(eigenproblem, 1.475).unwrap();
 
         assert!((eigen_pair.value - 1.4745880937_f64).abs() < 1e-9);

@@ -245,8 +245,8 @@ impl AIJMatrixBinary {
         let mut writer = BufWriter::new(file);
 
         // header
-        let mut header_buf = BytesMut::with_capacity(31);
-        header_buf.put_slice(b"1211216");
+        let mut header_buf = BytesMut::with_capacity(32);
+        header_buf.put(&b"\0{P"[..]);
         header_buf.put_u32(self.dim as u32);
         header_buf.put_u32(self.dim as u32);
         header_buf.put_u32(self.a.len() as u32);
