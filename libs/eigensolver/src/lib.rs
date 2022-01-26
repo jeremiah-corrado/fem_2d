@@ -5,7 +5,7 @@ extern crate bytes;
 mod eigenproblem;
 mod slepc_wrapper;
 
-pub use eigenproblem::{SparseMatrix, GEP, AIJMatrixBinary, retrieve_solution};
+pub use eigenproblem::{SparseMatrix, GEP, AIJMatrixBinary, retrieve_solution, solve_eigenproblem};
 pub use slepc_wrapper::{solve_gep, EigenPair};
 
 #[cfg(test)]

@@ -6,13 +6,18 @@ pub use sparse_matrix::{SparseMatrix, AIJMatrixBinary};
 use crate::EigenPair;
 use crate::slepc_wrapper::slepc_bridge::AIJMatrix;
 use rayon::prelude::*;
+use std::hash::Hash;
 use std::sync::mpsc::channel;
 
 use bytes::{BytesMut, Buf};
-use std::fs::File;
+use std::fs::{File, canonicalize};
 use std::io::Read;
-use std::io::BufReader;
-
+use std::env::var_os;
+use std::process::{Command, ExitStatus};
+use std::time::SystemTime;
+use std::hash::Hasher;
+use std::collections::hash_map::DefaultHasher;
+use std::fmt;
 
 /// Generalized Eigenproblem
 ///
@@ -37,10 +42,10 @@ impl GEP {
         [self.a.into(), self.b.into()]
     }
 
-    pub fn to_petsc_binary_files(self, prefix: impl AsRef<str>) -> std::io::Result<()> {
+    pub fn to_petsc_binary_files(self, dir: impl AsRef<str>, prefix: impl AsRef<str>) -> std::io::Result<()> {
         let [a, b] : [AIJMatrixBinary; 2] = [self.a.into(), self.b.into()];
-        a.to_petsc_binary_format(format!("{}_a.dat", prefix.as_ref()))?;
-        b.to_petsc_binary_format(format!("{}_b.dat", prefix.as_ref()))
+        a.to_petsc_binary_format(format!("{}/tmp/{}_a.dat", dir.as_ref(), prefix.as_ref()))?;
+        b.to_petsc_binary_format(format!("{}/tmp/{}_b.dat", dir.as_ref(), prefix.as_ref()))
     }
 }
 
@@ -68,9 +73,92 @@ impl ParallelExtend<[SparseMatrix; 2]> for GEP {
     }
 }
 
-pub fn retrieve_solution(prefix: impl AsRef<str>) -> std::io::Result<EigenPair> {
-    let evec = retrieve_eigenvector(format!("{}_evec.dat", prefix.as_ref()))?;
-    let eval = retrieve_eigenvalue(format!("{}_eval.dat", prefix.as_ref()))?;
+pub fn solve_eigenproblem(gep: GEP, target_eigenvalue: f64) -> Result<EigenPair, Box<dyn std::error::Error>> {
+    if let Some(esolve_dir) = var_os("GEP_SOLVE_DIR") {
+        let dir = esolve_dir.to_str().unwrap();
+        let prefix = unique_prefix();
+
+        // Write the matrices to files
+        gep.to_petsc_binary_files(&dir, &prefix)?;
+
+        // Run the solver
+        let esolve_exit_status = Command::new("mpiexec")
+            .arg("-np").arg("1")
+            .arg("-q")
+            .arg("./solve_gep")
+            .arg("-te").arg(&format!("{:.10}", target_eigenvalue))
+            .arg("-fp").arg(&prefix)
+            .current_dir(dir)
+            .status();
+
+        match esolve_exit_status {
+            Ok(status) => {
+                if status.success() {
+                    let solution = retrieve_solution(&dir, &prefix)?;
+                    clean_directory(&dir, &prefix)?;
+                    Ok(solution)
+                } else {
+                    clean_directory(&dir, &prefix)?;
+
+                    match status.code() {
+                        Some(1) => Err(Box::new(EigenSolverError::FailedToInitializeSlepc)),
+                        Some(2) => Err(Box::new(EigenSolverError::BadArguments)),
+                        Some(3) => Err(Box::new(EigenSolverError::FailedToInitializeMatrices)),
+                        Some(4 | 5 | 6) => Err(Box::new(EigenSolverError::FailedToInitializeEPS)),
+                        Some(7) => Err(Box::new(EigenSolverError::FailedToConverge)),
+                        Some(8) => Err(Box::new(EigenSolverError::FailedToRetreiveSolution)),
+                        _ => Err(Box::new(EigenSolverError::UnknownError)),
+                    }
+                }
+            } Err(_) => {
+                clean_directory(&dir, &prefix)?;
+
+                Err(Box::new(EigenSolverError::FailedToExecute))
+            }
+        }
+    } else {
+        Err(Box::new(EigenSolverError::SolverNotFound))
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum EigenSolverError {
+    SolverNotFound,
+    FailedToExecute,
+    FailedToInitializeSlepc,
+    BadArguments,
+    FailedToInitializeMatrices,
+    FailedToInitializeEPS,
+    FailedToConverge,
+    FailedToRetreiveSolution,
+    UnknownError
+}
+
+impl std::fmt::Display for EigenSolverError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            EigenSolverError::SolverNotFound => write!(f, "Solver not found; please set the GEP_SOLVE_DIR environment variable to the directory containing the solver executable"),
+            EigenSolverError::FailedToExecute => write!(f, "Failed to execute solve_gep with MPIEXEC!"),
+            EigenSolverError::FailedToInitializeSlepc => write!(f, "Failed to initialize Slepc!"),
+            EigenSolverError::BadArguments => write!(f, "Bad arguments passed to solve_gep!"),
+            EigenSolverError::FailedToInitializeMatrices => write!(f, "Failed to initialize matrices!"),
+            EigenSolverError::FailedToInitializeEPS => write!(f, "Failed to initialize EPS object!"),
+            EigenSolverError::FailedToConverge => write!(f, "Failed to converge on the Target Eigenvalue!"),
+            EigenSolverError::FailedToRetreiveSolution => write!(f, "Failed to retrieve the solution from solve_gep!"),
+            EigenSolverError::UnknownError => write!(f, "Unknown solve_gep error!"),
+        }
+    }
+}
+
+impl std::error::Error for EigenSolverError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        None
+    }
+}
+
+pub fn retrieve_solution(dir: impl AsRef<str>, prefix: impl AsRef<str>) -> std::io::Result<EigenPair> {
+    let evec = retrieve_eigenvector(format!("{}/tmp/{}_evec.dat", dir.as_ref(), prefix.as_ref()))?;
+    let eval = retrieve_eigenvalue(format!("{}/tmp/{}_eval.dat", dir.as_ref(), prefix.as_ref()))?;
 
     Ok(EigenPair {
         value: eval,
@@ -110,4 +198,25 @@ fn retrieve_eigenvalue(path: String) -> std::io::Result<f64> {
     let value = file_bytes.get_f64();
 
     Ok(value)
+}
+
+fn unique_prefix() -> String {
+    let t_now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
+    let mut hasher = DefaultHasher::new();
+    t_now.hash(&mut hasher);
+    format!("p_{}", hasher.finish().to_string().split_at(8).0)
+}
+
+fn clean_directory(dir: impl AsRef<str>, prefix: impl AsRef<str>) -> std::io::Result<()> {
+    for file in std::fs::read_dir(&format!("{}/tmp/", dir.as_ref()))? {
+        let file = file?;
+        let file_name_os = file.file_name();
+        let file_name = String::from(file_name_os.to_str().unwrap());
+
+        if file_name.contains(prefix.as_ref()) {
+            std::fs::remove_file(file.path())?;
+        }
+    }
+
+    Ok(())
 }

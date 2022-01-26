@@ -4,7 +4,7 @@ extern crate fem_domain;
 extern crate integration;
 
 pub use basis::{BasisFn, BasisFnSampler, KOLShapeFn, MaxOrthoShapeFn, ShapeFn};
-pub use eigensolver::{solve_gep, EigenPair, SparseMatrix, GEP};
+pub use eigensolver::{solve_gep, EigenPair, SparseMatrix, GEP, solve_eigenproblem};
 pub use fem_domain::{
     BasisDir, DoF, Domain, HRef, HRefError, Mesh, PRef, PRefError, Point, M2D, V2D,
 };
@@ -112,8 +112,8 @@ mod tests {
 
         let eigenproblem =
             fill_matrices_parallel::<CurlProduct, L2InnerProduct, KOLShapeFn>(&domain);
-        eigenproblem.clone().to_petsc_binary_files("./test_output/test").unwrap();
-        let eigen_pair = solve_gep(eigenproblem, 1.475).unwrap();
+        // let eigen_pair = solve_gep(eigenproblem, 1.475).unwrap();
+        let eigen_pair = solve_eigenproblem(eigenproblem, 1.475).unwrap();
 
         assert!((eigen_pair.value - 1.4745880937_f64).abs() < 1e-9);
     }
