@@ -1,4 +1,6 @@
 use super::GEP;
+use bytes::Buf;
+use std::fs::File;
 
 /// Solution to an Eigenvalue Problem
 pub struct EigenPair {
@@ -22,7 +24,7 @@ impl EigenPair {
 pub fn solve_gep(gep: GEP, target_eigenvalue: f64) -> Result<EigenPair, String> {
     let [a_aij, b_aij] = gep.to_aij_mats();
 
-    let sol = slepc_bridge::slepc_eigenproblem(target_eigenvalue, a_aij, b_aij);
+    let sol = slepc_bridge::slepc_eigenproblem(target_eigenvalue, a_aij, b_aij) ;
 
     match sol.status {
         0 => Ok(EigenPair {
@@ -32,6 +34,8 @@ pub fn solve_gep(gep: GEP, target_eigenvalue: f64) -> Result<EigenPair, String> 
         i => Err(format!("SLEPC EigenSolver failed with error code: {}", i)),
     }
 }
+
+
 
 #[cxx::bridge(namespace = slepc_wrapper)]
 pub mod slepc_bridge {

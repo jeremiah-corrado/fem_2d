@@ -89,9 +89,6 @@ mod tests {
         domain.gen_dofs();
 
         let eigenproblem = fill_matrices::<CurlProduct, L2InnerProduct, KOLShapeFn>(&domain);
-
-        eigenproblem.clone().to_petsc_binary_files("./test_output/test").unwrap();
-
         let eigen_pair = solve_gep(eigenproblem, 1.475).unwrap();
 
         assert!((eigen_pair.value - 1.4745880937_f64).abs() < 1e-9);
@@ -111,8 +108,11 @@ mod tests {
         domain.mesh.h_refine_elems(vec![6, 9, 12], HRef::T).unwrap();
         domain.gen_dofs();
 
+        println!("NDOFS: {}", domain.dofs.len());
+
         let eigenproblem =
             fill_matrices_parallel::<CurlProduct, L2InnerProduct, KOLShapeFn>(&domain);
+        eigenproblem.clone().to_petsc_binary_files("./test_output/test").unwrap();
         let eigen_pair = solve_gep(eigenproblem, 1.475).unwrap();
 
         assert!((eigen_pair.value - 1.4745880937_f64).abs() < 1e-9);

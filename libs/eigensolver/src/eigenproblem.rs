@@ -1,10 +1,18 @@
 mod sparse_matrix;
 
+use bytes::Bytes;
 pub use sparse_matrix::{SparseMatrix, AIJMatrixBinary};
 
+use crate::EigenPair;
 use crate::slepc_wrapper::slepc_bridge::AIJMatrix;
 use rayon::prelude::*;
 use std::sync::mpsc::channel;
+
+use bytes::{BytesMut, Buf};
+use std::fs::File;
+use std::io::Read;
+use std::io::BufReader;
+
 
 /// Generalized Eigenproblem
 ///
@@ -58,4 +66,48 @@ impl ParallelExtend<[SparseMatrix; 2]> for GEP {
                 self.b.consume_matrix(&mut elem_b_mat);
             });
     }
+}
+
+pub fn retrieve_solution(prefix: impl AsRef<str>) -> std::io::Result<EigenPair> {
+    let evec = retrieve_eigenvector(format!("{}_evec.dat", prefix.as_ref()))?;
+    let eval = retrieve_eigenvalue(format!("{}_eval.dat", prefix.as_ref()))?;
+
+    Ok(EigenPair {
+        value: eval,
+        vector: evec,
+    })
+}
+
+fn retrieve_eigenvector(path: String) -> std::io::Result<Vec<f64>> {
+    let mut vec_file = File::open(path)?;
+
+    let mut header_bytes = BytesMut::new();
+    header_bytes.resize(8, 0);
+    vec_file.read_exact(&mut header_bytes)?;
+
+    assert_eq!(header_bytes.get_i32(), 1211214_i32); // ensure this is a PETSC vector file
+    let m = header_bytes.get_i32() as usize; 
+
+    let mut value_bytes = BytesMut::new();
+    value_bytes.resize(m * 8, 0);
+    vec_file.read_exact(&mut value_bytes)?;
+
+    let mut values = Vec::with_capacity(m);
+    for _ in 0..m {
+        values.push(value_bytes.get_f64());
+    }
+
+    Ok(values)
+}
+
+fn retrieve_eigenvalue(path: String) -> std::io::Result<f64> {
+    let mut eval_file = File::open(path)?;
+    
+    let mut file_bytes = BytesMut::new();
+    file_bytes.resize(8, 0);
+    eval_file.read_exact(&mut file_bytes)?;
+
+    let value = file_bytes.get_f64();
+
+    Ok(value)
 }

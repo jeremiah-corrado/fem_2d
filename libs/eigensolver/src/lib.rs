@@ -5,7 +5,7 @@ extern crate bytes;
 mod eigenproblem;
 mod slepc_wrapper;
 
-pub use eigenproblem::{SparseMatrix, GEP, AIJMatrixBinary};
+pub use eigenproblem::{SparseMatrix, GEP, AIJMatrixBinary, retrieve_solution};
 pub use slepc_wrapper::{solve_gep, EigenPair};
 
 #[cfg(test)]
@@ -27,5 +27,12 @@ mod tests {
         let sm_aij : AIJMatrixBinary = sm.into();
 
         sm_aij.to_petsc_binary_format("../../test_output/test_matrix.dat").unwrap();
+    }
+
+    #[test]
+    fn get_solution_from_files() {
+        let epair = retrieve_solution("../../test_input/test").unwrap();
+        println!("Eigenvalue: {:15}", epair.value);
+        println!("Eigenvector length: {}", epair.vector.len());
     }
 }
