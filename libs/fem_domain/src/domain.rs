@@ -266,5 +266,7 @@ mod tests {
         mesh.p_refine_elems(vec![10, 11, 12, 13], PRef::from(2, -1)).unwrap();
 
         let dom = Domain::from_mesh(mesh);
+        dom.local_basis_specs(0).unwrap();
+        dom.descendant_basis_specs(0).unwrap();
     }
 }

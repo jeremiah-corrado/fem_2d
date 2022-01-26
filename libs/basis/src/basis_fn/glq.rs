@@ -67,7 +67,7 @@ mod tests {
 
     const GLQ_ACCURACY: f64 = 1e-9;
     // test points
-    const x_20: [f64; 20] = [
+    const X_20: [f64; 20] = [
         -0.993128599,
         -0.963971927,
         -0.912234428,
@@ -89,7 +89,7 @@ mod tests {
         0.963971927,
         0.993128599,
     ];
-    const w_20: [f64; 20] = [
+    const W_20: [f64; 20] = [
         0.017614007,
         0.04060143,
         0.062672048,
@@ -112,7 +112,7 @@ mod tests {
         0.017614007,
     ];
 
-    const x_20_scaled: [f64; 20] = [
+    const X_20_SCALED: [f64; 20] = [
         0.250858925,
         0.254503509,
         0.260970696,
@@ -139,18 +139,18 @@ mod tests {
     fn glq_point_generation_and_scaling() {
         let (glq_points, glq_weights) = gauss_quadrature_points(20, false);
 
-        for (glq_ref, glq_test) in x_20.iter().zip(glq_points.iter()) {
+        for (glq_ref, glq_test) in X_20.iter().zip(glq_points.iter()) {
             assert!((glq_ref - glq_test).abs() < GLQ_ACCURACY);
         }
 
-        for (glq_w_ref, glq_w_test) in w_20.iter().zip(glq_weights.iter()) {
+        for (glq_w_ref, glq_w_test) in W_20.iter().zip(glq_weights.iter()) {
             assert!((glq_w_ref - glq_w_test).abs() < GLQ_ACCURACY);
         }
 
         let (glq_scale, glq_scaled_points) = scale_gauss_quad_points(&glq_points, 0.25, 0.5);
 
         assert!((glq_scale - 0.125).abs() < 1e-14);
-        for (glq_s_ref, glq_s_test) in x_20_scaled.iter().zip(glq_scaled_points.iter()) {
+        for (glq_s_ref, glq_s_test) in X_20_SCALED.iter().zip(glq_scaled_points.iter()) {
             assert!((glq_s_ref - glq_s_test).abs() < GLQ_ACCURACY);
         }
     }
@@ -165,11 +165,11 @@ mod tests {
         assert!((glq_weights.first().unwrap() - 1.0).abs() < 1e-14);
         assert!((glq_weights.last().unwrap() - 1.0).abs() < 1e-14);
 
-        for (glq_ref, glq_test) in x_20.iter().zip(glq_points.iter().skip(1).take(20)) {
+        for (glq_ref, glq_test) in X_20.iter().zip(glq_points.iter().skip(1).take(20)) {
             assert!((glq_ref - glq_test).abs() < GLQ_ACCURACY);
         }
 
-        for (glq_w_ref, glq_w_test) in w_20.iter().zip(glq_weights.iter().skip(1).take(20)) {
+        for (glq_w_ref, glq_w_test) in W_20.iter().zip(glq_weights.iter().skip(1).take(20)) {
             assert!((glq_w_ref - glq_w_test).abs() < GLQ_ACCURACY);
         }
 
@@ -179,7 +179,7 @@ mod tests {
         assert!((glq_scaled_points.last().unwrap() - 0.5).abs() < 1e-14);
         assert!((glq_scale - 0.125).abs() < 1e-14);
 
-        for (glq_s_ref, glq_s_test) in x_20_scaled
+        for (glq_s_ref, glq_s_test) in X_20_SCALED
             .iter()
             .zip(glq_scaled_points.iter().skip(1).take(20))
         {

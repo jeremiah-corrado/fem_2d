@@ -1228,7 +1228,7 @@ mod tests {
         let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
 
         // repeatedly refine the bottom left cell
-        for _ in 0..16 {
+        for _ in 0..18 {
             mesh_c
                 .h_refine_with_filter(|elem| {
                     if !elem.has_children() && elem.nodes[0] == 0 {
