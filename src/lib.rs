@@ -3,7 +3,7 @@ extern crate eigensolver;
 extern crate fem_domain;
 extern crate integration;
 
-pub use basis::{BasisFn, BasisFnSampler, KOLShapeFn, MaxOrthoShapeFn, ShapeFn};
+pub use basis::{BasisFn, BasisFnSampler, KOLShapeFn, ShapeFn};
 pub use eigensolver::{solve_gep, EigenPair, SparseMatrix, GEP, solve_eigenproblem};
 pub use fem_domain::{
     BasisDir, DoF, Domain, HRef, HRefError, Mesh, PRef, PRefError, Point, M2D, V2D,
@@ -12,6 +12,9 @@ pub use integration::{
     fill_matrices, fill_matrices_parallel, CurlProduct, Integral, IntegralResult, L2InnerProduct,
     UniformFieldSpace,
 };
+
+// pub use basis::MaxOrthoShapeFn;
+
 
 #[cfg(test)]
 mod tests {

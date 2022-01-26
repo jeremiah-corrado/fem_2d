@@ -140,10 +140,9 @@ impl Edge {
 
     /// Attempts to establish an active pair of Elems. Returns false if none can be established
     pub(crate) fn set_activation(&mut self) -> bool {
-        let (bl_elems, tr_elems) = self.elems.split_at_mut(1);
-        match (bl_elems[0].last_entry(), tr_elems[0].last_entry()) {
-            (Some(bl_entry), Some(tr_entry)) => {
-                self.active_elems = Some([*bl_entry.get(), *tr_entry.get()]);
+        match (self.last_entry(0), self.last_entry(1)) {
+            (Some(bl_elem_id), Some(tr_elem_id)) => {
+                self.active_elems = Some([bl_elem_id, tr_elem_id]);
                 true
             }
             (_, _) => {
@@ -151,6 +150,13 @@ impl Edge {
                 false
             }
         }
+    }
+
+    fn last_entry(&self, side_idx: usize) -> Option<usize> {
+        for (_, elem_id) in self.elems[side_idx].iter().rev().take(1) {
+            return Some(*elem_id);
+        }
+        None
     }
 
     pub(crate) fn reset_activation(&mut self) {

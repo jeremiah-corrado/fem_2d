@@ -1,10 +1,15 @@
-#![feature(const_fn_floating_point_arithmetic)]
+#![cfg_attr(feature="max_ortho_basis", feature(const_fn_floating_point_arithmetic))]
 
 extern crate fem_domain;
 mod basis_fn;
 
 pub use basis_fn::{
-    BasisFn, BasisFnSampler, KOLShapeFn, MaxOrthoShapeFn, ParBasisFnSampler, ShapeFn,
+    BasisFn, BasisFnSampler, KOLShapeFn, ParBasisFnSampler, ShapeFn,
+};
+
+#[cfg(feature="max_ortho_basis")]
+pub use basis_fn::{
+    MaxOrthoShapeFn,
 };
 
 #[cfg(test)]

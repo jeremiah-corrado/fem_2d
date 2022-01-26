@@ -276,7 +276,7 @@ impl FieldQuantity {
     }
 
     pub fn insert_elem_values(&mut self, elem_id: usize, values: Vec<Vec<f64>>) {
-        if let Some(prev_entry) = self.values.insert(elem_id, values) {
+        if let Some(_) = self.values.insert(elem_id, values) {
             panic!(
                 "Field Quantity '{}' already had values for Elem {}; cannot assign new values!",
                 self.name, elem_id

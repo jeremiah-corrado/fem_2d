@@ -1,5 +1,7 @@
 mod glq;
 mod kol;
+
+#[cfg(feature="max_ortho_basis")]
 mod max_ortho;
 
 use fem_domain::{Elem, M2D, V2D};
@@ -9,6 +11,8 @@ use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
 pub use kol::KOLShapeFn;
+
+#[cfg(feature="max_ortho_basis")]
 pub use max_ortho::MaxOrthoShapeFn;
 
 /// Hierarchical Shape Function along a single direction (defined over (-1.0, +1.0)).

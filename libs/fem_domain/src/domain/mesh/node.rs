@@ -58,36 +58,38 @@ impl Node {
         self.active_elems
     }
 
-    pub(crate) fn reset_activation(&mut self) {
-        self.active_elems = None;
-    }
+    // TODO: implement note-type shape function matching
 
-    pub(crate) fn set_activation(&mut self) -> bool {
-        let mut combination_sets: [BTreeMap<[usize; 2], u8>; 4] = [
-            BTreeMap::new(), // "edge" 0 : [0, 1] -> v level
-            BTreeMap::new(), // "edge" 1 : [2, 3] -> v level
-            BTreeMap::new(), // "edge" 2 : [0, 2] -> u level
-            BTreeMap::new(), // "edge" 3 : [1, 3] -> u level
-        ];
+    // pub(crate) fn reset_activation(&mut self) {
+    //     self.active_elems = None;
+    // }
 
-        for (edge_idx, elem_indices, check_index) in [
-            (0, [0, 1], 1),
-            (1, [2, 3], 1),
-            (2, [0, 2], 0),
-            (3, [1, 3], 0),
-        ] {
-            for (key_0, elem_id_0) in self.elems[elem_indices[0]].iter() {
-                for (key_1, elem_id_1) in self.elems[elem_indices[1]].iter() {
-                    if key_0[check_index] == key_1[check_index] {
-                        combination_sets[edge_idx]
-                            .insert([*elem_id_0, *elem_id_1], key_0[check_index]);
-                    }
-                }
-            }
-        }
+    // pub(crate) fn set_activation(&mut self) -> bool {
+    //     let mut combination_sets: [BTreeMap<[usize; 2], u8>; 4] = [
+    //         BTreeMap::new(), // "edge" 0 : [0, 1] -> v level
+    //         BTreeMap::new(), // "edge" 1 : [2, 3] -> v level
+    //         BTreeMap::new(), // "edge" 2 : [0, 2] -> u level
+    //         BTreeMap::new(), // "edge" 3 : [1, 3] -> u level
+    //     ];
 
-        unimplemented!()
-    }
+    //     for (edge_idx, elem_indices, check_index) in [
+    //         (0, [0, 1], 1),
+    //         (1, [2, 3], 1),
+    //         (2, [0, 2], 0),
+    //         (3, [1, 3], 0),
+    //     ] {
+    //         for (key_0, elem_id_0) in self.elems[elem_indices[0]].iter() {
+    //             for (key_1, elem_id_1) in self.elems[elem_indices[1]].iter() {
+    //                 if key_0[check_index] == key_1[check_index] {
+    //                     combination_sets[edge_idx]
+    //                         .insert([*elem_id_0, *elem_id_1], key_0[check_index]);
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     unimplemented!()
+    // }
 
     /// Produce a Json Object that describes this Node
     pub fn to_json(&self) -> JsonValue {

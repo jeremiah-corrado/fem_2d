@@ -1,6 +1,5 @@
 mod sparse_matrix;
 
-use bytes::Bytes;
 pub use sparse_matrix::{SparseMatrix, AIJMatrixBinary};
 
 use crate::EigenPair;
@@ -117,6 +116,7 @@ pub fn solve_eigenproblem(gep: GEP, target_eigenvalue: f64) -> Result<EigenPair,
             }
         }
     } else {
+        println!("Solver not found; please set the GEP_SOLVE_DIR environment variable to the directory containing the solver executable!");
         Err(Box::new(EigenSolverError::SolverNotFound))
     }
 }
