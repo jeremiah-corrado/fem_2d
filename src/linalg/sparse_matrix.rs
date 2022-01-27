@@ -1,11 +1,11 @@
-use crate::slepc_wrapper::slepc_bridge::AIJMatrix;
 use std::collections::BTreeMap;
 use std::fs::File;
-use std::io::{Write, BufWriter};
-
-use nalgebra::DMatrix;
+use std::io::{BufWriter, Write};
 
 use bytes::{BufMut, BytesMut};
+use nalgebra::DMatrix;
+
+//TODO: switch to something more efficient than a BTreeMap (preallocate with know num zeros)
 
 /// Wrapper around a BTreeMap to store square-symmetric matrices in a sparse data structure
 #[derive(Clone)]
@@ -64,6 +64,7 @@ impl SparseMatrix {
         }
     }
 
+    /// Insert a group of entries
     pub fn insert_group(&mut self, mut entry_group: Vec<([usize; 2], f64)>) {
         for (rc, value) in entry_group.drain(0..).map(|([r, c], v)| {
             (
@@ -121,9 +122,11 @@ impl SparseMatrix {
         let file = File::create(path.as_ref())?;
         let mut writer = BufWriter::new(file);
 
-        let mut full_sparse: BTreeMap<[u32; 2], f64> = self.entries.iter().map(|([r,c], v)| {
-            ([*c, *r], *v)
-        }).collect();
+        let mut full_sparse: BTreeMap<[u32; 2], f64> = self
+            .entries
+            .iter()
+            .map(|([r, c], v)| ([*c, *r], *v))
+            .collect();
         full_sparse.append(&mut self.entries.clone());
 
         let nnz = full_sparse.len();
@@ -139,7 +142,9 @@ impl SparseMatrix {
         let nnz = v.len();
 
         // Write the header
-        writer.write_all(format!("1211216 {} {} {}\n", self.dimension, self.dimension, nnz).as_bytes())?;
+        writer.write_all(
+            format!("1211216 {} {} {}\n", self.dimension, self.dimension, nnz).as_bytes(),
+        )?;
         let mut row_nnz = vec![0; self.dimension];
         for (coordinates, _) in self.iter_upper_tri() {
             row_nnz[coordinates[0]] += 1;
@@ -147,8 +152,6 @@ impl SparseMatrix {
         for rnz in row_nnz.iter() {
             writer.write_all(format!("{} ", rnz).as_bytes())?;
         }
-        
-
 
         Ok(())
     }
@@ -157,7 +160,7 @@ impl SparseMatrix {
 impl Into<DMatrix<f64>> for SparseMatrix {
     fn into(self) -> DMatrix<f64> {
         let mut values = vec![vec![0.0; self.dimension]; self.dimension];
-        
+
         for ([r, c], v) in self.iter_upper_tri() {
             values[r][c] = v;
         }
@@ -170,52 +173,9 @@ impl Into<DMatrix<f64>> for SparseMatrix {
     }
 }
 
-impl Into<AIJMatrix> for SparseMatrix {
-    fn into(mut self) -> AIJMatrix {
-        // number of entries in each row (indices offset by 1)
-        let mut row_counts = vec![0; self.dimension + 1];
-
-        for [r, c] in self.entries.keys() {
-            if r == c {
-                row_counts[*r as usize + 1] += 1;
-            } else {
-                row_counts[*r as usize + 1] += 1;
-                row_counts[*c as usize + 1] += 1;
-            }
-        }
-
-        // prefix sum on row_counts
-        let mut i = vec![0; self.dimension + 1];
-        for (r, r_count) in row_counts.drain(0..).enumerate().skip(1) {
-            i[r] = r_count + i[r - 1];
-        }
-
-        // upper and lower triangles of matrix; sorted by row then column
-        let mut full_matrix: BTreeMap<[u32; 2], f64> = self
-            .entries
-            .iter()
-            .map(|([r, c], v)| ([*c, *r], *v))
-            .collect();
-        full_matrix.append(&mut self.entries);
-
-        // matrix entries and their associated columns
-        let (j, a) = full_matrix
-            .iter()
-            .map(|([_, c], v)| (*c as i32, *v))
-            .unzip();
-
-        AIJMatrix {
-            a,
-            i,
-            j,
-            dim: self.dimension,
-        }
-    }
-}
-
 impl Into<AIJMatrixBinary> for SparseMatrix {
     fn into(mut self) -> AIJMatrixBinary {
-        // number of entries in each row 
+        // number of entries in each row
         let mut row_counts = vec![0; self.dimension];
 
         for [r, c] in self.entries.keys() {
@@ -242,7 +202,7 @@ impl Into<AIJMatrixBinary> for SparseMatrix {
             .unzip();
 
         AIJMatrixBinary {
-            a, 
+            a,
             i: row_counts,
             j,
             dim: self.dimension,
@@ -250,15 +210,16 @@ impl Into<AIJMatrixBinary> for SparseMatrix {
     }
 }
 
+/// Petsc/Slepc Sparse Matrix Format
 pub struct AIJMatrixBinary {
     pub a: Vec<f64>,
-    pub i: Vec<i32>,
+    pub i: Vec<i32>, // Number of entries on each row (compute a prefix sum to get canonical form)
     pub j: Vec<i32>,
     pub dim: usize,
 }
 
 impl AIJMatrixBinary {
-    pub fn to_petsc_binary_format(&self, path: impl AsRef<str>) -> std::io::Result<()> {
+    pub fn print_to_petsc_binary_file(&self, path: impl AsRef<str>) -> std::io::Result<()> {
         let file = File::create(path.as_ref())?;
         let mut writer = BufWriter::new(file);
 
@@ -312,7 +273,9 @@ mod tests {
 
         let sm_bin: AIJMatrixBinary = sm.into();
 
-        sm_bin.to_petsc_binary_format("../../test_output/test.bin").unwrap();
+        sm_bin
+            .print_to_petsc_binary_file("../../test_output/test.bin")
+            .unwrap();
     }
 
     #[test]
@@ -374,46 +337,6 @@ mod tests {
 
         assert!(sm_a_entries.get(&[4, 0]).is_none());
         assert!(sm_a_entries.get(&[3, 1]).is_none());
-    }
-
-    const AIJ_TEST_A: [f64; 11] = [
-        1.0, 0.05125, 0.25, 2.0, 0.125, 0.05125, 3.0, 0.125, 4.0, 0.25, 5.0,
-    ];
-    const AIJ_TEST_J: [i32; 11] = [0, 2, 4, 1, 3, 0, 2, 1, 3, 0, 4];
-    const AIJ_TEST_I: [i32; 6] = [0, 3, 5, 7, 9, 11];
-
-    #[test]
-    fn into_aij_format() {
-        let mut sm = SparseMatrix::new(5);
-        sm.insert([0, 0], 1.0);
-        sm.insert([1, 1], 2.0);
-        sm.insert([2, 2], 3.0);
-        sm.insert([3, 3], 4.0);
-        sm.insert([4, 4], 5.0);
-
-        sm.insert([0, 4], 0.25);
-        sm.insert([1, 3], 0.125);
-        sm.insert([2, 0], 0.05125);
-
-        // println!("sparse_map: {:?}", sm.iter_upper_tri().collect::<Vec<([usize; 2], f64)>>());
-
-        let aij: AIJMatrix = sm.into();
-
-        // println!("a: {:?}", aij.a);
-        // println!("j: {:?}", aij.j);
-        // println!("i: {:?}", aij.i);
-
-        for (a, a_cmp) in aij.a.iter().zip(AIJ_TEST_A.iter()) {
-            assert!((a - a_cmp).abs() < 1e-15);
-        }
-
-        for (j, j_cmp) in aij.j.iter().zip(AIJ_TEST_J.iter()) {
-            assert_eq!(j, j_cmp);
-        }
-
-        for (i, i_cmp) in aij.i.iter().zip(AIJ_TEST_I.iter()) {
-            assert_eq!(i, i_cmp);
-        }
     }
 
     #[test]

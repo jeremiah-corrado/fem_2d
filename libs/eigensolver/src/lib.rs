@@ -1,6 +1,7 @@
 extern crate cxx;
 extern crate rayon;
 extern crate bytes;
+extern crate nalgebra;
 
 mod eigenproblem;
 mod slepc_wrapper;

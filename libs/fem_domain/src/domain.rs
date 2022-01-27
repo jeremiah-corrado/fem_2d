@@ -54,7 +54,7 @@ impl Domain {
         self.mesh.nodes.iter()
     }
 
-    /// Generate Degrees of Freedom over the mesh according to the Polynomial Expansion orders on each [Elem]
+    // Generate Degrees of Freedom over the mesh according to the Polynomial Expansion orders on each Elem
     fn gen_dofs(&mut self) {
         // prepare for fresh set of DoFs and BasisSpecs
         self.basis_specs = vec![Vec::new(); self.mesh.elems.len()];

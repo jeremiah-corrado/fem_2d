@@ -3,19 +3,23 @@ name = "fem_2d"
 version = "0.1.0"
 edition = "2021"
 
-[dependencies.fem_domain]
-path="./libs/fem_domain/"
+# [dependencies.fem_domain]
+# path="./libs/fem_domain/"
 
-[dependencies.basis]
-path="./libs/basis/"
+# [dependencies.basis]
+# path="./libs/basis/"
 
-[dependencies.integration]
-path="./libs/integration/"
+# [dependencies.integration]
+# path="./libs/integration/"
 
-[dependencies.eigensolver]
-path="./libs/eigensolver/"
+# [dependencies.eigensolver]
+# path="./libs/eigensolver/"
 
 [dependencies]
-
-[dev-dependencies]
 rayon="1.5.1"
+bytes = "1.1.0"
+nalgebra = "0.30.1"
+smallvec="1.7.0"
+num-complex="0.4.0"
+json="0.12.4"
+

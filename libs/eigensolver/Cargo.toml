@@ -10,6 +10,7 @@ links = "boost"
 cxx="1.0.62"
 rayon="1.5.1"
 bytes = "1.1.0"
+nalgebra="0.30.1"
 
 [build-dependencies]
 cxx-build = "1.0.62"

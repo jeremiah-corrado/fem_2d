@@ -1,25 +1,27 @@
-extern crate basis;
-extern crate eigensolver;
-extern crate fem_domain;
-extern crate integration;
+extern crate bytes;
+extern crate nalgebra;
+extern crate num_complex;
+extern crate rayon;
 
-pub use basis::{BasisFn, BasisFnSampler, KOLShapeFn, ShapeFn};
-pub use eigensolver::{solve_gep, EigenPair, SparseMatrix, GEP, solve_eigenproblem};
-pub use fem_domain::{
-    BasisDir, DoF, Domain, HRef, HRefError, Mesh, PRef, PRefError, Point, M2D, V2D,
-};
-pub use integration::{
-    fill_matrices, fill_matrices_parallel, CurlProduct, Integral, IntegralResult, L2InnerProduct,
-    UniformFieldSpace,
-};
+#[macro_use]
+extern crate smallvec;
 
-// pub use basis::MaxOrthoShapeFn;
+#[macro_use]
+extern crate json;
 
+/// Structures and Traits for Basis Function Evaluation
+pub mod basis;
+/// Structures to define the geometric characteristics and refinement state of an FEM Domain
+pub mod domain;
+/// Structures and functions to assist in the integration of Basis Functions
+pub mod integration;
+/// Structures and functions to solve Generalized Eigenvalue Problems
+pub mod linalg;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use rayon::prelude::*;
+    // use super::*;
+    // use rayon::prelude::*;
 
     // #[test]
     // fn integration_correctness() {
@@ -82,41 +84,41 @@ mod tests {
     //         }
     //     }
     // }
-    #[test]
-    fn basic_problem_seq() {
-        let mut mesh = Mesh::from_file("./test_input/test_mesh_b.json").unwrap();
-        mesh.global_p_refinement(PRef::from(3, 3)).unwrap();
-        mesh.global_h_refinement(HRef::T).unwrap();
-        mesh.h_refine_elems(vec![6, 9, 12], HRef::T).unwrap();
+    // #[test]
+    // fn basic_problem_seq() {
+    //     let mut mesh = Mesh::from_file("./test_input/test_mesh_b.json").unwrap();
+    //     mesh.global_p_refinement(PRef::from(3, 3)).unwrap();
+    //     mesh.global_h_refinement(HRef::T).unwrap();
+    //     mesh.h_refine_elems(vec![6, 9, 12], HRef::T).unwrap();
 
-        let domain = Domain::from_mesh(mesh);
+    //     let domain = Domain::from_mesh(mesh);
 
-        let eigenproblem = fill_matrices::<CurlProduct, L2InnerProduct, KOLShapeFn>(&domain);
-        let eigen_pair = solve_eigenproblem(eigenproblem, 1.475).unwrap();
+    //     let eigenproblem = fill_matrices::<CurlProduct, L2InnerProduct, KOLShapeFn>(&domain);
+    //     let eigen_pair = solve_eigenproblem(eigenproblem, 1.475).unwrap();
 
-        assert!((eigen_pair.value - 1.4745880937_f64).abs() < 1e-9);
-    }
+    //     assert!((eigen_pair.value - 1.4745880937_f64).abs() < 1e-9);
+    // }
 
-    #[test]
-    fn basic_problem_par() {
-        rayon::ThreadPoolBuilder::new()
-            .num_threads(4)
-            .build_global()
-            .unwrap();
+    // #[test]
+    // fn basic_problem_par() {
+    //     rayon::ThreadPoolBuilder::new()
+    //         .num_threads(4)
+    //         .build_global()
+    //         .unwrap();
 
-        let mut mesh = Mesh::from_file("./test_input/test_mesh_b.json").unwrap();
-        mesh.global_p_refinement(PRef::from(3, 3)).unwrap();
-        mesh.global_h_refinement(HRef::T).unwrap();
-        mesh.h_refine_elems(vec![6, 9, 12], HRef::T).unwrap();
+    //     let mut mesh = Mesh::from_file("./test_input/test_mesh_b.json").unwrap();
+    //     mesh.global_p_refinement(PRef::from(3, 3)).unwrap();
+    //     mesh.global_h_refinement(HRef::T).unwrap();
+    //     mesh.h_refine_elems(vec![6, 9, 12], HRef::T).unwrap();
 
-        let domain = Domain::from_mesh(mesh);
+    //     let domain = Domain::from_mesh(mesh);
 
-        println!("NDOFS: {}", domain.dofs.len());
+    //     println!("NDOFS: {}", domain.dofs.len());
 
-        let eigenproblem =
-            fill_matrices_parallel::<CurlProduct, L2InnerProduct, KOLShapeFn>(&domain);
-        let eigen_pair = solve_eigenproblem(eigenproblem, 1.475).unwrap();
+    //     let eigenproblem =
+    //         fill_matrices_parallel::<CurlProduct, L2InnerProduct, KOLShapeFn>(&domain);
+    //     let eigen_pair = solve_eigenproblem(eigenproblem, 1.475).unwrap();
 
-        assert!((eigen_pair.value - 1.4745880937_f64).abs() < 1e-9);
-    }
+    //     assert!((eigen_pair.value - 1.4745880937_f64).abs() < 1e-9);
+    // }
 }
