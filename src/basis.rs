@@ -13,8 +13,7 @@ use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
 /// Hierarchical Curl-Conforming Shape Function along a single direction (defined over (-1.0, +1.0)).
-/// [KOLShapeFn] and [MaxOrthoShapeFn] implement this trait.
-/// Custom basis functions can be defined by implementing this trait.
+/// A Custom Basis Function can be defined by implementing this Trait on your own Struct.
 pub trait ShapeFn: Clone + Sync + Send + std::fmt::Debug {
     fn with(max_order: usize, points: &[f64], compute_d2: bool) -> Self;
 

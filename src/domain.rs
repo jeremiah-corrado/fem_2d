@@ -1,5 +1,8 @@
+/// Degrees of Freedom
 pub mod dof;
+/// Structures used to compute solution fields over a Domain
 pub mod fields;
+/// The internal geometric structure of a Domain
 pub mod mesh;
 
 use crate::basis::{BasisFnSampler, ParBasisFnSampler, ShapeFn};
@@ -45,17 +48,17 @@ impl Domain {
         dom
     }
 
-    /// Iterate over all [Elem]s in the mesh
+    /// Iterate over all `Elem`s in the mesh
     pub fn elems<'a>(&'a self) -> impl Iterator<Item = &'a mesh::elem::Elem> + '_ {
         self.mesh.elems.iter()
     }
 
-    /// Iterate over all [Edge]s in the mesh
+    /// Iterate over all `Edge`s in the mesh
     pub fn edges<'a>(&'a self) -> impl Iterator<Item = &'a mesh::edge::Edge> + '_ {
         self.mesh.edges.iter()
     }
 
-    /// Iterate over all [Node]s in the mesh
+    /// Iterate over all `Node`s in the mesh
     pub fn nodes<'a>(&'a self) -> impl Iterator<Item = &'a mesh::node::Node> + '_ {
         self.mesh.nodes.iter()
     }
@@ -172,7 +175,7 @@ impl Domain {
         [elem_bs, edge_bs, node_bs]
     }
 
-    /// Retrieve a list of [BasisSpec]s on an [Elem] by ID
+    /// Retrieve a list of [BasisSpec]s on an `Elem` by ID
     pub fn local_basis_specs<'a>(&'a self, elem_id: usize) -> Result<&'a Vec<BasisSpec>, String> {
         if elem_id >= self.mesh.elems.len() {
             Err(format!(
@@ -184,7 +187,7 @@ impl Domain {
         }
     }
 
-    /// Retrieve a list of an [Elem]s descendant [BasisSpec]s (All the [`BasisSpec`]s on its descendant [`Elem`]s)
+    /// Retrieve a list of an `Elem`s descendant [BasisSpec]s (All the [`BasisSpec`]s on its descendant `Elem`s)
     pub fn descendant_basis_specs<'a>(
         &'a self,
         elem_id: usize,
@@ -203,7 +206,7 @@ impl Domain {
         }
     }
 
-    /// Retrieve a list of an [Elem]s ancestor [BasisSpec]s (All the [`BasisSpec`]s on its ancestor [`Elem`]s)
+    /// Retrieve a list of an `Elem`s ancestor [BasisSpec]s (All the [`BasisSpec`]s on its ancestor `Elem`s)
     pub fn ancestor_basis_specs<'a>(
         &'a self,
         elem_id: usize,
@@ -222,8 +225,8 @@ impl Domain {
         }
     }
 
-    // push a new BasisSpec onto the list, updating its ID to match its position in its elem's list
-    // return its [elem_id, elem_list_position]
+    // push a new `BasisSpec` onto the list, updating its ID to match its position in its elem's list
+    // return its [BSAddress] composed of its element id and index
     fn push_basis_spec(&mut self, mut bs: BasisSpec, dof_id: usize) -> BSAddress {
         let elem_id = bs.elem_id;
         let elem_idx = self.basis_specs[elem_id].len();
