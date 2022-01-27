@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["UniformFieldSpace","A collection of Field Solutions over a [Domain]."]]});

@@ -1,7 +1,7 @@
 /// 2D Gauss Legendre Quadrature integral of some function F defined over an m by n rectangular region.
 ///
 /// It is assumed that u_weights.len() == m and v_weights.len() == n.
-pub fn real_gauss_quad<F>(u_weights: &Vec<f64>, v_weights: &Vec<f64>, integrand: F) -> f64
+pub fn real_gauss_quad<F>(u_weights: &[f64], v_weights: &[f64], integrand: F) -> f64
 where
     F: Fn(usize, usize) -> f64,
 {
@@ -20,7 +20,7 @@ where
 ///
 /// This is the same as [real_gauss_quad] except, the outer edge (the first and last elements of 'u_weights' and 'v_weights') are ignored.
 /// Intended to be used in scenarios where BasisFns are defined for By-Parts integration but the solutions on the edges can be ignored.
-pub fn real_gauss_quad_inner<F>(u_weights: &Vec<f64>, v_weights: &Vec<f64>, integrand: F) -> f64
+pub fn real_gauss_quad_inner<F>(u_weights: &[f64], v_weights: &[f64], integrand: F) -> f64
 where
     F: Fn(usize, usize) -> f64,
 {
@@ -47,8 +47,8 @@ where
 
 /// 1D integral over some function F, which is defined along one edge of a rectangular parametric region.
 pub fn real_gauss_quad_edge<F>(
-    u_weights: &Vec<f64>,
-    v_weights: &Vec<f64>,
+    u_weights: &[f64],
+    v_weights: &[f64],
     edge_index: usize,
     integrand: F,
 ) -> f64

@@ -302,14 +302,15 @@ impl Mesh {
     // ----------------------------------------------------------------------------------------------------
 
     /// Get the four [Point]s composing an [`Elem`]
-    pub fn elem_points<'a>(&'a self, elem_id: usize) -> [&'a Point; 4] {
+    pub fn elem_points(&self, elem_id: usize) -> [&Point; 4] {
         assert!(elem_id < self.elems.len());
         self.elems[elem_id]
             .nodes
             .map(|node_id| &self.nodes[node_id].coords)
     }
 
-    pub fn elem_diag_points<'a>(&'a self, elem_id: usize) -> [&'a Point; 2] {
+    /// Get the "smallest" and "largest" [Point]s composing an [`Elem`]
+    pub fn elem_diag_points(&self, elem_id: usize) -> [&Point; 2] {
         assert!(elem_id < self.elems.len());
         [
             &self.nodes[self.elems[elem_id].nodes[0]].coords,
@@ -318,7 +319,7 @@ impl Mesh {
     }
 
     /// Get the two [Point]s composing an [`Edge`]
-    pub fn edge_points<'a>(&'a self, edge_id: usize) -> [&'a Point; 2] {
+    pub fn edge_points(&self, edge_id: usize) -> [&Point; 2] {
         assert!(edge_id < self.edges.len());
         [
             &self.nodes[self.edges[edge_id].nodes[0]].coords,
@@ -462,7 +463,7 @@ impl Mesh {
             if elem_id >= self.elems.len() {
                 return Err(HRefError::ElemDoesntExist(elem_id));
             }
-            if let Some(_) = refinements_map.insert(elem_id, h_ref) {
+            if refinements_map.insert(elem_id, h_ref).is_some() {
                 return Err(HRefError::DoubleRefinement(elem_id));
             }
         }
@@ -512,7 +513,7 @@ impl Mesh {
             self.elems.extend(new_elems.drain(0..));
         }
 
-        if refinement_extensions.len() > 0 {
+        if !refinement_extensions.is_empty() {
             self.execute_h_refinements(refinement_extensions)?;
         }
 
@@ -581,7 +582,7 @@ impl Mesh {
 
         // upgrade the ElemUninits to Elems (They should each have 4 node_ids and 4 edge_ids by this point)
         // connect the Elems to their relevant edges in the process
-        Ok(self.upgrade_uninit_elems(new_elems)?)
+        self.upgrade_uninit_elems(new_elems)
     }
 
     fn execute_u_refinement(
@@ -638,7 +639,7 @@ impl Mesh {
 
         // upgrade the ElemUninits to Elems (They should each have 4 node_ids and 4 edge_ids by this point)
         // connect the Elems to their relevant edges in the process
-        Ok(self.upgrade_uninit_elems(new_elems)?)
+        self.upgrade_uninit_elems(new_elems)
     }
 
     fn execute_v_refinement(
@@ -695,7 +696,7 @@ impl Mesh {
 
         // upgrade the ElemUninits to Elems (They should each have 4 node_ids and 4 edge_ids by this point)
         // connect the Elems to their relevant edges in the process
-        Ok(self.upgrade_uninit_elems(new_elems)?)
+        self.upgrade_uninit_elems(new_elems)
     }
 
     fn h_refine_edge_if_needed(
@@ -867,7 +868,7 @@ impl Mesh {
             if elem_id >= self.elems.len() {
                 return Err(PRefError::ElemDoesntExist(elem_id));
             }
-            if let Some(_) = refinements_map.insert(elem_id, p_ref) {
+            if refinements_map.insert(elem_id, p_ref).is_some() {
                 return Err(PRefError::DoubleRefinement(elem_id));
             }
         }
@@ -917,7 +918,7 @@ impl Mesh {
             if elem_id >= self.elems.len() {
                 return Err(PRefError::ElemDoesntExist(elem_id));
             }
-            if let Some(_) = poly_orders_map.insert(elem_id, orders) {
+            if poly_orders_map.insert(elem_id, orders).is_some() {
                 return Err(PRefError::DoubleRefinement(elem_id));
             }
         }

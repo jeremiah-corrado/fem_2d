@@ -91,7 +91,7 @@ impl SparseMatrix {
 
     // Remove the entries from the matrix, replacing them with an empty BTreeMap.
     fn take_entries(&mut self) -> BTreeMap<[u32; 2], f64> {
-        std::mem::replace(&mut self.entries, BTreeMap::new())
+        std::mem::take(&mut self.entries)
     }
 
     /// Consume the entries from another sparse matrix leaving it empty.
@@ -157,28 +157,28 @@ impl SparseMatrix {
     }
 }
 
-impl Into<DMatrix<f64>> for SparseMatrix {
-    fn into(self) -> DMatrix<f64> {
-        let mut values = vec![vec![0.0; self.dimension]; self.dimension];
+impl From<SparseMatrix> for DMatrix<f64> {
+    fn from(sm: SparseMatrix) -> Self {
+        let mut values = vec![vec![0.0; sm.dimension]; sm.dimension];
 
-        for ([r, c], v) in self.iter_upper_tri() {
+        for ([r, c], v) in sm.iter_upper_tri() {
             values[r][c] = v;
         }
 
-        for ([r, c], v) in self.iter_upper_tri() {
+        for ([r, c], v) in sm.iter_upper_tri() {
             values[c][r] = v;
         }
 
-        DMatrix::from_iterator(self.dimension, self.dimension, values.drain(0..).flatten())
+        DMatrix::from_iterator(sm.dimension, sm.dimension, values.drain(0..).flatten())
     }
 }
 
-impl Into<AIJMatrixBinary> for SparseMatrix {
-    fn into(mut self) -> AIJMatrixBinary {
+impl From<SparseMatrix> for AIJMatrixBinary {
+    fn from(mut sm: SparseMatrix) -> Self {
         // number of entries in each row
-        let mut row_counts = vec![0; self.dimension];
+        let mut row_counts = vec![0; sm.dimension];
 
-        for [r, c] in self.entries.keys() {
+        for [r, c] in sm.entries.keys() {
             if r == c {
                 row_counts[*r as usize] += 1;
             } else {
@@ -188,12 +188,12 @@ impl Into<AIJMatrixBinary> for SparseMatrix {
         }
 
         // upper and lower triangles of matrix; sorted by row then column
-        let mut full_matrix: BTreeMap<[u32; 2], f64> = self
+        let mut full_matrix: BTreeMap<[u32; 2], f64> = sm
             .entries
             .iter()
             .map(|([r, c], v)| ([*c, *r], *v))
             .collect();
-        full_matrix.append(&mut self.entries);
+        full_matrix.append(&mut sm.entries);
 
         // matrix entries and their associated columns
         let (j, a) = full_matrix
@@ -205,7 +205,7 @@ impl Into<AIJMatrixBinary> for SparseMatrix {
             a,
             i: row_counts,
             j,
-            dim: self.dimension,
+            dim: sm.dimension,
         }
     }
 }

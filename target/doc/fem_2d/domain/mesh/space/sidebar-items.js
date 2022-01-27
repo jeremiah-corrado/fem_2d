@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["ParaDir","Parametric Coordinate Directions"]],"struct":[["M2D","2 by 2 Matrix. Used to represent transformations in/into Parametric space"],["Point","Point in 2D Space"],["V2D","2D vector in Parametric Space"]]});

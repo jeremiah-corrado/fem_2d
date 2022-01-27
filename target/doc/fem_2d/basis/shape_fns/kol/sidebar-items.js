@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["KOLShapeFn","A simple Curl-Conforming Hierarchical Shape Function"]]});

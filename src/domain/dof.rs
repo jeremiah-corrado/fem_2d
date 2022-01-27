@@ -17,9 +17,9 @@ impl DoF {
         Self {
             id,
             basis_specs: match bs_addresses.len() {
-                1 => BasisSpecGroup::ELEM(bs_addresses[0]),
-                2 => BasisSpecGroup::EDGE([bs_addresses[0], bs_addresses[1]]),
-                4 => BasisSpecGroup::NODE([
+                1 => BasisSpecGroup::ElemGroup(bs_addresses[0]),
+                2 => BasisSpecGroup::EdgeGroup([bs_addresses[0], bs_addresses[1]]),
+                4 => BasisSpecGroup::NodeGroup([
                     bs_addresses[0],
                     bs_addresses[1],
                     bs_addresses[2],
@@ -36,11 +36,11 @@ impl DoF {
     /// Get the list of addresses for the 1, 2 or 4 BasisSpecs associated with this DoF.
     pub fn get_basis_specs(&self) -> SmallVec<[BSAddress; 4]> {
         match self.basis_specs {
-            BasisSpecGroup::ELEM(elem_bs_address) => smallvec![elem_bs_address],
-            BasisSpecGroup::EDGE(edge_bs_addresses) => {
+            BasisSpecGroup::ElemGroup(elem_bs_address) => smallvec![elem_bs_address],
+            BasisSpecGroup::EdgeGroup(edge_bs_addresses) => {
                 smallvec![edge_bs_addresses[0], edge_bs_addresses[1]]
             }
-            BasisSpecGroup::NODE(node_bs_addresses) => smallvec![
+            BasisSpecGroup::NodeGroup(node_bs_addresses) => smallvec![
                 node_bs_addresses[0],
                 node_bs_addresses[1],
                 node_bs_addresses[2],
@@ -57,19 +57,19 @@ impl fmt::Display for DoF {
 }
 
 enum BasisSpecGroup {
-    ELEM(BSAddress),
-    EDGE([BSAddress; 2]),
-    NODE([BSAddress; 4]),
+    ElemGroup(BSAddress),
+    EdgeGroup([BSAddress; 2]),
+    NodeGroup([BSAddress; 4]),
 }
 
 impl fmt::Display for BasisSpecGroup {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::ELEM(address) => write!(f, "ElemType[ {} ]", address),
-            Self::EDGE([address_0, address_1]) => {
+            Self::ElemGroup(address) => write!(f, "ElemType[ {} ]", address),
+            Self::EdgeGroup([address_0, address_1]) => {
                 write!(f, "EdgeType[ {} {} ]", address_0, address_1)
             }
-            Self::NODE(bs_addresses) => {
+            Self::NodeGroup(bs_addresses) => {
                 write!(f, "NodeType[")?;
                 for bsa in bs_addresses.iter() {
                     write!(f, " {}", bsa)?;

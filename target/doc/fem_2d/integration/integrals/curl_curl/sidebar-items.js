@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["CurlCurl","The L2 Inner product of the Curl of two Basis Functions"]]});

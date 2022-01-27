@@ -3,7 +3,10 @@ use nalgebra::SymmetricEigen;
 
 /// This function is only recommended in scenarios where the problem size is small and the B-matrix is known to be very well conditioned
 ///
-/// For larger and more difficult problems the SLEPC Solver is recommended.
+/// This function directly inverts the B-matrix using Nalgebra's Cholesky Decomposition which does not work well when B is ill-conditioned.
+/// It also casts the sparse-matrices as dense matrix objects which uses a very large amount of memory for large matrices.
+///
+/// For larger or more difficult problems the SLEPC Solver is recommended.
 pub fn nalgebra_solve_gep(gep: GEP, target_eigenvalue: f64) -> Result<EigenPair, String> {
     let [a_mat, b_mat] = gep.to_nalgebra_dense_mats();
     if let Some(cholesky_decomp) = b_mat.cholesky() {
@@ -22,7 +25,7 @@ pub fn nalgebra_solve_gep(gep: GEP, target_eigenvalue: f64) -> Result<EigenPair,
         }
 
         Ok(EigenPair {
-            value: ba_se_decomp.eigenvalues.get(delta_min_idx).unwrap().clone(),
+            value: *ba_se_decomp.eigenvalues.get(delta_min_idx).unwrap(),
             vector: ba_se_decomp
                 .eigenvectors
                 .column(delta_min_idx)

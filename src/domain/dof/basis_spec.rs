@@ -22,10 +22,10 @@ impl BasisSpec {
                 (true, false) => BasisLoc::edge_bs(elem, i + 2),
                 (false, true) => BasisLoc::edge_bs(elem, j),
                 (true, true) => BasisLoc::node_bs(elem, i + 2 * j),
-                (false, false) => BasisLoc::ELEM,
+                (false, false) => BasisLoc::ElemBs,
             },
-            (2..=u8::MAX, 2..=u8::MAX, _) => BasisLoc::ELEM,
-            (_, _, _) => BasisLoc::ELEM,
+            (2..=u8::MAX, 2..=u8::MAX, _) => BasisLoc::ElemBs,
+            (_, _, _) => BasisLoc::ElemBs,
         };
 
         Self {
@@ -45,7 +45,7 @@ impl BasisSpec {
     /// panics if the basis specs are not edge-type or if they are not attached to the same edge
     pub fn matches_with_edge(&self, other: &Self) -> bool {
         match (self.loc, other.loc) {
-            (BasisLoc::EDGE(idx_0, edge_id_0), BasisLoc::EDGE(idx_1, edge_id_1)) => {
+            (BasisLoc::EdgeBs(idx_0, edge_id_0), BasisLoc::EdgeBs(idx_1, edge_id_1)) => {
                 assert_eq!(
                     edge_id_0, edge_id_1,
                     "Cannot attempt to match Edge-Type BasisSpecs associated with different Edges!"
@@ -97,22 +97,6 @@ impl BasisSpec {
         self.dof_id = Some(dof_id);
         self.elem_idx = Some(elem_idx);
     }
-
-    // pub fn assign_dof_id(&mut self, dof_id: usize) {
-    //     assert!(
-    //         self.dof_id.is_none(),
-    //         "BasisSpec {} is already connected to DoF {}; cannot connect to {}!",
-    //         self.id,
-    //         self.dof_id.unwrap(),
-    //         dof_id
-    //     );
-    //     self.dof_id = Some(dof_id);
-    // }
-
-    // pub fn update_ids(&mut self, new_id: usize, dof_id: usize) {
-    //     self.id = new_id;
-    //     self.dof_id = Some(dof_id);
-    // }
 
     /// Get a tuple of information needed to compute an integral over this BasisSpec
     pub fn integration_data(&self) -> ([usize; 2], BasisDir, usize) {
@@ -167,18 +151,18 @@ impl fmt::Display for BasisDir {
 
 #[derive(Clone, Copy, Debug)]
 pub(crate) enum BasisLoc {
-    ELEM,
-    EDGE(u8, usize),
-    NODE(u8, usize),
+    ElemBs,
+    EdgeBs(u8, usize),
+    NodeBs(u8, usize),
 }
 
 impl BasisLoc {
     pub fn edge_bs(elem: &Elem, idx: u8) -> Self {
-        Self::EDGE(idx, elem.edges[idx as usize])
+        Self::EdgeBs(idx, elem.edges[idx as usize])
     }
 
     pub fn node_bs(elem: &Elem, idx: u8) -> Self {
-        Self::NODE(idx, elem.nodes[idx as usize])
+        Self::NodeBs(idx, elem.nodes[idx as usize])
     }
 }
 

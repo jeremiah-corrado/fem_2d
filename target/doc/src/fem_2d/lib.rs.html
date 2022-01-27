@@ -1,0 +1,260 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src&#x2F;lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../fem_2d/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+</pre><pre class="rust"><code><span class="doccomment">//! A 2D FEM implementation which supports aniosotropic hp-refinements</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! This Library is primarily focused on Solving the Maxwell Eigenvalue Problem on a PEC-terminated Mesh;</span>
+<span class="doccomment">//! however, its functionality can be easily extended by creating custom implementations of</span>
+<span class="doccomment">//! the `Integral` and `ShapeFn` Traits</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # Example</span>
+<span class="doccomment">//! This example shows how to solve the Maxwell Eigenvalue Problem on standard waveguide and print the electric fields to a VTK file</span>
+<span class="doccomment">//! ```rust</span>
+<span class="doccomment">//! use fem_2d::prelude::*;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! // Load a standard air-filled waveguide mesh from a JSON file</span>
+<span class="doccomment">//! let mut mesh = Mesh::from_file(&quot;./test_input/test_mesh_a.json&quot;).unwrap();</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! // Set the polynomial expansion order to 3 in both directions on all Elems</span>
+<span class="doccomment">//! mesh.set_global_expansion_orders([3, 3]);</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! // Anisotropically refine all Elems along the x-direction</span>
+<span class="doccomment">//! mesh.h_refine_elems(vec![0, 1, 2, 3], HRef::U(None));</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! // Construct a domain with Dirichlet boundary conditions</span>
+<span class="doccomment">//! let domain = Domain::new(mesh);</span>
+<span class="doccomment">//! println!(&quot;Constructed Domain with {} DoFs&quot;, domain.dofs.len());</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! // Construct a generalized eigenvalue problem for the Electric Field</span>
+<span class="doccomment">//!     // (in parallel using the Rayon Global ThreadPool)</span>
+<span class="doccomment">//! let gep = domain.galerkin_sample_gep_parallel::&lt;KOLShapeFn, CurlCurl, L2Inner&gt;(None);</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! // Solve the generalized eigenvalue problem using Nalgebra&#39;s Eigen-Decomposition</span>
+<span class="doccomment">//!     // look for an eigenvalue close to 2.0</span>
+<span class="doccomment">//! let solution = nalgebra_solve_gep(gep, 2.0).unwrap();</span>
+<span class="doccomment">//! println!(&quot;Found Eigenvalue: {:.15}&quot;, solution.value);</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! // Construct a solution-field-space over the Domain with 64 samples on each &quot;shell&quot; Elem</span>
+<span class="doccomment">//! let mut field_space = UniformFieldSpace::new(&amp;domain, [8, 8]);</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! // Compute the Electric Field in the X- and Y-directions (using the same ShapeFns as above)</span>
+<span class="doccomment">//! let e_field_names = field_space.xy_fields::&lt;KOLShapeFn&gt;(&quot;E&quot;, solution.normalized_eigenvector()).unwrap();</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! // Compute the magnitude of the Electric Field</span>
+<span class="doccomment">//! field_space.expression_2arg(e_field_names, &quot;E_mag&quot;, |ex, ey| (ex.powi(2) + ey.powi(2)).sqrt()).unwrap();</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! // Print &quot;E_x&quot;, &quot;E_y&quot; and &quot;E_mag&quot; to a VTK file</span>
+<span class="doccomment">//! field_space.print_all_to_vtk(&quot;./test_output/electric_field_solution.vtk&quot;).unwrap();</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```</span>
+
+<span class="attribute">#![<span class="ident">cfg_attr</span>(
+    <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;max_ortho_basis&quot;</span>,
+    <span class="ident">feature</span>(<span class="ident">const_fn_floating_point_arithmetic</span>)
+)]</span>
+
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">bytes</span>;
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">nalgebra</span>;
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">num_complex</span>;
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">rayon</span>;
+
+<span class="attribute">#[<span class="ident">macro_use</span>]</span>
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">smallvec</span>;
+
+<span class="attribute">#[<span class="ident">macro_use</span>]</span>
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">json</span>;
+
+<span class="doccomment">/// Structures and Traits for Basis Function Evaluation</span>
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">basis</span>;
+<span class="doccomment">/// Structures to define the geometric characteristics and refinement state of an FEM Domain</span>
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">domain</span>;
+<span class="doccomment">/// Structures and functions to assist in the integration of Basis Functions</span>
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">integration</span>;
+<span class="doccomment">/// Structures and functions to solve Generalized Eigenvalue Problems</span>
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">linalg</span>;
+
+<span class="doccomment">/// Convenient Re-Exports</span>
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">prelude</span> {
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::basis::shape_fns::kol::KOLShapeFn</span>;
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;max_ortho_basis&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::basis::shape_fns::max_ortho::MaxOrthoShapeFn</span>;
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::domain</span>::{
+        <span class="ident">dof</span>::{
+            <span class="ident">basis_spec</span>::{<span class="ident">BSAddress</span>, <span class="ident">BasisSpec</span>},
+            <span class="ident">DoF</span>,
+        },
+        <span class="ident">fields::UniformFieldSpace</span>,
+        <span class="ident">mesh</span>::{
+            <span class="ident">elem::Elem</span>,
+            <span class="ident">h_refinement</span>::{<span class="ident">HRef</span>, <span class="ident">HRefError</span>},
+            <span class="ident">p_refinement</span>::{<span class="ident">PRef</span>, <span class="ident">PRefError</span>},
+            <span class="ident">Mesh</span>,
+        },
+        <span class="ident">Domain</span>,
+    };
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::integration::integrals</span>::{<span class="ident">curl_curl::CurlCurl</span>, <span class="ident">inner::L2Inner</span>};
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::linalg</span>::{
+        <span class="ident">nalgebra_solve::nalgebra_solve_gep</span>,
+        <span class="ident">slepc_solve</span>::{<span class="ident">slepc_solve_gep</span>, <span class="ident">SlepcGEPError</span>},
+        <span class="ident">EigenPair</span>, <span class="ident">GEP</span>,
+    };
+}
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
+<span class="kw">mod</span> <span class="ident">tests</span> {
+    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::prelude</span>::<span class="kw-2">*</span>;
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">basic_problem</span>() {
+        <span class="comment">// Define Mesh</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mesh</span> <span class="op">=</span> <span class="ident">Mesh::from_file</span>(<span class="string">&quot;./test_input/test_mesh_b.json&quot;</span>).<span class="ident">unwrap</span>();
+        <span class="ident">mesh</span>.<span class="ident">global_p_refinement</span>(<span class="ident">PRef::from</span>(<span class="number">3</span>, <span class="number">3</span>)).<span class="ident">unwrap</span>();
+        <span class="ident">mesh</span>.<span class="ident">global_h_refinement</span>(<span class="ident">HRef::T</span>).<span class="ident">unwrap</span>();
+        <span class="ident">mesh</span>.<span class="ident">h_refine_elems</span>(<span class="macro">vec!</span>[<span class="number">6</span>, <span class="number">9</span>, <span class="number">12</span>], <span class="ident">HRef::T</span>).<span class="ident">unwrap</span>();
+
+        <span class="comment">// Construct Domain</span>
+        <span class="kw">let</span> <span class="ident">domain</span> <span class="op">=</span> <span class="ident">Domain::from_mesh</span>(<span class="ident">mesh</span>);
+        <span class="kw">let</span> <span class="ident">ndofs</span> <span class="op">=</span> <span class="ident">domain</span>.<span class="ident">dofs</span>.<span class="ident">len</span>();
+        <span class="macro">println!</span>(<span class="string">&quot;Domain constructed with {} Degrees of Freedom&quot;</span>, <span class="ident">ndofs</span>);
+
+        <span class="comment">// Fill Matrices</span>
+        <span class="kw">let</span> <span class="ident">eigenproblem</span> <span class="op">=</span>
+            <span class="ident">domain</span>.<span class="ident">galerkin_sample_gep_parallel</span>::<span class="op">&lt;</span><span class="ident">KOLShapeFn</span>, <span class="ident">CurlCurl</span>, <span class="ident">L2Inner</span><span class="op">&gt;</span>(<span class="prelude-val">None</span>);
+
+        <span class="comment">// Solve Eigenvalue Problem</span>
+        <span class="kw">let</span> <span class="ident">solution</span> <span class="op">=</span> <span class="ident">slepc_solve_gep</span>(<span class="ident">eigenproblem</span>, <span class="number">1.475</span>).<span class="ident">unwrap</span>();
+        <span class="macro">println!</span>(<span class="string">&quot;Found eigenvalue: {:.15}&quot;</span>, <span class="ident">solution</span>.<span class="ident">value</span>);
+
+        <span class="macro">assert!</span>((<span class="ident">solution</span>.<span class="ident">value</span> <span class="op">-</span> <span class="number">1.4745880937_f64</span>).<span class="ident">abs</span>() <span class="op">&lt;</span> <span class="number">1e-9</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">solution</span>.<span class="ident">vector</span>.<span class="ident">len</span>(), <span class="ident">ndofs</span>);
+    }
+}
+</code></pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="fem_2d" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>
+    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script>
+</body></html>

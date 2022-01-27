@@ -1,6 +1,6 @@
 /// Use Nalgebra's Eigen decomposition to solve a GEP (not recommended)
 pub mod nalgebra_solve;
-/// Use External SLEPC solver to solve a GEP 
+/// Use External SLEPC solver to solve a GEP
 pub mod slepc_solve;
 /// Sparsely Packed Matrix
 pub mod sparse_matrix;
@@ -78,7 +78,7 @@ pub struct EigenPair {
 
 impl EigenPair {
     /// L2 normalized vector
-    pub fn eigenvector_l2(&self) -> Vec<f64> {
+    pub fn normalized_eigenvector(&self) -> Vec<f64> {
         let norm = self.vector.iter().map(|x| x.powi(2)).sum::<f64>().sqrt();
         self.vector.iter().map(|x| x / norm).collect()
     }

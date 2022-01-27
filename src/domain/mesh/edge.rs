@@ -79,7 +79,7 @@ impl Edge {
                 if child_edge_length < MIN_EDGE_LENGTH {
                     Err(HRefError::MinEdgeLength(self.id))
                 } else {
-                    self.children = Some(new_ids.clone());
+                    self.children = Some(new_ids);
                     self.child_node = Some(new_node_id);
                     Ok(smallvec![
                         Self {
@@ -119,10 +119,7 @@ impl Edge {
 
     /// Returns a vector of child Edge ids. Will return an empty vector if this Edge has no children.
     pub fn child_ids(&self) -> Option<SmallVec<[usize; 2]>> {
-        match self.children {
-            Some(child_ids) => Some(SmallVec::from(child_ids)),
-            None => None,
-        }
+        self.children.map(SmallVec::from)
     }
 
     pub fn has_children(&self) -> bool {
@@ -153,10 +150,11 @@ impl Edge {
     }
 
     fn last_entry(&self, side_idx: usize) -> Option<usize> {
-        for (_, elem_id) in self.elems[side_idx].iter().rev().take(1) {
-            return Some(*elem_id);
+        if let Some((_, elem_id)) = self.elems[side_idx].iter().rev().take(1).next() {
+            Some(*elem_id)
+        } else {
+            None
         }
-        None
     }
 
     pub(crate) fn reset_activation(&mut self) {

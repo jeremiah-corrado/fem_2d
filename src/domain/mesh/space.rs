@@ -186,11 +186,11 @@ pub enum ParaDir {
     V,
 }
 
-impl Into<JsonValue> for ParaDir {
-    fn into(self) -> JsonValue {
-        match self {
-            Self::U => JsonValue::from("U-Dir"),
-            Self::V => JsonValue::from("V-Dir"),
+impl From<ParaDir> for JsonValue {
+    fn from(paradir: ParaDir) -> Self {
+        match paradir {
+            ParaDir::U => "U-Dir".into(),
+            ParaDir::V => "V-Dir".into(),
         }
     }
 }
@@ -308,11 +308,11 @@ impl PartialEq for Point {
 
 impl Eq for Point {}
 
-impl Into<JsonValue> for Point {
-    fn into(self) -> JsonValue {
+impl From<Point> for JsonValue {
+    fn from(point: Point) -> Self {
         object! {
-            "x": self.x,
-            "y": self.y,
+            "x": point.x,
+            "y": point.y,
         }
     }
 }

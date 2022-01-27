@@ -59,11 +59,11 @@ impl<SF: ShapeFn> BasisFnSampler<SF> {
         compute_2nd_derivs: bool,
     ) -> (Self, [Vec<f64>; 2]) {
         let (u_points, u_weights) = gauss_quadrature_points(
-            num_u_points.unwrap_or(default_ngq(i_max)),
+            num_u_points.unwrap_or_else(|| default_ngq(i_max)),
             compute_2nd_derivs,
         );
         let (v_points, v_weights) = gauss_quadrature_points(
-            num_v_points.unwrap_or(default_ngq(j_max)),
+            num_v_points.unwrap_or_else(|| default_ngq(j_max)),
             compute_2nd_derivs,
         );
 
@@ -88,10 +88,7 @@ impl<SF: ShapeFn> BasisFnSampler<SF> {
     ) -> Rc<BasisFn<SF>> {
         let desc = BSDescription {
             space: [elem.nodes[0], elem.nodes[1]],
-            sample: match over_desc_elem {
-                Some(desc_elem) => Some([desc_elem.nodes[0], desc_elem.nodes[1]]),
-                None => None,
-            },
+            sample: over_desc_elem.map(|desc_elem| [desc_elem.nodes[0], desc_elem.nodes[1]]),
         };
 
         if let Some(computed_bs) = self.computed.get(&desc) {
@@ -144,11 +141,11 @@ impl<SF: ShapeFn> ParBasisFnSampler<SF> {
         compute_2nd_derivs: bool,
     ) -> (Self, [Vec<f64>; 2]) {
         let (u_points, u_weights) = gauss_quadrature_points(
-            num_u_points.unwrap_or(default_ngq(i_max)),
+            num_u_points.unwrap_or_else(|| default_ngq(i_max)),
             compute_2nd_derivs,
         );
         let (v_points, v_weights) = gauss_quadrature_points(
-            num_v_points.unwrap_or(default_ngq(j_max)),
+            num_v_points.unwrap_or_else(|| default_ngq(j_max)),
             compute_2nd_derivs,
         );
 
@@ -173,10 +170,7 @@ impl<SF: ShapeFn> ParBasisFnSampler<SF> {
     ) -> Arc<BasisFn<SF>> {
         let desc = BSDescription {
             space: [elem.nodes[0], elem.nodes[1]],
-            sample: match over_desc_elem {
-                Some(desc_elem) => Some([desc_elem.nodes[0], desc_elem.nodes[1]]),
-                None => None,
-            },
+            sample: over_desc_elem.map(|desc_elem| [desc_elem.nodes[0], desc_elem.nodes[1]]),
         };
 
         match self.computed.lock() {

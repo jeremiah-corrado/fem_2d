@@ -41,11 +41,11 @@ impl Default for HLevels {
     }
 }
 
-impl Into<JsonValue> for HLevels {
-    fn into(self) -> JsonValue {
+impl From<HLevels> for JsonValue {
+    fn from(h: HLevels) -> Self {
         object! {
-            "u": self.u,
-            "v": self.v,
+            "u": h.u,
+            "v": h.v,
         }
     }
 }

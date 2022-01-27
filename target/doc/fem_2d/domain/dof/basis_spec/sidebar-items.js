@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["BasisDir","Orientation of a Basis Function in Parametric Space"]],"struct":[["BSAddress",""],["BasisSpec",""]]});

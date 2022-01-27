@@ -43,7 +43,7 @@ impl<'d> UniformFieldSpace<'d> {
     /// The X and Y field quantities will be stored as X_{vector_name} and Y_{vector_name} respectively. The Names are returned in an array in that order.
     pub fn xy_fields<SF: ShapeFn>(
         &mut self,
-        vector_name: impl AsRef<str>,
+        vector_name: &'static str,
         eigenvector: Vec<f64>,
     ) -> Result<[String; 2], String> {
         if eigenvector.len() != self.domain.dofs.len() {
@@ -53,8 +53,8 @@ impl<'d> UniformFieldSpace<'d> {
                 eigenvector.len()
             ))
         } else {
-            let x_q_name = format!("X_{}", vector_name.as_ref());
-            let y_q_name = format!("Y_{}", vector_name.as_ref());
+            let x_q_name = format!("X_{}", vector_name);
+            let y_q_name = format!("Y_{}", vector_name);
 
             let mut x_quantity = FieldQuantity::new(&x_q_name);
             let mut y_quantity = FieldQuantity::new(&y_q_name);
@@ -219,7 +219,7 @@ impl<'d> UniformFieldSpace<'d> {
         operator: F,
     ) -> Result<(), String>
     where
-        F: Fn(&f64) -> f64,
+        F: Fn(&f64) -> f64 + Copy,
     {
         let q_key = String::from(name.as_ref());
         let q_new_key = String::from(result_name.as_ref());
@@ -291,15 +291,15 @@ struct FieldQuantity {
 }
 
 impl FieldQuantity {
-    pub fn new(name: &String) -> Self {
+    pub fn new(name: &str) -> Self {
         Self {
             values: BTreeMap::new(),
-            name: name.clone(),
+            name: name.to_string(),
         }
     }
 
     pub fn insert_elem_values(&mut self, elem_id: usize, values: Vec<Vec<f64>>) {
-        if let Some(_) = self.values.insert(elem_id, values) {
+        if self.values.insert(elem_id, values).is_some() {
             panic!(
                 "Field Quantity '{}' already had values for Elem {}; cannot assign new values!",
                 self.name, elem_id
@@ -315,9 +315,9 @@ impl FieldQuantity {
         )?;
 
         for (_, shell_elem_values) in self.values.iter() {
-            for m in 0..shell_elem_values.len() {
-                for n in 0..shell_elem_values[m].len() {
-                    write!(writer, "{:.15} ", shell_elem_values[m][n])?;
+            for shell_row_values in shell_elem_values {
+                for value in shell_row_values {
+                    write!(writer, "{:.15} ", value)?;
                 }
             }
         }
@@ -325,9 +325,9 @@ impl FieldQuantity {
         Ok(())
     }
 
-    pub fn operation<F>(&self, operator: F, new_name: &String) -> Self
+    pub fn operation<F>(&self, operator: F, new_name: &str) -> Self
     where
-        F: Fn(&f64) -> f64,
+        F: Fn(&f64) -> f64 + Copy,
     {
         Self {
             values: self
@@ -338,12 +338,12 @@ impl FieldQuantity {
                         *elem_id,
                         elem_values
                             .iter()
-                            .map(|col| col.iter().map(|val| operator(val)).collect())
+                            .map(|col| col.iter().map(operator).collect())
                             .collect(),
                     )
                 })
                 .collect(),
-            name: new_name.clone(),
+            name: new_name.to_string(),
         }
     }
 }

@@ -71,11 +71,11 @@ impl Default for PolyOrders {
     }
 }
 
-impl Into<JsonValue> for PolyOrders {
-    fn into(self) -> JsonValue {
+impl From<PolyOrders> for JsonValue {
+    fn from(orders: PolyOrders) -> Self {
         object! {
-            "u": self.ni,
-            "v": self.nj,
+            "u": orders.ni,
+            "v": orders.nj,
         }
     }
 }
@@ -122,13 +122,13 @@ impl PRef {
             di: match i {
                 0 => PRefInt::None,
                 d if d > 0 => PRefInt::Increment(d as u8),
-                d if d < 0 => PRefInt::Decrement((-1 * d) as u8),
+                d if d < 0 => PRefInt::Decrement(-d as u8),
                 _ => unreachable!(),
             },
             dj: match j {
                 0 => PRefInt::None,
                 d if d > 0 => PRefInt::Increment(d as u8),
-                d if d < 0 => PRefInt::Decrement((-1 * d) as u8),
+                d if d < 0 => PRefInt::Decrement(-d as u8),
                 _ => unreachable!(),
             },
         }

@@ -96,7 +96,7 @@ impl Elem {
             id,
             nodes,
             edges,
-            element: element.clone(),
+            element,
             children: None,
             ancestors: SmallVec::new(),
             h_levels: HLevels::default(),
@@ -115,10 +115,9 @@ impl Elem {
             None => {
                 let children = refinement
                     .indices_and_ids(id_counter)
-                    .map(|(elem_idx, elem_id)| {
+                    .map(|elem_idx_id| {
                         ElemUninit::new(
-                            elem_id,
-                            elem_idx,
+                            elem_idx_id,
                             refinement,
                             self.element.clone(),
                             self.id,
@@ -137,14 +136,11 @@ impl Elem {
 
     /// Id of the Parent Elem if this Elem has a parent
     pub fn parent_id(&self) -> Option<usize> {
-        match self.ancestors.last() {
-            Some((parent_id, _)) => Some(*parent_id),
-            None => None,
-        }
+        self.ancestors.last().map(|(id, _)| *id)
     }
 
     /// Get the stack of [HRefLoc]s and Elem-IDs back to this `Elem`s ancestor on the base layer of the mesh
-    pub fn loc_stack<'a>(&'a self) -> &'a [(usize, HRefLoc)] {
+    pub fn loc_stack(&self) -> &[(usize, HRefLoc)] {
         &self.ancestors
     }
 
@@ -227,8 +223,7 @@ pub struct ElemUninit {
 
 impl ElemUninit {
     pub fn new(
-        id: usize,
-        idx: usize,
+        (idx, id): (usize, usize),
         refinement: HRef,
         element: Arc<Element>,
         parent_id: usize,

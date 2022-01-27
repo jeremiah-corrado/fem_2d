@@ -105,7 +105,7 @@ impl Domain {
                 // allocate space for the new basis specs
                 let num_expected = rel_basis_specs.len() / 2;
                 for elem_id in active_elem_ids {
-                    if self.basis_specs[elem_id].len() == 0 {
+                    if self.basis_specs[elem_id].is_empty() {
                         self.basis_specs[elem_id] = Vec::with_capacity(num_expected);
                     } else {
                         self.basis_specs[elem_id].reserve(num_expected);
@@ -155,18 +155,18 @@ impl Domain {
                     let bs = BasisSpec::new(bs_id_tracker.next_id(), poly_ij, dir, elem);
 
                     match bs.loc {
-                        BasisLoc::ELEM => elem_bs
+                        BasisLoc::ElemBs => elem_bs
                             .entry(elem.id)
                             .and_modify(|bs_list| bs_list.push(bs.clone()))
-                            .or_insert(vec![bs]),
-                        BasisLoc::EDGE(_, edge_id) => edge_bs
+                            .or_insert_with(|| vec![bs]),
+                        BasisLoc::EdgeBs(_, edge_id) => edge_bs
                             .entry(edge_id)
                             .and_modify(|bs_list| bs_list.push(bs.clone()))
-                            .or_insert(vec![bs]),
-                        BasisLoc::NODE(_, node_id) => node_bs
+                            .or_insert_with(|| vec![bs]),
+                        BasisLoc::NodeBs(_, node_id) => node_bs
                             .entry(node_id)
                             .and_modify(|bs_list| bs_list.push(bs.clone()))
-                            .or_insert(vec![bs]),
+                            .or_insert_with(|| vec![bs]),
                     };
                 }
             }
@@ -176,7 +176,7 @@ impl Domain {
     }
 
     /// Retrieve a list of [BasisSpec]s on an `Elem` by ID
-    pub fn local_basis_specs<'a>(&'a self, elem_id: usize) -> Result<&'a Vec<BasisSpec>, String> {
+    pub fn local_basis_specs(&self, elem_id: usize) -> Result<&Vec<BasisSpec>, String> {
         if elem_id >= self.mesh.elems.len() {
             Err(format!(
                 "Elem {} doesn't exist; Cannot retrieve BasisSpecs!",
@@ -188,10 +188,10 @@ impl Domain {
     }
 
     /// Retrieve a list of an `Elem`s descendant [BasisSpec]s (All the [`BasisSpec`]s on its descendant `Elem`s)
-    pub fn descendant_basis_specs<'a>(
-        &'a self,
+    pub fn descendant_basis_specs(
+        &self,
         elem_id: usize,
-    ) -> Result<Vec<(usize, &'a Vec<BasisSpec>)>, String> {
+    ) -> Result<Vec<(usize, &Vec<BasisSpec>)>, String> {
         if elem_id >= self.mesh.elems.len() {
             Err(format!(
                 "Elem {} doesn't exist; Cannot retrieve Descendant BasisSpecs!",
@@ -207,10 +207,7 @@ impl Domain {
     }
 
     /// Retrieve a list of an `Elem`s ancestor [BasisSpec]s (All the [`BasisSpec`]s on its ancestor `Elem`s)
-    pub fn ancestor_basis_specs<'a>(
-        &'a self,
-        elem_id: usize,
-    ) -> Result<Vec<&'a BasisSpec>, String> {
+    pub fn ancestor_basis_specs(&self, elem_id: usize) -> Result<Vec<&BasisSpec>, String> {
         if elem_id >= self.mesh.elems.len() {
             Err(format!(
                 "Elem {} doesn't exist; Cannot retrieve Ancestor BasisSpecs!",
