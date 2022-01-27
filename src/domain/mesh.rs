@@ -1088,7 +1088,7 @@ mod tests {
 
     #[test]
     fn mesh_from_file() {
-        let mut mesh_a = Mesh::from_file("../../test_input/test_mesh_a.json").unwrap();
+        let mut mesh_a = Mesh::from_file("./test_input/test_mesh_a.json").unwrap();
         mesh_a.set_edge_activation();
 
         for (element, mats_cmp) in mesh_a
@@ -1129,13 +1129,11 @@ mod tests {
             assert!(element.points[0].x < element.points[1].x);
             assert!(element.points[0].y < element.points[2].y);
         }
-
-        let _ = Mesh::from_file("../../test_input/test_mesh_b.json").unwrap();
     }
 
     #[test]
     fn basic_h_refinements() {
-        let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
+        let mut mesh_c = Mesh::from_file("./test_input/test_mesh_c.json").unwrap();
         mesh_c.h_refine_elems(vec![0], HRef::T).unwrap();
         mesh_c.h_refine_elems(vec![1, 2], HRef::U(None)).unwrap();
         mesh_c.h_refine_elems(vec![3, 4], HRef::V(None)).unwrap();
@@ -1143,7 +1141,7 @@ mod tests {
 
     #[test]
     fn basic_p_refinements() {
-        let mut mesh_b = Mesh::from_file("../../test_input/test_mesh_b.json").unwrap();
+        let mut mesh_b = Mesh::from_file("./test_input/test_mesh_b.json").unwrap();
         mesh_b.p_refine_elems(vec![0], PRef::from(2, 2)).unwrap();
         mesh_b.p_refine_elems(vec![1], PRef::from(2, 1)).unwrap();
         mesh_b.p_refine_elems(vec![2], PRef::from(1, 2)).unwrap();
@@ -1158,9 +1156,9 @@ mod tests {
 
     #[test]
     fn refined_mesh_to_file() {
-        let mut mesh_b = Mesh::from_file("../../test_input/test_mesh_b.json").unwrap();
+        let mut mesh_b = Mesh::from_file("./test_input/test_mesh_b.json").unwrap();
         mesh_b
-            .export_to_json("../../test_output/mesh_b_copy.json")
+            .export_to_json("./test_output/mesh_b_copy.json")
             .unwrap();
 
         mesh_b
@@ -1185,21 +1183,21 @@ mod tests {
 
         mesh_b.set_edge_activation();
         mesh_b
-            .export_to_json("../../test_output/mesh_b_refined.json")
+            .export_to_json("./test_output/mesh_b_refined.json")
             .unwrap();
     }
 
     #[test]
     #[should_panic]
     fn h_refine_non_existent() {
-        let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
+        let mut mesh_c = Mesh::from_file("./test_input/test_mesh_c.json").unwrap();
         mesh_c.h_refine_elems(vec![0, 1], HRef::T).unwrap();
     }
 
     #[test]
     #[should_panic]
     fn h_refine_elem_with_children() {
-        let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
+        let mut mesh_c = Mesh::from_file("../test_input/test_mesh_c.json").unwrap();
         mesh_c.h_refine_elems(vec![0], HRef::T).unwrap();
         mesh_c.h_refine_elems(vec![0], HRef::T).unwrap();
     }
@@ -1207,7 +1205,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn double_h_refinement() {
-        let mut mesh_a = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
+        let mut mesh_a = Mesh::from_file("./test_input/test_mesh_c.json").unwrap();
         mesh_a
             .execute_h_refinements(vec![(0, HRef::T), (1, HRef::T), (0, HRef::u())])
             .unwrap();
@@ -1216,7 +1214,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn bad_extended_h_refinement() {
-        let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
+        let mut mesh_c = Mesh::from_file("./test_input/test_mesh_c.json").unwrap();
         mesh_c
             .h_refine_elems(vec![0], HRef::u_extened(2).unwrap())
             .unwrap();
@@ -1225,7 +1223,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn minimum_edge_length_exceeded() {
-        let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
+        let mut mesh_c = Mesh::from_file("./test_input/test_mesh_c.json").unwrap();
 
         // repeatedly refine the bottom left cell
         for _ in 0..18 {
@@ -1244,21 +1242,21 @@ mod tests {
     #[test]
     #[should_panic]
     fn p_refine_non_existent() {
-        let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
+        let mut mesh_c = Mesh::from_file("./test_input/test_mesh_c.json").unwrap();
         mesh_c.p_refine_elems(vec![0, 1], PRef::from(1, 1)).unwrap();
     }
 
     #[test]
     #[should_panic]
     fn double_p_refinement() {
-        let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
+        let mut mesh_c = Mesh::from_file("./test_input/test_mesh_c.json").unwrap();
         mesh_c.p_refine_elems(vec![0, 0], PRef::from(1, 1)).unwrap();
     }
 
     #[test]
     #[should_panic]
     fn neg_p_refinement_i() {
-        let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
+        let mut mesh_c = Mesh::from_file("./test_input/test_mesh_c.json").unwrap();
         mesh_c.set_global_expansion_orders([3, 3]).unwrap();
         mesh_c.p_refine_elems(vec![0], PRef::from(-3, 1)).unwrap();
     }
@@ -1266,7 +1264,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn neg_p_refinement_j() {
-        let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
+        let mut mesh_c = Mesh::from_file("./test_input/test_mesh_c.json").unwrap();
         mesh_c.set_global_expansion_orders([3, 3]).unwrap();
 
         mesh_c.p_refine_elems(vec![0], PRef::from(1, -3)).unwrap();
@@ -1275,7 +1273,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn p_refinement_over_max_i() {
-        let mut mesh_c = Mesh::from_file("../../test_input/test_mesh_c.json").unwrap();
+        let mut mesh_c = Mesh::from_file("./test_input/test_mesh_c.json").unwrap();
         let max_exp_as_i8 = MAX_POLYNOMIAL_ORDER.try_into().unwrap();
         mesh_c
             .p_refine_elems(vec![0], PRef::from(max_exp_as_i8, 0))

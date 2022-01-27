@@ -274,7 +274,7 @@ mod tests {
         let sm_bin: AIJMatrixBinary = sm.into();
 
         sm_bin
-            .print_to_petsc_binary_file("../../test_output/test.bin")
+            .print_to_petsc_binary_file("./test_output/test.bin")
             .unwrap();
     }
 

@@ -54,17 +54,22 @@ mod tests {
 
     #[test]
     fn basic_problem() {
+        // Define Mesh
         let mut mesh = Mesh::from_file("./test_input/test_mesh_b.json").unwrap();
         mesh.global_p_refinement(PRef::from(3, 3)).unwrap();
         mesh.global_h_refinement(HRef::T).unwrap();
         mesh.h_refine_elems(vec![6, 9, 12], HRef::T).unwrap();
 
+        // Construct Domain
         let domain = Domain::from_mesh(mesh);
         let ndofs = domain.dofs.len();
         println!("Domain constructed with {} Degrees of Freedom", ndofs);
 
+        // Fill Matrices
         let eigenproblem =
             domain.galerkin_sample_gep_parallel::<KOLShapeFn, CurlCurl, L2Inner>(None);
+
+        // Solve Eigenvalue Problem
         let solution = slepc_solve_gep(eigenproblem, 1.475).unwrap();
         println!("Found eigenvalue: {:.15}", solution.value);
 

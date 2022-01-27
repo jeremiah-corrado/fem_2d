@@ -500,8 +500,8 @@ mod tests {
     use mesh::p_refinement::PRef;
 
     #[test]
-    fn create_dofs() {
-        let mut mesh = Mesh::from_file("../../test_input/test_mesh_a.json").unwrap();
+    fn create_domain() {
+        let mut mesh = Mesh::from_file("./test_input/test_mesh_a.json").unwrap();
         mesh.set_global_expansion_orders([5, 5]).unwrap();
         mesh.global_h_refinement(HRef::T).unwrap();
         mesh.h_refine_elems(vec![4, 5], HRef::T).unwrap();
