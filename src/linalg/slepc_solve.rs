@@ -45,30 +45,30 @@ pub fn slepc_solve_gep(
                     clean_directory(&dir, &prefix)?;
 
                     match status.code() {
-                        Some(1) => Err(Box::new(EigenSolverError::FailedToInitializeSlepc)),
-                        Some(2) => Err(Box::new(EigenSolverError::BadArguments)),
-                        Some(3) => Err(Box::new(EigenSolverError::FailedToInitializeMatrices)),
-                        Some(4 | 5 | 6) => Err(Box::new(EigenSolverError::FailedToInitializeEPS)),
-                        Some(7) => Err(Box::new(EigenSolverError::FailedToConverge)),
-                        Some(8) => Err(Box::new(EigenSolverError::FailedToReturnSolution)),
-                        _ => Err(Box::new(EigenSolverError::UnknownError)),
+                        Some(1) => Err(Box::new(SlepcGEPError::FailedToInitializeSlepc)),
+                        Some(2) => Err(Box::new(SlepcGEPError::BadArguments)),
+                        Some(3) => Err(Box::new(SlepcGEPError::FailedToInitializeMatrices)),
+                        Some(4 | 5 | 6) => Err(Box::new(SlepcGEPError::FailedToInitializeEPS)),
+                        Some(7) => Err(Box::new(SlepcGEPError::FailedToConverge)),
+                        Some(8) => Err(Box::new(SlepcGEPError::FailedToReturnSolution)),
+                        _ => Err(Box::new(SlepcGEPError::UnknownError)),
                     }
                 }
             }
             Err(_) => {
                 clean_directory(&dir, &prefix)?;
 
-                Err(Box::new(EigenSolverError::FailedToExecute))
+                Err(Box::new(SlepcGEPError::FailedToExecute))
             }
         }
     } else {
         println!("Solver not found; please set the GEP_SOLVE_DIR environment variable to the directory containing the solver executable!");
-        Err(Box::new(EigenSolverError::SolverNotFound))
+        Err(Box::new(SlepcGEPError::SolverNotFound))
     }
 }
 
 #[derive(Debug, Clone)]
-pub enum EigenSolverError {
+pub enum SlepcGEPError {
     SolverNotFound,
     FailedToExecute,
     FailedToInitializeSlepc,
@@ -80,23 +80,23 @@ pub enum EigenSolverError {
     UnknownError,
 }
 
-impl std::fmt::Display for EigenSolverError {
+impl std::fmt::Display for SlepcGEPError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            EigenSolverError::SolverNotFound => write!(f, "Solver not found; please set the GEP_SOLVE_DIR environment variable to the directory containing the solver executable"),
-            EigenSolverError::FailedToExecute => write!(f, "Failed to execute solve_gep with MPIEXEC!"),
-            EigenSolverError::FailedToInitializeSlepc => write!(f, "Slepc failed to initialize!"),
-            EigenSolverError::BadArguments => write!(f, "Bad arguments passed to solve_gep!"),
-            EigenSolverError::FailedToInitializeMatrices => write!(f, "Slepc Failed to initialize matrices!"),
-            EigenSolverError::FailedToInitializeEPS => write!(f, "Slepc Failed to initialize Eigenproblem object!"),
-            EigenSolverError::FailedToConverge => write!(f, "Slepc Failed to converge on the Target Eigenvalue!"),
-            EigenSolverError::FailedToReturnSolution => write!(f, "Slepc Failed to return solution files!"),
-            EigenSolverError::UnknownError => write!(f, "Unknown solve_gep error!"),
+            Self::SolverNotFound => write!(f, "Solver not found; please set the GEP_SOLVE_DIR environment variable to the directory containing the solver executable"),
+            Self::FailedToExecute => write!(f, "Failed to execute solve_gep with MPIEXEC!"),
+            Self::FailedToInitializeSlepc => write!(f, "Slepc failed to initialize!"),
+            Self::BadArguments => write!(f, "Bad arguments passed to solve_gep!"),
+            Self::FailedToInitializeMatrices => write!(f, "Slepc Failed to initialize matrices!"),
+            Self::FailedToInitializeEPS => write!(f, "Slepc Failed to initialize Eigenproblem object!"),
+            Self::FailedToConverge => write!(f, "Slepc Failed to converge on the Target Eigenvalue!"),
+            Self::FailedToReturnSolution => write!(f, "Slepc Failed to return solution files!"),
+            Self::UnknownError => write!(f, "Unknown solve_gep error!"),
         }
     }
 }
 
-impl std::error::Error for EigenSolverError {
+impl std::error::Error for SlepcGEPError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         None
     }

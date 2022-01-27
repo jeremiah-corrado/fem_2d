@@ -1,8 +1,11 @@
-/// Link with external Slepc GEP Solver
-pub mod slepc_gep_link;
+/// Use Nalgebra's Eigen decomposition to solve a GEP (not recommended)
+pub mod nalgebra_solve;
+/// Use External SLEPC solver to solve a GEP 
+pub mod slepc_solve;
 /// Sparsely Packed Matrix
 pub mod sparse_matrix;
 
+use nalgebra::DMatrix;
 use rayon::prelude::*;
 use sparse_matrix::{AIJMatrixBinary, SparseMatrix};
 use std::sync::mpsc::channel;
@@ -34,6 +37,10 @@ impl GEP {
         let [a, b]: [AIJMatrixBinary; 2] = [self.a.into(), self.b.into()];
         a.print_to_petsc_binary_file(format!("{}/tmp/{}_a.dat", dir.as_ref(), prefix.as_ref()))?;
         b.print_to_petsc_binary_file(format!("{}/tmp/{}_b.dat", dir.as_ref(), prefix.as_ref()))
+    }
+
+    pub fn to_nalgebra_dense_mats(self) -> [DMatrix<f64>; 2] {
+        [self.a.into(), self.b.into()]
     }
 }
 

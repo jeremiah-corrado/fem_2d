@@ -43,7 +43,8 @@ pub mod prelude {
     };
     pub use crate::integration::integrals::{curl_curl::CurlCurl, inner::L2Inner};
     pub use crate::linalg::{
-        slepc_gep_link::{slepc_solve_gep, EigenSolverError},
+        nalgebra_solve::nalgebra_solve_gep,
+        slepc_solve::{slepc_solve_gep, SlepcGEPError},
         EigenPair, GEP,
     };
 }
