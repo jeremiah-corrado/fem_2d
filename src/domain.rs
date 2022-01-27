@@ -1,6 +1,6 @@
 pub mod dof;
-pub mod mesh;
 pub mod fields;
+pub mod mesh;
 
 use crate::basis::{BasisFnSampler, ParBasisFnSampler, ShapeFn};
 use crate::integration::Integral;

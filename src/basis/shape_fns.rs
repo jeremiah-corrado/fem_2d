@@ -1,4 +1,4 @@
-mod kol {
+pub mod kol {
     use crate::basis::ShapeFn;
 
     /// A simple Curl-Conforming Hierarchical Shape Function

@@ -245,12 +245,12 @@ pub mod inner {
     use super::*;
 
     /// The L2 Inner product of two Basis Functions
-    pub struct L2InnerProduct {
+    pub struct L2Inner {
         u_weights: Vec<f64>,
         v_weights: Vec<f64>,
     }
 
-    impl Integral for L2InnerProduct {
+    impl Integral for L2Inner {
         fn with_weights(u_weights: &[f64], v_weights: &[f64]) -> Self {
             Self {
                 u_weights: u_weights.to_vec(),

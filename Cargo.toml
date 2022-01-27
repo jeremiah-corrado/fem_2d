@@ -3,17 +3,8 @@ name = "fem_2d"
 version = "0.1.0"
 edition = "2021"
 
-# [dependencies.fem_domain]
-# path="./libs/fem_domain/"
-
-# [dependencies.basis]
-# path="./libs/basis/"
-
-# [dependencies.integration]
-# path="./libs/integration/"
-
-# [dependencies.eigensolver]
-# path="./libs/eigensolver/"
+[features]
+max_ortho_basis = []
 
 [dependencies]
 rayon="1.5.1"

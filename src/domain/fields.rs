@@ -1,5 +1,5 @@
-use crate::basis::{BasisFn, ShapeFn};
 use super::Domain;
+use crate::basis::{BasisFn, ShapeFn};
 
 use std::collections::{BTreeMap, HashMap};
 use std::fs::File;
@@ -9,8 +9,8 @@ use std::time::SystemTime;
 // TODO: rework UniformFieldSpace and print_to_vtk functions to support curvilinear elements
 // TODO: implement a constant (over x and y) density FieldSpace structure which supports field image exports
 
-/// A collection of Field Solutions over a [Domain]. 
-/// 
+/// A collection of Field Solutions over a [Domain].
+///
 /// Solutions can be operated on and printed to VTK files for visualization.
 pub struct UniformFieldSpace<'d> {
     quantities: HashMap<String, FieldQuantity>,
@@ -21,7 +21,7 @@ pub struct UniformFieldSpace<'d> {
 
 impl<'d> UniformFieldSpace<'d> {
     /// Generate a FieldSpace over a [Domain]
-    /// 
+    ///
     /// * `domain`: is a reference to a Domain which must outlive this Structure. It is used for all subsequent computations
     /// * `densities`: the number of evaluation points in the u and v directions respectively. These values apply to Elems on the shell of the Domain (their ancestor Elems will have more evaluation points)
     pub fn new(domain: &'d Domain, densities: [usize; 2]) -> Self {
@@ -110,18 +110,15 @@ impl<'d> UniformFieldSpace<'d> {
     }
 
     /// create a VTK file at the designated `path` (with the file `name.vtk`) including all Field Quantities
-    /// 
+    ///
     /// These files can be plotted using [Visit](https://wci.llnl.gov/simulation/computer-codes/visit)
-    pub fn print_all_to_vtk(
-        &self,
-        path: impl AsRef<str>,
-    ) -> std::io::Result<()> {
+    pub fn print_all_to_vtk(&self, path: impl AsRef<str>) -> std::io::Result<()> {
         let all_q_names = self.quantities.keys().cloned().collect();
         self.print_quantities_to_vkt(path, all_q_names)
     }
 
     /// create a VTK file at the designated `path` (with the file `name.vtk`) including a list of Field Quantities
-    /// 
+    ///
     /// These files can be plotted using [Visit](https://wci.llnl.gov/simulation/computer-codes/visit)
     pub fn print_quantities_to_vkt(
         &self,
@@ -215,37 +212,61 @@ impl<'d> UniformFieldSpace<'d> {
     }
 
     /// map an operation over a field quantity (`name`) and store the result in a new quantity (`result_name`)
-    pub fn map_to_quantity<F>(&mut self, name: impl AsRef<str>, result_name: impl AsRef<str>, operator: F) -> Result<(), String> 
-        where F: Fn(&f64) -> f64
+    pub fn map_to_quantity<F>(
+        &mut self,
+        name: impl AsRef<str>,
+        result_name: impl AsRef<str>,
+        operator: F,
+    ) -> Result<(), String>
+    where
+        F: Fn(&f64) -> f64,
     {
         let q_key = String::from(name.as_ref());
         let q_new_key = String::from(result_name.as_ref());
 
         if !self.quantities.contains_key(&q_key) {
-            Err(format!("FieldSpace does not have quantity: {}; cannot apply operation!", q_key))
+            Err(format!(
+                "FieldSpace does not have quantity: {}; cannot apply operation!",
+                q_key
+            ))
         } else {
-            let q_new = self.quantities.get(&q_key).unwrap().operation(operator, &q_new_key);
+            let q_new = self
+                .quantities
+                .get(&q_key)
+                .unwrap()
+                .operation(operator, &q_new_key);
             self.quantities.insert(q_new_key, q_new);
             Ok(())
         }
     }
 
     /// evaluate an expression of two field quantities and store the result in a new quantity (`result_name`)
-    pub fn expression_2arg<F>(&mut self, operand_names: [impl AsRef<str>; 2], result_name: impl AsRef<str>, expression: F) -> Result<(), String> 
-        where F: Fn(f64, f64) -> f64 
+    pub fn expression_2arg<F>(
+        &mut self,
+        operand_names: [impl AsRef<str>; 2],
+        result_name: impl AsRef<str>,
+        expression: F,
+    ) -> Result<(), String>
+    where
+        F: Fn(f64, f64) -> f64,
     {
         let op_a = String::from(operand_names[0].as_ref());
         let op_b = String::from(operand_names[1].as_ref());
         let q_new_key = String::from(result_name.as_ref());
 
         if !self.quantities.contains_key(&op_a) || !self.quantities.contains_key(&op_b) {
-            Err(format!("FieldSpace does not have quantities {} and {}; cannot apply operation!", op_a, op_b))
+            Err(format!(
+                "FieldSpace does not have quantities {} and {}; cannot apply operation!",
+                op_a, op_b
+            ))
         } else {
             let mut q_new = FieldQuantity::new(&q_new_key);
             let q_a = self.quantities.get(&op_a).unwrap();
             let q_b = self.quantities.get(&op_b).unwrap();
-            
-            for ((shell_elem_id, elem_values_a), elem_values_b) in q_a.values.iter().zip(q_b.values.values()) {
+
+            for ((shell_elem_id, elem_values_a), elem_values_b) in
+                q_a.values.iter().zip(q_b.values.values())
+            {
                 let mut result_values = vec![vec![0.0; self.densities[0]]; self.densities[1]];
                 for m in 0..self.densities[0] {
                     for n in 0..self.densities[1] {
@@ -261,7 +282,7 @@ impl<'d> UniformFieldSpace<'d> {
         }
     }
 
-    // TODO: implement 3arg, Narg, and convolution. 
+    // TODO: implement 3arg, Narg, and convolution.
 }
 
 struct FieldQuantity {
@@ -304,19 +325,25 @@ impl FieldQuantity {
         Ok(())
     }
 
-    pub fn operation<F>(&self, operator: F, new_name: &String) -> Self 
-        where F: Fn(&f64) -> f64 
+    pub fn operation<F>(&self, operator: F, new_name: &String) -> Self
+    where
+        F: Fn(&f64) -> f64,
     {
         Self {
-            values: self.values.iter().map(|(elem_id, elem_values)| {
-                (
-                    *elem_id,
-                    elem_values.iter().map(|col| {
-                        col.iter().map(|val| operator(val)).collect()
-                    }).collect()
-                )
-            }).collect(),
-            name: new_name.clone()
+            values: self
+                .values
+                .iter()
+                .map(|(elem_id, elem_values)| {
+                    (
+                        *elem_id,
+                        elem_values
+                            .iter()
+                            .map(|col| col.iter().map(|val| operator(val)).collect())
+                            .collect(),
+                    )
+                })
+                .collect(),
+            name: new_name.clone(),
         }
     }
 }

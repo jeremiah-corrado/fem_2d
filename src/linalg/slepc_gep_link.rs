@@ -11,7 +11,7 @@ use std::fs::File;
 use std::io::Read;
 use std::process::Command;
 
-pub fn solve_eigenproblem(
+pub fn slepc_solve_gep(
     gep: GEP,
     target_eigenvalue: f64,
 ) -> Result<EigenPair, Box<dyn std::error::Error>> {
@@ -102,10 +102,7 @@ impl std::error::Error for EigenSolverError {
     }
 }
 
-fn retrieve_solution(
-    dir: impl AsRef<str>,
-    prefix: impl AsRef<str>,
-) -> std::io::Result<EigenPair> {
+fn retrieve_solution(dir: impl AsRef<str>, prefix: impl AsRef<str>) -> std::io::Result<EigenPair> {
     let evec = retrieve_eigenvector(format!("{}/tmp/{}_evec.dat", dir.as_ref(), prefix.as_ref()))?;
     let eval = retrieve_eigenvalue(format!("{}/tmp/{}_eval.dat", dir.as_ref(), prefix.as_ref()))?;
 
