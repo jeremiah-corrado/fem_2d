@@ -1,1 +1,0 @@
-initSidebarItems({"mod":[["dof","Degrees of Freedom Specification for a BasisFn defined on Some Elem. Keeps track of the orders, direction, and associated DoF."],["fields","Structures used to compute solution fields over a Domain"],["mesh","The internal geometric structure of a Domain"]],"struct":[["Domain","High Level Description of an FEM Domain"]]});

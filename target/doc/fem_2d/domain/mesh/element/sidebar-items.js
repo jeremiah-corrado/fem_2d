@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["Element","Basic geometric unit of the FEM Domain. Describes the geometric structure and material properties of a rectangle in real space."],["Materials","Complex valued material parameters"]]});

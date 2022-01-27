@@ -1,2 +1,0 @@
-cargo:rustc-env=TYPENUM_BUILD_CONSTS=/home/jcorrado/Documents/FEM_2D_public/fem_2d/target/debug/build/typenum-d2b77880758bcf06/out/consts.rs
-cargo:rustc-env=TYPENUM_BUILD_OP=/home/jcorrado/Documents/FEM_2D_public/fem_2d/target/debug/build/typenum-d2b77880758bcf06/out/op.rs

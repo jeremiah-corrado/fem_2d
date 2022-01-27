@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["IntegralResult","Return type of an [Integral]"]],"mod":[["integrals","Specific Implementations of the `Integral` Trait"]],"trait":[["Integral","A trait to describe an “integrator” which can compute 2D integrals over some function of two [BasisFn]’s"]]});

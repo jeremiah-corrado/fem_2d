@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["Node","A point in 2D space. Pairs of points describe Edges and Groups of 4 points describe Elems."]]});

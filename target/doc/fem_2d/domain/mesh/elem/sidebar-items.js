@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["Elem","Basic unit of the FEM Domain which describes some rectangular area in parametric space. Stores associative relationships with neighboring Nodes and Edge as well as h– and p–refinement information"],["ElemUninit","Intermediate data structure used to represent a child [Elem] during the execution of an [HRef]"]]});

@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["HRef","Description of an h-Refinement"],["HRefError",""],["HRefLoc","The location of a child `Elem` relative to its parent following an [HRef]"]],"struct":[["HLevels","Description of an Elem’s h-Refinement levels in the u and v directions"]]});

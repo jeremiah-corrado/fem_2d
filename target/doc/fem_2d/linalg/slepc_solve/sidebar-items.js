@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["SlepcGEPError",""]],"fn":[["slepc_solve_gep",""]]});

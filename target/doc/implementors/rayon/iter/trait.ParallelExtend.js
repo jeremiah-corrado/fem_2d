@@ -1,4 +1,0 @@
-(function() {var implementors = {};
-implementors["fem_2d"] = [{"text":"impl <a class=\"trait\" href=\"rayon/iter/trait.ParallelExtend.html\" title=\"trait rayon::iter::ParallelExtend\">ParallelExtend</a>&lt;<a class=\"primitive\" href=\"https://doc.rust-lang.org/1.57.0/std/primitive.array.html\">[</a><a class=\"struct\" href=\"fem_2d/linalg/sparse_matrix/struct.SparseMatrix.html\" title=\"struct fem_2d::linalg::sparse_matrix::SparseMatrix\">SparseMatrix</a><a class=\"primitive\" href=\"https://doc.rust-lang.org/1.57.0/std/primitive.array.html\">; 2]</a>&gt; for <a class=\"struct\" href=\"fem_2d/linalg/struct.GEP.html\" title=\"struct fem_2d::linalg::GEP\">GEP</a>","synthetic":false,"types":["fem_2d::linalg::GEP"]}];
-implementors["rayon"] = [];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

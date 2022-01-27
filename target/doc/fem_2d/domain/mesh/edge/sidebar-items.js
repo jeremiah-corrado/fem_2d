@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["Edge","The connection between two neighboring [Elem]s. Defined by two points in real space."]]});

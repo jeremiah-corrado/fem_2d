@@ -1,1 +1,0 @@
-initSidebarItems({"mod":[["basis_spec",""]],"struct":[["DoF","A single degree of freedom"]]});

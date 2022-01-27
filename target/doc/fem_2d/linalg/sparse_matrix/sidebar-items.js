@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["AIJMatrixBinary","Petsc/Slepc Sparse Matrix Format"],["SparseMatrix","Wrapper around a BTreeMap to store square-symmetric matrices in a sparse data structure"]]});

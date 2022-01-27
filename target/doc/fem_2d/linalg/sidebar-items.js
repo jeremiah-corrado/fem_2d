@@ -1,1 +1,0 @@
-initSidebarItems({"mod":[["nalgebra_solve","Use Nalgebra’s Eigen decomposition to solve a GEP (not recommended)"],["slepc_solve","Use External SLEPC solver to solve a GEP"],["sparse_matrix","Sparsely Packed Matrix"]],"struct":[["EigenPair","Solution to an Eigenvalue Problem"],["GEP","Generalized Eigenvalue Problem"]]});
