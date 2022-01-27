@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
+nighly = ["max_ortho_basis"]
 max_ortho_basis = []
 
 [dependencies]
