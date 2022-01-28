@@ -31,7 +31,7 @@
 //! let solution = nalgebra_solve_gep(gep, 10.0).unwrap();
 //! println!("Found Eigenvalue: {:.15}", solution.value);
 //!
-//! // Construct a solution-field-space over the Domain with 64 samples on each "shell" Elem
+//! // Construct a solution-field-space over the Domain with 64 samples on each "leaf" Elem
 //! let mut field_space = UniformFieldSpace::new(&domain, [8, 8]);
 //!
 //! // Compute the Electric Field in the X- and Y-directions (using the same ShapeFns as above)

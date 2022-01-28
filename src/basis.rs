@@ -1,5 +1,5 @@
 mod glq;
-/// Specific implementations of the `ShapeFn` Trait
+/// Specific implementations of the `ShapeFn` Trait (MaxOrthoShapeFn can be added as a Feature on the Nightly Toolchain)
 pub mod shape_fns;
 
 use crate::domain::mesh::{
