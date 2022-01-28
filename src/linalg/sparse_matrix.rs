@@ -36,11 +36,11 @@ impl SparseMatrix {
 
     /// Insert a value into the matrix. Assumes symmetry: row/col order does not matter.
     pub fn insert(&mut self, [row_idx, col_idx]: [usize; 2], value: f64) {
-        debug_assert!(
+        assert!(
             row_idx < self.dimension,
             "row_idx exceeded matrix dimension; cannot insert value!"
         );
-        debug_assert!(
+        assert!(
             col_idx < self.dimension,
             "col_idx exceeded matrix dimension; cannot insert value!"
         );
@@ -67,6 +67,14 @@ impl SparseMatrix {
     /// Insert a group of entries
     pub fn insert_group(&mut self, mut entry_group: Vec<([usize; 2], f64)>) {
         for (rc, value) in entry_group.drain(0..).map(|([r, c], v)| {
+            assert!(
+                r < self.dimension,
+                "row_idx exceeded matrix dimension; cannot insert value!"
+            );
+            assert!(
+                c < self.dimension,
+                "col_idx exceeded matrix dimension; cannot insert value!"
+            );
             (
                 if r <= c {
                     [

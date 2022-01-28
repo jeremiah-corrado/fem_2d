@@ -1,9 +1,9 @@
 use super::{
-    space::{M2D, V2D}, 
     element::{Element, Materials},
-    h_refinement::{HLevels, HRefError, HRefLoc, HRef},
+    h_refinement::{HLevels, HRef, HRefError, HRefLoc},
     p_refinement::PolyOrders,
-    EXPECTED_NUM_H_REFINEMENTS
+    space::{M2D, V2D},
+    EXPECTED_NUM_H_REFINEMENTS,
 };
 
 use json::JsonValue;
@@ -12,18 +12,18 @@ use std::fmt;
 use std::sync::Arc;
 
 /// `Elem`s are the basic geometric unit in the `Mesh` in Parametric Space
-/// 
+///
 /// `Elem`s are responsible for keeping track of:
 /// * Connections to neighboring `Node`s and `Edge`s
 /// * Connections to their parent `Elem` (and their own h-refinement state)
 /// * Connections to their child `Elem`s (if h-refined)
 /// * Polynomial expansion orders (p-refinement state)
-/// 
+///
 /// `Elem`s also maintain a connection to their associated [`Element`] for descriptions of material parameters and mappings to Real Space
-/// 
+///
 /// ## Layout
 /// The indices of `Node`s and `Edge`s from the perspective of an `Elem` are described as follows:
-/// 
+///
 /// ```text
 ///               N
 ///         2 --------- 3
@@ -36,12 +36,12 @@ use std::sync::Arc;
 ///               S
 /// ```
 /// The cardinal directions are also shown. These are used in the h-refinement module to describe different types of h-refinement
-/// 
-/// 
+///
+///
 /// ## h-Refinement
-/// 
+///
 /// Three variants of h-refinements are supported. The relative indices of the child `Elem`s and their associated `Node`s and `Edge`s are shown below for each type:
-/// 
+///
 /// 1. **T-Type**:
 /// ```text
 ///                 1
@@ -60,7 +60,7 @@ use std::sync::Arc;
 ///     0 --------------------- 1
 ///                 0
 /// ```
-/// 
+///
 /// 2. **U-Type**:
 /// ```text
 ///                 1
@@ -79,7 +79,7 @@ use std::sync::Arc;
 ///     0 --------------------- 1
 ///                 0
 /// ```
-/// 
+///
 /// 3. **V-Type**:
 /// ```text
 ///                 1

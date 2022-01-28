@@ -2,6 +2,11 @@
 name = "fem_2d"
 version = "0.1.0"
 edition = "2021"
+authors = ["Jeremiah Corrado"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/jeremiah-corrado/fem_2d/"
+description = "2D Finite Element Solver"
 
 [features]
 nighly = ["max_ortho_basis"]

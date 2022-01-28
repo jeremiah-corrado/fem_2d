@@ -126,8 +126,16 @@ mod tests {
         assert_eq!(solution.vector.len(), ndofs);
 
         let mut field_space = UniformFieldSpace::new(&domain, [8, 8]);
-        let e_field_names = field_space.xy_fields::<KOLShapeFn>("E", solution.normalized_eigenvector()).unwrap();
-        field_space.expression_2arg(e_field_names, "E_mag", |ex, ey| (ex.powi(2) + ey.powi(2)).sqrt()).unwrap();
-        field_space.print_all_to_vtk("./test_output/mesh_b_fields.vtk").unwrap();
+        let e_field_names = field_space
+            .xy_fields::<KOLShapeFn>("E", solution.normalized_eigenvector())
+            .unwrap();
+        field_space
+            .expression_2arg(e_field_names, "E_mag", |ex, ey| {
+                (ex.powi(2) + ey.powi(2)).sqrt()
+            })
+            .unwrap();
+        field_space
+            .print_all_to_vtk("./test_output/mesh_b_fields.vtk")
+            .unwrap();
     }
 }

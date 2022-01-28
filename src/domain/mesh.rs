@@ -1,25 +1,25 @@
-/// Structures and Functions to facilitate RBS based anisotropic h-refinement
-pub mod h_refinement;
-/// Structures and Functions to facilitate anisotropic p-refinement
-pub mod p_refinement;
-/// Structures to describe the 2D real and parametric spaces defining a Mesh
-pub mod space;
+/// A line between two Nodes
+pub mod edge;
 /// A Finite Element in Parametric Space
 pub mod elem;
 /// A Finite Element in Real Space
 pub mod element;
+/// Structures and Functions to facilitate RBS based anisotropic h-refinement
+pub mod h_refinement;
 /// A Point in Real Space
 pub mod node;
-/// A line between two Nodes
-pub mod edge;
+/// Structures and Functions to facilitate anisotropic p-refinement
+pub mod p_refinement;
+/// Structures to describe the 2D real and parametric spaces defining a Mesh
+pub mod space;
 
-use h_refinement::{HRef, HRefError};
-use p_refinement::{PRef, PRefError};
-use space::{ParaDir, Point};
+use edge::Edge;
 use elem::{Elem, ElemUninit};
 use element::{Element, Materials};
+use h_refinement::{HRef, HRefError};
 use node::Node;
-use edge::Edge;
+use p_refinement::{PRef, PRefError};
+use space::{ParaDir, Point};
 
 use super::IdTracker;
 
@@ -435,9 +435,11 @@ impl Mesh {
             Err(HRefError::ElemDoesntExist(elem_id))
         } else {
             let elem = &self.elems[elem_id];
-            Ok(!elem.has_children() && elem.edges.iter().all(|edge_id| {
-                self.edges[*edge_id].length > MIN_EDGE_LENGTH
-            }))
+            Ok(!elem.has_children()
+                && elem
+                    .edges
+                    .iter()
+                    .all(|edge_id| self.edges[*edge_id].length > MIN_EDGE_LENGTH))
         }
     }
 
@@ -448,8 +450,8 @@ impl Mesh {
         if elem_id >= self.elems.len() {
             Err(PRefError::ElemDoesntExist(elem_id))
         } else {
-            Ok(self.elems[elem_id].poly_orders.ni < MAX_POLYNOMIAL_ORDER && 
-                self.elems[elem_id].poly_orders.nj < MAX_POLYNOMIAL_ORDER)
+            Ok(self.elems[elem_id].poly_orders.ni < MAX_POLYNOMIAL_ORDER
+                && self.elems[elem_id].poly_orders.nj < MAX_POLYNOMIAL_ORDER)
         }
     }
 

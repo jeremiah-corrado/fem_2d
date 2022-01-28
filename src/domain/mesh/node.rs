@@ -1,23 +1,23 @@
-use super::elem::Elem; 
 use super::super::space::Point;
+use super::elem::Elem;
 use json::JsonValue;
 use std::collections::BTreeMap;
 
 /// A point in Real 2D space
-/// 
+///
 /// Nodes keep track of all adjacent `Elem`s and are responsible for identifying whether or not they can support node-type Degrees of Freedom (not fully implemented yet)
 ///
 /// ## Layout
-/// 
+///
 /// The indices of `Elem`s and `Edge`s relative to a Node are described as follows:
-/// 
+///
 /// ```text
 ///         1
 ///         |
 ///       1 | 0
 ///   2-----*-----3
 ///       3 | 2
-///         | 
+///         |
 ///         0
 /// ```
 #[derive(Debug, Clone)]
