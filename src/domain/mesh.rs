@@ -4,19 +4,22 @@ pub mod h_refinement;
 pub mod p_refinement;
 /// Structures to describe the 2D real and parametric spaces defining a Mesh
 pub mod space;
-/// Primitive types that compose the Mesh
-pub mod primitives;
+/// A Finite Element in Parametric Space
+pub mod elem;
+/// A Finite Element in Real Space
+pub mod element;
+/// A Point in Real Space
+pub mod node;
+/// A line between two Nodes
+pub mod edge;
 
 use h_refinement::{HRef, HRefError};
 use p_refinement::{PRef, PRefError};
-use space::{ParaDir, Point, M2D, V2D};
-
-use primitives::{
-    elem::{Elem, ElemUninit}, 
-    edge::Edge, 
-    node::Node, 
-    element::{Element, Materials}
-};
+use space::{ParaDir, Point};
+use elem::{Elem, ElemUninit};
+use element::{Element, Materials};
+use node::Node;
+use edge::Edge;
 
 use super::IdTracker;
 
@@ -416,22 +419,50 @@ impl Mesh {
         }
     }
 
+    /// Maximum polynomial expansion orders represented among all `Elem`s in the `Mesh`
     pub fn max_expansion_orders(&self) -> [u8; 2] {
         self.elems
             .iter()
             .fold([0; 2], |acc, elem| elem.poly_orders.max_with(acc))
     }
 
+    /// Determine if this Elem can be h-refined
+    /// * returns false if the Elem already has children
+    /// * returns false if any of the Elem's Edges are shorter than [MIN_EDGE_LENGTH]
+    /// * returns an `Err` if the Mesh doesn't have `elem_id`
+    pub fn elem_is_h_refineable(&self, elem_id: usize) -> Result<bool, HRefError> {
+        if elem_id >= self.elems.len() {
+            Err(HRefError::ElemDoesntExist(elem_id))
+        } else {
+            let elem = &self.elems[elem_id];
+            Ok(!elem.has_children() && elem.edges.iter().all(|edge_id| {
+                self.edges[*edge_id].length > MIN_EDGE_LENGTH
+            }))
+        }
+    }
+
+    /// Determine if this Elem can be p-refined (in the positive direction)
+    /// * returns false if the Elem's expansion orders have exceeded [MAX_POLYNOMIAL_ORDER] in either direction
+    /// * returns an `Err` if the Mesh doesn't have `elem_id`
+    pub fn elem_id_p_refineable(&self, elem_id: usize) -> Result<bool, PRefError> {
+        if elem_id >= self.elems.len() {
+            Err(PRefError::ElemDoesntExist(elem_id))
+        } else {
+            Ok(self.elems[elem_id].poly_orders.ni < MAX_POLYNOMIAL_ORDER && 
+                self.elems[elem_id].poly_orders.nj < MAX_POLYNOMIAL_ORDER)
+        }
+    }
+
     // ----------------------------------------------------------------------------------------------------
     // h-refinement methods
     // ----------------------------------------------------------------------------------------------------
 
-    /// Apply an [HRef] to all [Elem]s that have not been h-refined
+    /// Apply an [HRef] to all [Elem]s in the Mesh that are eligible for h-refinement
     pub fn global_h_refinement(&mut self, refinement: HRef) -> Result<(), HRefError> {
         self.execute_h_refinements(
             self.elems
                 .iter()
-                .filter(|elem| !elem.has_children())
+                .filter(|elem| self.elem_is_h_refineable(elem.id).unwrap())
                 .map(|shell_elem| (shell_elem.id, refinement))
                 .collect(),
         )

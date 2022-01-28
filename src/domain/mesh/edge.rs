@@ -1,10 +1,74 @@
-use super::super::{h_refinement::HRefError, Elem, Node, ParaDir, MIN_EDGE_LENGTH};
+use super::{
+    h_refinement::HRefError,
+    elem::Elem,
+    node::Node,
+    space::ParaDir,
+    MIN_EDGE_LENGTH,
+};
+
 use json::JsonValue;
 use smallvec::SmallVec;
 use std::collections::BTreeMap;
 
+/// Edges describe a strait line in parametric space between two `Node`s
+/// 
+/// Edges keep track of all adjacent `Elem`s and are responsible for identifying whether or not they can support edge-type Degrees of Freedom.
+/// They also decide which pair of adjacent `Elem`s are to be used for Shape Function matching if any.
+///
+/// ## Layout 
+/// There are two Edge variants: U-directed and V-directed
+/// 
+/// 1. **U-Dir**:
+/// 
+/// Edges are designated as u-directed if the angle between its two points is less than 45° relative to the Real x-axis
+/// 
+/// `Node` and `Elem` Indices:
+/// ```text
+///            T
+///            1
+///    0 *-----------* 1
+///            0         
+///            B
+/// ```
+/// 
+/// Indices of child-edges after h-refinement:
+/// ```text
+///         0     1
+///      *-----*-----*
+/// ```
+///     
+/// 1. **V-Dir**:
+/// 
+/// Edges are designated as v-directed if the angle between its two points is greater than 45° relative to the Real x-axis
+/// 
+/// `Node` and `Elem` Indices:
+/// ```text
+///         1
+///         *
+///         |
+///         |
+///   L  0  |  1  R
+///         |
+///         |
+///         *
+///         0
+/// 
+///
+/// ```
+/// 
+/// Indices of child-edges after h-refinement:
+/// ```text
+///         *
+///         |
+///         |  1
+///         * 
+///         |
+///         |  0
+///         *  
+/// ```
+/// 
+/// 
 #[derive(Debug, Clone)]
-/// The connection between two neighboring [Elem]s. Defined by two points in real space.
 pub struct Edge {
     pub id: usize,
     pub nodes: [usize; 2],
@@ -122,10 +186,12 @@ impl Edge {
         self.children.map(SmallVec::from)
     }
 
+    /// Has been h-Refined?
     pub fn has_children(&self) -> bool {
         self.children.is_some()
     }
 
+    /// Returns the Node sitting on the center of this Edge if it has been h-Refined; otherwise, `None` is returned.
     pub fn child_node_id(&self) -> Option<usize> {
         self.child_node
     }
@@ -161,6 +227,10 @@ impl Edge {
         self.active_elems = None;
     }
 
+    /// Get the ID of the other active `Elem` connected to this Edge
+    /// 
+    /// *Returns None if this Edge doesn't have a pair of Active `Elem`s
+    /// *Panics if the `elem_id` argument isn't one of the active `Elem`s
     pub fn other_active_elem_id(&self, elem_id: usize) -> Option<usize> {
         match self.active_elems {
             Some(active_elem_ids) => {
@@ -173,14 +243,14 @@ impl Edge {
                         1 => Some(active_elem_ids[0]),
                         _ => unreachable!(),
                     },
-                    None => None,
+                    None => panic!("{} isn't an active Elem on Edge {}; Cannot retrieve other active Elem!", elem_id, self.id),
                 }
             }
             None => None,
         }
     }
 
-    /// Produce a Json Object that describes this Elem
+    /// Produce a Json Object that describes this Edge
     pub fn to_json(&self) -> JsonValue {
         let mut edge_json = object! {
             "id": self.id,

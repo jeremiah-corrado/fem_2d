@@ -1,7 +1,9 @@
-use super::super::{
-    h_refinement::{HLevels, HRefError, HRefLoc},
+use super::{
+    space::{M2D, V2D}, 
+    element::{Element, Materials},
+    h_refinement::{HLevels, HRefError, HRefLoc, HRef},
     p_refinement::PolyOrders,
-    Element, HRef, EXPECTED_NUM_H_REFINEMENTS, M2D, V2D,
+    EXPECTED_NUM_H_REFINEMENTS
 };
 
 use json::JsonValue;
@@ -9,76 +11,94 @@ use smallvec::SmallVec;
 use std::fmt;
 use std::sync::Arc;
 
-/*
-    Layout of Geometric indices:
-
-                  N
-            2 --------- 3
-            |     1     |
-            |           |
-         W  |2         3|  E
-            |           |
-            |     0     |
-            0 --------- 1
-                  S
-
-    Layout of Geometric indices relative to Child indices (for each type of h-refinement):
-
-    T :
-                1
-    2 --------------------- 3
-    |2    1    3|2    1    3|
-    |           |           |
-    |2    2    3|2    3    3|
-    |           |           |
-    |0    0    1|0    0    1|
-  2 |----------- -----------| 3
-    |2    1    3|2    1    3|
-    |           |           |
-    |2    0    3|2    1    3|
-    |           |           |
-    |0    0    1|0    0    1|
-    0 --------------------- 1
-                0
-
-    U :
-                1
-    2 --------------------- 3
-    |2    1    3|2    1   3 |
-    |           |           |
-    |           |           |
-    |           |           |
-    |           |           |
-  2 |2    0    3|2    1    3| 3
-    |           |           |
-    |           |           |
-    |           |           |
-    |           |           |
-    |0    0    1|0    0    1|
-    0 --------------------- 1
-                0
-
-    V :
-                1
-    2 --------------------- 3
-    |2          1          3|
-    |                       |
-    |2          1          3|
-    |                       |
-    |0          0          1|
-  2 |-----------------------| 3
-    |2          1          3|
-    |                       |
-    |2          0          3|
-    |                       |
-    |0          0          1|
-    0 --------------------- 1
-                0
-*/
-
+/// `Elem`s are the basic geometric unit in the `Mesh` in Parametric Space
+/// 
+/// `Elem`s are responsible for keeping track of:
+/// * Connections to neighboring `Node`s and `Edge`s
+/// * Connections to their parent `Elem` (and their own h-refinement state)
+/// * Connections to their child `Elem`s (if h-refined)
+/// * Polynomial expansion orders (p-refinement state)
+/// 
+/// `Elem`s also maintain a connection to their associated [`Element`] for descriptions of material parameters and mappings to Real Space
+/// 
+/// ## Layout
+/// The indices of `Node`s and `Edge`s from the perspective of an `Elem` are described as follows:
+/// 
+/// ```text
+///               N
+///         2 --------- 3
+///         |     1     |
+///         |           |
+///      W  |2         3|  E
+///         |           |
+///         |     0     |
+///         0 --------- 1
+///               S
+/// ```
+/// The cardinal directions are also shown. These are used in the h-refinement module to describe different types of h-refinement
+/// 
+/// 
+/// ## h-Refinement
+/// 
+/// Three variants of h-refinements are supported. The relative indices of the child `Elem`s and their associated `Node`s and `Edge`s are shown below for each type:
+/// 
+/// 1. **T-Type**:
+/// ```text
+///                 1
+///     2 --------------------- 3
+///     |2    1    3|2    1    3|
+///     |           |           |
+///     |2    2    3|2    3    3|
+///     |           |           |
+///     |0    0    1|0    0    1|
+///   2 |----------- -----------| 3
+///     |2    1    3|2    1    3|
+///     |           |           |
+///     |2    0    3|2    1    3|
+///     |           |           |
+///     |0    0    1|0    0    1|
+///     0 --------------------- 1
+///                 0
+/// ```
+/// 
+/// 2. **U-Type**:
+/// ```text
+///                 1
+///     2 --------------------- 3
+///     |2    1    3|2    1   3 |
+///     |           |           |
+///     |           |           |
+///     |           |           |
+///     |           |           |
+///   2 |2    0    3|2    1    3| 3
+///     |           |           |
+///     |           |           |
+///     |           |           |
+///     |           |           |
+///     |0    0    1|0    0    1|
+///     0 --------------------- 1
+///                 0
+/// ```
+/// 
+/// 3. **V-Type**:
+/// ```text
+///                 1
+///     2 --------------------- 3
+///     |2          1          3|
+///     |                       |
+///     |2          1          3|
+///     |                       |
+///     |0          0          1|
+///   2 |-----------------------| 3
+///     |2          1          3|
+///     |                       |
+///     |2          0          3|
+///     |                       |
+///     |0          0          1|
+///     0 --------------------- 1
+///                 0
+/// ```
 #[derive(Debug, Clone)]
-/// Basic unit of the FEM Domain which describes some rectangular area in parametric space.
-/// Stores associative relationships with neighboring Nodes and Edge as well as h-- and p--refinement information
 pub struct Elem {
     pub id: usize,
     pub nodes: [usize; 4],
@@ -106,7 +126,7 @@ impl Elem {
     }
 
     /// Construct new 2 or 4 [ElemUninit]'s from an [HRef] of this Elem
-    pub fn h_refine(
+    pub(crate) fn h_refine(
         &mut self,
         refinement: HRef,
         id_counter: &mut usize,
@@ -166,12 +186,18 @@ impl Elem {
         }
     }
 
+    /// Get the bounds of this `Elem` in parametric space relative to its ancestor `Element`
     pub fn parametric_range(&self) -> [[f64; 2]; 2] {
         self.ancestors
             .iter()
             .fold([[-1.0, 1.0], [-1.0, 1.0]], |acc, (_, href_loc)| {
                 href_loc.sub_range(acc)
             })
+    }
+
+    /// Get a reference to the Material properties in this part of the Mesh
+    pub fn get_materials(&self) -> &Materials {
+        &self.element.materials
     }
 
     /// Gradients of a parametric point (as a [V2D]) through real space (via this Elem's parent [Element])
@@ -185,6 +211,7 @@ impl Elem {
         self.children.clone()
     }
 
+    /// Has this Elem been h-Refined
     pub fn has_children(&self) -> bool {
         self.children.is_some()
     }

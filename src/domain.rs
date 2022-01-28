@@ -49,17 +49,17 @@ impl Domain {
     }
 
     /// Iterate over all `Elem`s in the mesh
-    pub fn elems<'a>(&'a self) -> impl Iterator<Item = &'a mesh::primitives::elem::Elem> + '_ {
+    pub fn elems<'a>(&'a self) -> impl Iterator<Item = &'a mesh::elem::Elem> + '_ {
         self.mesh.elems.iter()
     }
 
     /// Iterate over all `Edge`s in the mesh
-    pub fn edges<'a>(&'a self) -> impl Iterator<Item = &'a mesh::primitives::edge::Edge> + '_ {
+    pub fn edges<'a>(&'a self) -> impl Iterator<Item = &'a mesh::edge::Edge> + '_ {
         self.mesh.edges.iter()
     }
 
     /// Iterate over all `Node`s in the mesh
-    pub fn nodes<'a>(&'a self) -> impl Iterator<Item = &'a mesh::primitives::node::Node> + '_ {
+    pub fn nodes<'a>(&'a self) -> impl Iterator<Item = &'a mesh::node::Node> + '_ {
         self.mesh.nodes.iter()
     }
 
@@ -270,6 +270,8 @@ impl Domain {
             let desc_basis_specs = self.descendant_basis_specs(elem.id).unwrap();
             let bs_local = bf_sampler.sample_basis_fn(elem, None);
 
+            let elem_materials = elem.get_materials();
+
             let mut local_a_entries: Vec<([usize; 2], f64)> =
                 Vec::with_capacity(local_basis_specs.len() * local_basis_specs.len() / 2);
             let mut local_b_entries: Vec<([usize; 2], f64)> =
@@ -293,8 +295,8 @@ impl Domain {
                         .integrate(p_dir, q_dir, p_orders, q_orders, &bs_local, &bs_local)
                         .full_solution();
 
-                    local_a_entries.push(([p_dof_id, q_dof_id], a));
-                    local_b_entries.push(([p_dof_id, q_dof_id], b));
+                    local_a_entries.push(([p_dof_id, q_dof_id], a / elem_materials.mu_rel.re));
+                    local_b_entries.push(([p_dof_id, q_dof_id], b * elem_materials.eps_rel.re));
                 }
             }
 
@@ -327,8 +329,8 @@ impl Domain {
                             .integrate(p_dir, q_dir, p_orders, q_orders, &bs_p_sampled, &bs_q_local)
                             .full_solution();
 
-                        desc_a_entries.push(([p_dof_id, q_dof_id], a));
-                        desc_b_entries.push(([p_dof_id, q_dof_id], b));
+                        desc_a_entries.push(([p_dof_id, q_dof_id], a / elem_materials.mu_rel.re));
+                        desc_b_entries.push(([p_dof_id, q_dof_id], b * elem_materials.eps_rel.re));
                     }
                 }
             }
@@ -372,6 +374,8 @@ impl Domain {
 
             let bf_sampler_elem = bf_sampler_send.clone();
 
+            let elem_materials = elem.get_materials();
+
             // get relevant data for this Elem
             let bs_local = bf_sampler_elem.lock().unwrap().sample_basis_fn(elem, None);
             let local_basis_specs = self.local_basis_specs(elem.id).unwrap();
@@ -400,8 +404,8 @@ impl Domain {
                         .integrate(p_dir, q_dir, p_orders, q_orders, &bs_local, &bs_local)
                         .full_solution();
 
-                    local_a_entries.push(([p_dof_id, q_dof_id], a));
-                    local_b_entries.push(([p_dof_id, q_dof_id], b));
+                    local_a_entries.push(([p_dof_id, q_dof_id], a / elem_materials.mu_rel.re));
+                    local_b_entries.push(([p_dof_id, q_dof_id], b * elem_materials.eps_rel.re));
                 }
             }
 
@@ -438,8 +442,8 @@ impl Domain {
                             .integrate(p_dir, q_dir, p_orders, q_orders, &bs_p_sampled, &bs_q_local)
                             .full_solution();
 
-                        desc_a_entries.push(([p_dof_id, q_dof_id], a));
-                        desc_b_entries.push(([p_dof_id, q_dof_id], b));
+                        desc_a_entries.push(([p_dof_id, q_dof_id], a / elem_materials.mu_rel.re));
+                        desc_b_entries.push(([p_dof_id, q_dof_id], b * elem_materials.eps_rel.re));
                     }
                 }
             }

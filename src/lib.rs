@@ -82,7 +82,7 @@ pub mod prelude {
         },
         fields::UniformFieldSpace,
         mesh::{
-            primitives::elem::Elem,
+            elem::Elem,
             h_refinement::{HRef, HRefError},
             p_refinement::{PRef, PRefError},
             Mesh,

@@ -3,8 +3,23 @@ use super::super::space::Point;
 use json::JsonValue;
 use std::collections::BTreeMap;
 
-/// A point in 2D space.
-/// Pairs of points describe Edges and Groups of 4 points describe Elems.
+/// A point in Real 2D space
+/// 
+/// Nodes keep track of all adjacent `Elem`s and are responsible for identifying whether or not they can support node-type Degrees of Freedom (not fully implemented yet)
+///
+/// ## Layout
+/// 
+/// The indices of `Elem`s and `Edge`s relative to a Node are described as follows:
+/// 
+/// ```text
+///         1
+///         |
+///       1 | 0
+///   2-----*-----3
+///       3 | 2
+///         | 
+///         0
+/// ```
 #[derive(Debug, Clone)]
 pub struct Node {
     pub id: usize,
@@ -55,7 +70,7 @@ impl Node {
         }
     }
 
-    pub fn active_elems(&self) -> Option<[usize; 4]> {
+    pub(crate) fn active_elems(&self) -> Option<[usize; 4]> {
         self.active_elems
     }
 

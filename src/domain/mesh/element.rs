@@ -3,9 +3,15 @@ use json::JsonValue;
 use num_complex::Complex64;
 use std::fmt;
 
+/// The `Element`s are the basic geometric unit of the Mesh in Real Space. 
+/// 
+/// Elements are responsible for:
+/// * Keeping a mapping between Real and Parametric Space in their region of the Mesh (curvilinear Elements are not fully implemented yet)
+/// * Keeping track of the material parameters in their portion of the Mesh
+/// 
+/// JSON mesh files describe the `Element`s in the domain; not the `Elem`s
+/// Upon `Mesh` construction, each `Element` has one associated `Elem`, but more can be added through h-Refinements
 #[derive(Debug)]
-/// Basic geometric unit of the FEM Domain.
-/// Describes the geometric structure and material properties of a rectangle in real space.
 pub struct Element {
     pub id: usize,
     pub points: [Point; 4],
