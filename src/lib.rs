@@ -19,7 +19,7 @@
 //! mesh.h_refine_elems(vec![0, 1, 2, 3], HRef::U(None));
 //!
 //! // Construct a domain with Dirichlet boundary conditions
-//! let domain = Domain::new(mesh);
+//! let domain = Domain::from_mesh(mesh);
 //! println!("Constructed Domain with {} DoFs", domain.dofs.len());
 //!
 //! // Construct a generalized eigenvalue problem for the Electric Field
@@ -27,8 +27,8 @@
 //! let gep = domain.galerkin_sample_gep_parallel::<KOLShapeFn, CurlCurl, L2Inner>(None);
 //!
 //! // Solve the generalized eigenvalue problem using Nalgebra's Eigen-Decomposition
-//!     // look for an eigenvalue close to 2.0
-//! let solution = nalgebra_solve_gep(gep, 2.0).unwrap();
+//!     // look for an eigenvalue close to 10.0
+//! let solution = nalgebra_solve_gep(gep, 10.0).unwrap();
 //! println!("Found Eigenvalue: {:.15}", solution.value);
 //!
 //! // Construct a solution-field-space over the Domain with 64 samples on each "shell" Elem
@@ -124,5 +124,10 @@ mod tests {
 
         assert!((solution.value - 1.4745880937_f64).abs() < 1e-9);
         assert_eq!(solution.vector.len(), ndofs);
+
+        let mut field_space = UniformFieldSpace::new(&domain, [8, 8]);
+        let e_field_names = field_space.xy_fields::<KOLShapeFn>("E", solution.normalized_eigenvector()).unwrap();
+        field_space.expression_2arg(e_field_names, "E_mag", |ex, ey| (ex.powi(2) + ey.powi(2)).sqrt()).unwrap();
+        field_space.print_all_to_vtk("./test_output/mesh_b_fields.vtk").unwrap();
     }
 }

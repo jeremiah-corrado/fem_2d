@@ -251,19 +251,23 @@ impl<SF: ShapeFn> BasisFn<SF> {
     ) -> Self {
         let [(u_glq_scale, u_points_scaled), (v_glq_scale, v_points_scaled)] = match desc_elem {
             Some(desc_elem_ref) => {
-                let child_parametric_range = desc_elem_ref.relative_parametric_range(elem.id);
-                [
-                    scale_gauss_quad_points(
-                        raw_u_points,
-                        child_parametric_range[0][0],
-                        child_parametric_range[0][1],
-                    ),
-                    scale_gauss_quad_points(
-                        raw_v_points,
-                        child_parametric_range[1][0],
-                        child_parametric_range[1][1],
-                    ),
-                ]
+                if desc_elem_ref.id == elem.id {
+                    [(1.0, raw_u_points.to_vec()), (1.0, raw_v_points.to_vec())]
+                } else {
+                    let child_parametric_range = desc_elem_ref.relative_parametric_range(elem.id);
+                    [
+                        scale_gauss_quad_points(
+                            raw_u_points,
+                            child_parametric_range[0][0],
+                            child_parametric_range[0][1],
+                        ),
+                        scale_gauss_quad_points(
+                            raw_v_points,
+                            child_parametric_range[1][0],
+                            child_parametric_range[1][1],
+                        ),
+                    ]
+                }
             }
             None => [(1.0, raw_u_points.to_vec()), (1.0, raw_v_points.to_vec())],
         };
