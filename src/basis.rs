@@ -3,7 +3,7 @@ mod glq;
 pub mod shape_fns;
 
 use crate::domain::mesh::{
-    elem::Elem,
+    primitives::elem::Elem,
     space::{M2D, V2D},
 };
 use glq::{gauss_quadrature_points, scale_gauss_quad_points};

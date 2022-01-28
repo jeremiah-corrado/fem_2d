@@ -1,4 +1,4 @@
-use super::{ParaDir, Point, M2D, V2D};
+use super::super::space::{ParaDir, Point, M2D, V2D};
 use json::JsonValue;
 use num_complex::Complex64;
 use std::fmt;

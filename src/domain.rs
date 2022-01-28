@@ -49,17 +49,17 @@ impl Domain {
     }
 
     /// Iterate over all `Elem`s in the mesh
-    pub fn elems<'a>(&'a self) -> impl Iterator<Item = &'a mesh::elem::Elem> + '_ {
+    pub fn elems<'a>(&'a self) -> impl Iterator<Item = &'a mesh::primitives::elem::Elem> + '_ {
         self.mesh.elems.iter()
     }
 
     /// Iterate over all `Edge`s in the mesh
-    pub fn edges<'a>(&'a self) -> impl Iterator<Item = &'a mesh::edge::Edge> + '_ {
+    pub fn edges<'a>(&'a self) -> impl Iterator<Item = &'a mesh::primitives::edge::Edge> + '_ {
         self.mesh.edges.iter()
     }
 
     /// Iterate over all `Node`s in the mesh
-    pub fn nodes<'a>(&'a self) -> impl Iterator<Item = &'a mesh::node::Node> + '_ {
+    pub fn nodes<'a>(&'a self) -> impl Iterator<Item = &'a mesh::primitives::node::Node> + '_ {
         self.mesh.nodes.iter()
     }
 

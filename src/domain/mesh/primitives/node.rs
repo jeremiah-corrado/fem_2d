@@ -1,4 +1,5 @@
-use super::{Elem, Point};
+use super::elem::Elem; 
+use super::super::space::Point;
 use json::JsonValue;
 use std::collections::BTreeMap;
 

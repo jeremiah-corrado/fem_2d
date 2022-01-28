@@ -1,4 +1,4 @@
-use crate::domain::mesh::elem::Elem;
+use crate::domain::mesh::primitives::elem::Elem;
 use std::fmt;
 
 #[derive(Clone, Debug)]

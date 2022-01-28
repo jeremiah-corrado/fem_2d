@@ -1,18 +1,22 @@
-pub mod edge;
-pub mod elem;
-pub mod element;
+/// Structures and Functions to facilitate RBS based anisotropic h-refinement
 pub mod h_refinement;
-pub mod node;
+/// Structures and Functions to facilitate anisotropic p-refinement
 pub mod p_refinement;
+/// Structures to describe the 2D real and parametric spaces defining a Mesh
 pub mod space;
+/// Primitive types that compose the Mesh
+pub mod primitives;
 
-use edge::Edge;
-use elem::{Elem, ElemUninit};
-use element::{Element, Materials};
 use h_refinement::{HRef, HRefError};
-use node::Node;
 use p_refinement::{PRef, PRefError};
 use space::{ParaDir, Point, M2D, V2D};
+
+use primitives::{
+    elem::{Elem, ElemUninit}, 
+    edge::Edge, 
+    node::Node, 
+    element::{Element, Materials}
+};
 
 use super::IdTracker;
 

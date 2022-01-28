@@ -1,4 +1,4 @@
-use super::{h_refinement::HRefError, Elem, Node, ParaDir, MIN_EDGE_LENGTH};
+use super::super::{h_refinement::HRefError, Elem, Node, ParaDir, MIN_EDGE_LENGTH};
 use json::JsonValue;
 use smallvec::SmallVec;
 use std::collections::BTreeMap;

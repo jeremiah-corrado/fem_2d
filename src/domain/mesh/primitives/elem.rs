@@ -1,8 +1,9 @@
-use super::{
+use super::super::{
     h_refinement::{HLevels, HRefError, HRefLoc},
     p_refinement::PolyOrders,
     Element, HRef, EXPECTED_NUM_H_REFINEMENTS, M2D, V2D,
 };
+
 use json::JsonValue;
 use smallvec::SmallVec;
 use std::fmt;
