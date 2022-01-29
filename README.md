@@ -12,16 +12,18 @@ A Rust library for 2D Finite Element Method computations, featuring:
   - You can use the built in Integrals (for the Maxwell Eigenvalue Problem)
   - Or you can define your own problem by implementing the `Integral` Trait
 - Two Eigensolvers
-  - Sparse: Using an external Slepc Solver (installation instructions found [here](https://github.com/jeremiah-corrado/slepc_gep_solver)
+  - Sparse: Using an external Slepc Solver (code and installation instructions found [here](https://github.com/jeremiah-corrado/slepc_gep_solver))
   - Dense: Using [Nalgebra](https://nalgebra.org/)'s Eigen Decomposition (not recommended for large problems)
 - Expressive Solution Evaluation
   - Field solutions can easily be generated from an eigenvector
-  - Functions of solutions can be evaluated
-  - Solutions can be printed to `.vtk` files for plotting (via [VISIT](https://visit-dav.github.io/visit-website/index.html) or similar tools)
+  - Functions of solutions can be evaluated (ex: magnitude of a field)
+  - Solutions can be printed to `.vtk` files for plotting (using [VISIT](https://visit-dav.github.io/visit-website/index.html) or similar tools)
 
 ## Example
 
-Solve the Maxwell Eigenvalue Problem on a standard Waveguide and print the Electric Fields to a VTK file
+Solve the Maxwell Eigenvalue Problem on a standard Waveguide and print the Electric Fields to a VTK file.
+
+This example encompasses most of the functionality of the library.
 ```Rust
 use fem_2d::prelude::*;
 
@@ -35,9 +37,9 @@ let mut mesh = Mesh::from_file("./test_input/test_mesh_a.json").unwrap();
 mesh.global_h_refinement(HRef::t()).unwrap();
 
 // Then anisotropically refine the resultant Elems in the center of the mesh
-let center_edge_id = mesh.elems[0].edges[3];
+let cenral_node_id = mesh.elems[0].nodes[3];
 mesh.h_refine_with_filter(|elem| {
-    if elem.edges.contains(&center_edge_id) {
+    if elem.nodes.contains(&cenral_node_id) {
         Some(HRef::u())
     } else {
         None
