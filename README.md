@@ -71,7 +71,9 @@ field_space.print_all_to_vtk("./test_output/electric_field_solution.vtk").unwrap
 ```
 
 ## Mesh Refinement
+A `Mesh` structure keeps track of the geometric layout of the finite elements (designated as `Elem`s in the library), as well as the polynomial expansion orders on each element. These can be updated using h- and p-refinements respectively
 
+### *h*-Refinement:
 ***h*-Refinements** are implemented using the Refinement by Superposition (RBS) method
 > Technical details can be found in this paper: [A Refinement-by-Superposition Approach to FullyAnisotropichp-Refinement for Improved Efficiencyin CEM](https://www.techrxiv.org/articles/preprint/A_Refinement-by-Superposition_Approach_to_Fully_Anisotropic_hp-Refinement_for_Improved_Efficiency_in_CEM/16695163)
 
@@ -80,12 +82,80 @@ Three types of h-refinement are supported:
 * **U**: Elements are superimposed with 2 child elements, such that the resolution is improved in the x-direction
 * **V**: Elements are superimposed with 2 child elements, such that the resolution is improved in the y-direction
 
-These are designated as an Enum: `HRef`, located in the `h_refinements` module
+These are designated as an Enum: `HRef`, located in the `h_refinements` module. They can be executed by constructing a refinement as follows:
+```Rust
+let h_iso = HRef::T;
+let h_aniso_u = HRef::U(None); 
+let h_aniso_v = HRef::V(None);
+```
+...and applying it to an element or group of elements using one of the many *h*-refinement methods on `Mesh`.
 
-___________________
+Multi-step anisotropic *h*-refinements can be executed by constructing the U or V variant with `Some(0)` or `Some(1)`. This will cause the 0th or 1st resultant child element to be anisotropically refined in the opposite direction.
 
 Mesh coarsening is not currently supported
 
-***p*-Refinements** allow elements to support large expansion orders in the X and Y directions. These can be modulated separately for greater control over resource usage and solution accuracy.
+### *p*-Refinement:
+***p*-Refinements** allow elements to support a range of expansion orders in the X and Y directions. These can be modulated separately for greater control over resource usage and solution accuracy.
 
-Expansion orders can be increased or reduced by constructing a `PRef`, located in the `p_refinements` module
+As a `Domain` is constructed from a `Mesh`, Basis Functions are constructed based on the elements expansion orders.
+
+Expansion orders can be increased or decreased by constructing a `PRef`, located in the `p_refinements` module:
+```Rust
+let uv_plus_2 = PRef::from(2, 2);
+let u_plus_1_v_minus_3 = PRef::From(1, -3);
+```
+...and applying it to an element or group of elements using one of the many *p*-refinement methods on `Mesh`.
+
+
+## JSON Mesh Files
+A `Mesh` can be constructed from a JSON file with the following format:
+```JSON
+{
+    "Elements": [
+        {
+            "materials": [eps_rel_re, eps_rel_im, mu_rel_re, mu_rel_im],
+            "node_ids": [node_0_id, node_1_id, node_2_id, node_3_id],
+        },
+        {
+            "materials": [1.0, 0.0, 1.0, 0.0],
+            "node_ids": [1, 2, 4, 5],
+        },
+        {
+            "materials": [1.2, 0.0, 0.9999, 0.0],
+            "node_ids": [2, 3, 5, 6],
+        }
+    ],
+    "Nodes": [
+        [x_coordinate, y_coordinate],
+        [0.0, 0.0],
+        [1.0, 0.0],
+        [2.0, 0.0],
+        [0.0, 0.5],
+        [1.0, 0.5],
+        [2.0, 0.5],
+    ]
+}
+```
+(The first Element and Node are simply there to explain what variables mean. Those should not be included in an actual mesh file!)
+
+The above file corresponds to this 2 Element mesh (with Node indices labeled):
+```text
+    3               4               5
+0.5 *---------------*---------------*
+    |               |               |
+    |      air      |    teflon     |
+    |               |               |
+0.0 *---------------*---------------*
+ y  0               1               2
+ x 0.0             1.0             2.0
+
+```
+
+This library does not yet support curvilinear elements. When that feature is added, this file format will also be extended to describe higher-order geometry.
+
+___
+
+A refined `Mesh` can also be exported and visualized using [this](...) tool.
+
+
+
