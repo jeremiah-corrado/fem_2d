@@ -35,9 +35,9 @@ let mut mesh = Mesh::from_file("./test_input/test_mesh_a.json").unwrap();
 mesh.global_h_refinement(HRef::t()).unwrap();
 
 // Then anisotropically refine the resultant Elems in the center of the mesh
-let center_elem_id = mesh.elems[0].edges[3];
+let center_edge_id = mesh.elems[0].edges[3];
 mesh.h_refine_with_filter(|elem| {
-    if elem.edges.contains(&center_elem_id) {
+    if elem.edges.contains(&center_edge_id) {
         Some(HRef::u())
     } else {
         None
