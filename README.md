@@ -158,7 +158,8 @@ This library does not yet support curvilinear elements. When that feature is add
 ___
 
 A refined `Mesh` can also be exported and visualized using [this](...) tool:
-<img src="/test_output/mesh_example.png" width="200">
+<!-- ![Mesh Image Example](/assets/images/tux.png) -->
+<img src="/test_output/mesh_example.jpeg" width="200">
 
 
 
