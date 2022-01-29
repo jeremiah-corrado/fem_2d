@@ -12,10 +12,61 @@ A rust library for 2D Finite Element Method computations, featuring:
   - You can use the built in Integrals (for the Maxwell Eigenvalue Problem)
   - Or you can define your own problem by implementing the `Integral` Trait
 - Two Eigensolvers
-  - Sparse: Using an external Slepc Solver (installation instructions found [here](https://github.com/jeremiah-corrado/slepc_gep_solver)]
+  - Sparse: Using an external Slepc Solver (installation instructions found [here](https://github.com/jeremiah-corrado/slepc_gep_solver)
   - Dense: Using [Nalgebra](https://nalgebra.org/)'s Eigen Decomposition (not recommended for large problems)
 - Expressive Solution Evaluation
   - Field solutions can easily be generated from an eigenvector
   - Functions of solutions can be evaluated
   - Solutions can be printed to `.vtk' files for plotting (via [VISIT](https://visit-dav.github.io/visit-website/index.html) or similar tools)
 
+## Example
+
+Solve the Maxwell Eigenvalue Problem on a standard Waveguide and print the Electric Fields to a VTK file
+```Rust
+use fem_2d::prelude::*;
+
+// Load a standard air-filled waveguide mesh from a JSON file
+let mut mesh = Mesh::from_file("./test_input/test_mesh_a.json").unwrap();
+
+// Set the polynomial expansion order to 4 in both directions on all Elems
+        mesh.set_global_expansion_orders([4, 4]).unwrap();
+
+// Isotropically refine all Elems
+mesh.global_h_refinement(HRef::t()).unwrap();
+
+// Then anisotropically refine the resultant Elems in the center of the mesh
+let center_elem_id = mesh.elems[0].edges[3];
+mesh.h_refine_with_filter(|elem| {
+    if elem.edges.contains(&center_elem_id) {
+        Some(HRef::u())
+    } else {
+        None
+    }
+}).unwrap();
+        
+// Construct a domain with Dirichlet boundary conditions
+let domain = Domain::from_mesh(mesh);
+println!("Constructed Domain with {} DoFs", domain.dofs.len());
+
+// Construct a generalized eigenvalue problem for the Electric Field
+    // (in parallel using the Rayon Global ThreadPool)
+let gep = domain.galerkin_sample_gep_parallel::<KOLShapeFn, CurlCurl, L2Inner>(None);
+
+// Solve the generalized eigenvalue problem using Nalgebra's Eigen-Decomposition
+    // look for an eigenvalue close to 10.0
+let solution = nalgebra_solve_gep(gep, 10.0).unwrap();
+println!("Found Eigenvalue: {:.15}", solution.value);
+
+// Construct a solution-field-space over the Domain with 64 samples on each "leaf" Elem
+let mut field_space = UniformFieldSpace::new(&domain, [8, 8]);
+
+// Compute the Electric Field in the X- and Y-directions (using the same ShapeFns as above)
+let e_field_names = field_space.xy_fields::<KOLShapeFn>("E", solution.normalized_eigenvector()).unwrap();
+
+// Compute the magnitude of the Electric Field
+field_space.expression_2arg(e_field_names, "E_mag", |ex, ey| (ex.powi(2) + ey.powi(2)).sqrt()).unwrap();
+
+// Print "E_x", "E_y" and "E_mag" to a VTK file
+field_space.print_all_to_vtk("./test_output/electric_field_solution.vtk").unwrap();
+
+```
