@@ -74,7 +74,7 @@ field_space.print_all_to_vtk("./test_output/electric_field_solution.vtk").unwrap
 A `Mesh` structure keeps track of the geometric layout of the finite elements (designated as `Elem`s in the library), as well as the polynomial expansion orders on each element. These can be updated using h- and p-refinements respectively
 
 ### *h*-Refinement:
-***h*-Refinements** are implemented using the Refinement by Superposition (RBS) method
+*h*-Refinements* are implemented using the Refinement by Superposition (RBS) method
 > Technical details can be found in this paper: [A Refinement-by-Superposition Approach to FullyAnisotropichp-Refinement for Improved Efficiencyin CEM](https://www.techrxiv.org/articles/preprint/A_Refinement-by-Superposition_Approach_to_Fully_Anisotropic_hp-Refinement_for_Improved_Efficiency_in_CEM/16695163)
 
 Three types of h-refinement are supported:
@@ -95,7 +95,7 @@ Multi-step anisotropic *h*-refinements can be executed by constructing the U or 
 Mesh coarsening is not currently supported
 
 ### *p*-Refinement:
-***p*-Refinements** allow elements to support a range of expansion orders in the X and Y directions. These can be modulated separately for greater control over resource usage and solution accuracy.
+*p*-Refinements* allow elements to support a range of expansion orders in the X and Y directions. These can be modulated separately for greater control over resource usage and solution accuracy.
 
 As a `Domain` is constructed from a `Mesh`, Basis Functions are constructed based on the elements expansion orders.
 
@@ -149,13 +149,16 @@ The above file corresponds to this 2 Element mesh (with Node indices labeled):
  y  0               1               2
  x 0.0             1.0             2.0
 
+Both Elements start with a polynomial expansion order of 1 upon construction. 
+
 ```
 
 This library does not yet support curvilinear elements. When that feature is added, this file format will also be extended to describe higher-order geometry.
 
 ___
 
-A refined `Mesh` can also be exported and visualized using [this](...) tool.
+A refined `Mesh` can also be exported and visualized using [this](...) tool:
+![Mesh image example](mesh_image_example.jpeg)
 
 
 
