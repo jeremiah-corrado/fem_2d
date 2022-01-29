@@ -195,6 +195,11 @@ impl Edge {
         self.active_elems
     }
 
+    /// Is this edge on the border of the Mesh (does it have elements only on one side)
+    pub fn is_boundary(&self) -> bool {
+        self.elems[0].is_empty() || self.elems[1].is_empty()
+    }
+
     /// Attempts to establish an active pair of Elems. Returns false if none can be established
     pub(crate) fn set_activation(&mut self) -> bool {
         match (self.last_entry(0), self.last_entry(1)) {

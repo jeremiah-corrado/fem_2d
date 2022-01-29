@@ -2,7 +2,7 @@
 
 A Rust library for 2D Finite Element Method computations, featuring:
 
-- Highly felxible *hp*-Refinement
+- Highly flexible *hp*-Refinement
   - Isotropic & Anisotropic *h*-refinements (with support for n-irregularity)
   - Isotropic & Anisotropic *p*-refinements 
 - Generic shape function evaluation
@@ -13,11 +13,23 @@ A Rust library for 2D Finite Element Method computations, featuring:
   - Or you can define your own problem by implementing the `Integral` Trait
 - Two Eigensolvers
   - Sparse: Using an external Slepc Solver (code and installation instructions found [here](https://github.com/jeremiah-corrado/slepc_gep_solver))
-  - Dense: Using [Nalgebra](https://nalgebra.org/)'s Eigen Decomposition (not recommended for large problems)
+  - Dense: Using [Nalgebra](https://nalgebra.org/)'s Eigen-Decomposition (not recommended for large problems)
 - Expressive Solution Evaluation
   - Field solutions can easily be generated from an eigenvector
-  - Functions of solutions can be evaluated (ex: magnitude of a field)
-  - Solutions can be printed to `.vtk` files for plotting (using [VISIT](https://visit-dav.github.io/visit-website/index.html) or similar tools)
+  - Arbitrary functions of solutions can also be evaluated (ex: magnitude of a field)
+  - Solutions and expressions are easily printed to `.vtk` files for plotting (using [VISIT](https://visit-dav.github.io/visit-website/index.html) or similar tools)
+
+## Usage
+
+Add this to your `Cargo.toml` file:
+
+```toml
+[dependencies]
+fem_2d = "0.1.0"
+```
+
+If you are using this library for any academic or commercial purpose, please sight the following paper in addition to this repository:
+> [An extendible 2D Fem library in Rust with extensive support for *hp*-refinement](...)
 
 ## Example
 
@@ -77,7 +89,7 @@ A `Mesh` structure keeps track of the geometric layout of the finite elements (d
 
 ### *h*-Refinement:
 *h*-Refinements* are implemented using the Refinement by Superposition (RBS) method
-> Technical details can be found in this paper: [A Refinement-by-Superposition Approach to FullyAnisotropichp-Refinement for Improved Efficiencyin CEM](https://www.techrxiv.org/articles/preprint/A_Refinement-by-Superposition_Approach_to_Fully_Anisotropic_hp-Refinement_for_Improved_Efficiency_in_CEM/16695163)
+> Technical details can be found in this paper: [A Refinement-by-Superposition Approach to Fully Anisotropichp-Refinement for Improved Efficiency in CEM](https://www.techrxiv.org/articles/preprint/A_Refinement-by-Superposition_Approach_to_Fully_Anisotropic_hp-Refinement_for_Improved_Efficiency_in_CEM/16695163)
 
 Three types of h-refinement are supported:
 * **T**: Elements are superimposed with 4 equally sized child elements
