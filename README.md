@@ -95,14 +95,14 @@ Multi-step anisotropic *h*-refinements can be executed by constructing the U or 
 Mesh coarsening is not currently supported
 
 ### *p*-Refinement:
-*p*-Refinements* allow elements to support a range of expansion orders in the X and Y directions. These can be modulated separately for greater control over resource usage and solution accuracy.
+*p*-Refinements allow elements to support a range of expansion orders in the X and Y directions. These can be modified separately for greater control over resource usage and solution accuracy.
 
 As a `Domain` is constructed from a `Mesh`, Basis Functions are constructed based on the elements expansion orders.
 
 Expansion orders can be increased or decreased by constructing a `PRef`, located in the `p_refinements` module:
 ```Rust
 let uv_plus_2 = PRef::from(2, 2);
-let u_plus_1_v_minus_3 = PRef::From(1, -3);
+let u_plus_1_v_minus_3 = PRef::from(1, -3);
 ```
 ...and applying it to an element or group of elements using one of the many *p*-refinement methods on `Mesh`.
 
