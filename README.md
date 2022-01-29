@@ -1,10 +1,10 @@
 # fem_2d
 
-A rust library for 2D Finite Element Method computations, featuring:
+A Rust library for 2D Finite Element Method computations, featuring:
 
-- Highly felxible hp-Refinement
-  - Isotropic & Anisotropic h-refinements (with support for n-irregularity)
-  - Isotropic & Anisotropic p-refinements 
+- Highly felxible *hp*-Refinement
+  - Isotropic & Anisotropic *h*-refinements (with support for n-irregularity)
+  - Isotropic & Anisotropic *p*-refinements 
 - Generic shape function evaluation
   - You can use one of the two built in sets of Shape Functions
   - Or you can define your own by implementing the `ShapeFn` Trait
@@ -17,7 +17,7 @@ A rust library for 2D Finite Element Method computations, featuring:
 - Expressive Solution Evaluation
   - Field solutions can easily be generated from an eigenvector
   - Functions of solutions can be evaluated
-  - Solutions can be printed to `.vtk' files for plotting (via [VISIT](https://visit-dav.github.io/visit-website/index.html) or similar tools)
+  - Solutions can be printed to `.vtk` files for plotting (via [VISIT](https://visit-dav.github.io/visit-website/index.html) or similar tools)
 
 ## Example
 
@@ -68,5 +68,24 @@ field_space.expression_2arg(e_field_names, "E_mag", |ex, ey| (ex.powi(2) + ey.po
 
 // Print "E_x", "E_y" and "E_mag" to a VTK file
 field_space.print_all_to_vtk("./test_output/electric_field_solution.vtk").unwrap();
-
 ```
+
+## Mesh Refinement
+
+***h*-Refinements** are implemented using the Refinement by Superposition (RBS) method
+> Technical details can be found in this paper: [A Refinement-by-Superposition Approach to FullyAnisotropichp-Refinement for Improved Efficiencyin CEM](https://www.techrxiv.org/articles/preprint/A_Refinement-by-Superposition_Approach_to_Fully_Anisotropic_hp-Refinement_for_Improved_Efficiency_in_CEM/16695163)
+
+Three types of h-refinement are supported:
+* **T**: Elements are superimposed with 4 equally sized child elements
+* **U**: Elements are superimposed with 2 child elements, such that the resolution is improved in the x-direction
+* **V**: Elements are superimposed with 2 child elements, such that the resolution is improved in the y-direction
+
+These are designated as an Enum: `HRef`, located in the `h_refinements` module
+
+___________________
+
+Mesh coarsening is not currently supported
+
+***p*-Refinements** allow elements to support large expansion orders in the X and Y directions. These can be modulated separately for greater control over resource usage and solution accuracy.
+
+Expansion orders can be increased or reduced by constructing a `PRef`, located in the `p_refinements` module
