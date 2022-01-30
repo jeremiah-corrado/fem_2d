@@ -31,8 +31,6 @@ fem_2d = "0.1.0"
 If you are using this library for any academic or commercial purpose, please site the following paper in addition to this repository:
 > ['fem_2d: A Rust Package for 2D Finite Element Method Computations with Extensive Support for *hp*-refinement'](...)
 
-
-
 ## Example
 
 Solve the Maxwell Eigenvalue Problem on a standard Waveguide and print the Electric Fields to a VTK file.
@@ -173,7 +171,7 @@ This library does not yet support curvilinear elements. When that feature is add
 
 ___
 
-A refined `Mesh` can also be exported and visualized using [this](...) tool:
+A refined `Mesh` can also be exported and visualized using [this](https://github.com/jeremiah-corrado/fem_2d_mesh_plot) tool:
 
 <img src="/test_output/mesh_example.jpeg" width="350">
 
