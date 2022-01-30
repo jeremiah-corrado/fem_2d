@@ -7,10 +7,8 @@ tags:
   - hp-refinement
   - PDE Solvers
 authors:
-  - name: Jeremiah Corrado^[first author]'
+  - name: Jeremiah Corrado^[first author]
     orcid: 0000-0003-2688-0600
-    affiliation: 1
-  - name: Branislav M. Notaros
     affiliation: 1
 affiliations:
  - name: Colorado State University, Department of Electrical and Computer Engineering
@@ -25,10 +23,12 @@ The Finite Element Method (FEM) is a powerful tool used to solve Partial Differe
 
 The `fem_2d` library is a powerful FEM simulation tool implemented in Rust. It was designed within the domain of Computational Electromagnetics (CEM) with a specific focus on solving Maxwells Equations on 2D waveguide cross-sections with very high accuracy. It's functionality is easily extendable to other domains using Rust `Traits` (which are similar to C++20 `Concepts` or Java `Interfaces`). Traits are a highly expressive form of genericism, which allow functions to act on any data structure so long as it implements some shared functionality. In this case, the shared functionality is the ability to compute an integral between a basis function and testing function. As such, the libraries entire functionality can be leveraged against a generic PDE problem simply implementing fem_2d's `Integral` trait to express the variational form of the problem of interest.
 
-`fem_2d` has all the functionality needed to formulate and solve Generalized Eigenvalue Problems. This includes a solver based on the popular pure-Rust linear algebra library [Nalgebra](), as well as an [external sparse-solver](https://github.com/jeremiah-corrado/slepc_gep_solver) implemented in Slepc. It also has extensive functionality for generating `.vtk` files of solutions which can be plotted using external tools. 
+`fem_2d` has all the functionality needed to formulate and solve Generalized Eigenvalue Problems. This includes a solver based on the popular pure-Rust linear algebra library Nalgebra[@nalgebra], as well as an external sparse solver implemented using SLEPc [@slepc, @petsc-web-page, @petsc-user-ref, @petsc-efficient]. It also has extensive functionality for generating `.vtk` files of solutions which can be plotted using external tools. 
 
 # Statement of Need
-Fem_2D's primary advantage over other FEM libraries, such as the [Deal.II]() library, is its highly dynamic and expressive *hp*-refinement scheme. Unlike many other quadrilateral-based (Rectangular rather than Triangular element) FEM packages, `fem_2d` supports n-irregular anisotropic *h*-refinement as well as anisotropic *p*-refinement. In other words, there is no fundamental limitation on the shape, location, or orientation when adding new elements to the Mesh. The polynomial expansion orders of the Basis Functions associated with each element can also be modified separately. The implementation details and performance implications of this unrestrained *hp*-refinement scheme are discussed in detail in [this paper](https://www.techrxiv.org/articles/preprint/A_Refinement-by-Superposition_Approach_to_Fully_Anisotropic_hp-Refinement_for_Improved_Efficiency_in_CEM/16695163).
+Fem_2D's primary advantage over other FEM libraries, such as the Deal.II library [@dealII93], is its highly dynamic and expressive *hp*-refinement scheme. Unlike many other quadrilateral-element FEM packages, `fem_2d` supports n-irregular anisotropic *h*-refinement as well as anisotropic *p*-refinement. In other words, there is no fundamental limitation on the shape, location, or orientation when adding new elements to the Mesh. The polynomial expansion orders of the Basis Functions associated with each element can also be modified separately in each direction. 
+
+The Isotropic *h*-refinement API alone, is a useful, and even necessary, feature when computing solutions over geometries with sharp edges or material discontinuities, as these tend to introduce very small-scale solution behavior which is otherwise addressed only by excessive amounts of *p*-refinement `[@corrado_harmon_notaros_2021]`. The addition of anisotropic *h*- and *p*-refinement presents an even lager capacity for improved solution efficiency, as small-scale behavior is targeted more directly and redundant Degrees of Freedom can are left out of the system `[@corrado_harmon_notaros_2021]`. 
 
 ## Examples of *hp*-Refinement:
 

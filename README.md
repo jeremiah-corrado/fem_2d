@@ -29,7 +29,7 @@ fem_2d = "0.1.0"
 ```
 
 If you are using this library for any academic or commercial purpose, please sight the following paper in addition to this repository:
-> [An extendible 2D Fem library in Rust with extensive support for *hp*-refinement](...)
+> ['fem_2d: A Rust Package for 2D Finite Element Method Computations with Extensive Support for *hp*-refinement'](...)
 
 ## Example
 
