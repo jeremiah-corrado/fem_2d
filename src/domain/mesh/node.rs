@@ -26,7 +26,7 @@ pub struct Node {
     pub coords: Point,
     pub boundary: bool,
     elems: [BTreeMap<[u8; 2], usize>; 4],
-    active_elems: Option<[usize; 4]>,
+    // active_elems: Option<[usize; 4]>,
 }
 
 impl Node {
@@ -42,7 +42,7 @@ impl Node {
                 BTreeMap::new(),
                 BTreeMap::new(),
             ],
-            active_elems: None,
+            // active_elems: None,
         }
     }
 
@@ -59,7 +59,6 @@ impl Node {
                     address,
                     index_of_self,
                     elem.id,
-
                 );
             }
         } else {
@@ -70,9 +69,9 @@ impl Node {
         }
     }
 
-    pub(crate) fn active_elems(&self) -> Option<[usize; 4]> {
-        self.active_elems
-    }
+    // pub(crate) fn active_elems(&self) -> Option<[usize; 4]> {
+    //     self.active_elems
+    // }
 
     // TODO: implement note-type shape function matching
 

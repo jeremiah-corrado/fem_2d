@@ -50,10 +50,10 @@
     feature(const_fn_floating_point_arithmetic)
 )]
 
-extern crate bytes;
-extern crate nalgebra;
-extern crate num_complex;
-extern crate rayon;
+// extern crate bytes;
+// extern crate nalgebra;
+// extern crate num_complex;
+// extern crate rayon;
 
 #[macro_use]
 extern crate smallvec;
