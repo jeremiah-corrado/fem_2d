@@ -72,7 +72,7 @@ mesh.p_refine_with_filter(|elem| {
 
 The Maxwell eigenvalue problem has the following Galerkin Sampled formulation for an arbitrary domain terminated with dirichlet boundary conditions:
 
->Find a solution: $ \mathrm{U} = \{{\mathbf{u}}, \lambda \} \in B_0 \times \Bbb{R} $ which satisfies:
+>Find a solution: $  \quad \text{U} = \{{\mathbf{u}}, \lambda \} \in B_0 \times \Bbb{R}  \quad  $ which satisfies:
 >
 > $$ b(\mathbf{u}, \phi) = \lambda a(\mathbf{u}, \phi) \quad \forall \phi \in B_0 $$ 
 >$$\text{where: } \left\{\begin{array}{l}
