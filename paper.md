@@ -72,14 +72,15 @@ mesh.p_refine_with_filter(|elem| {
 
 The Maxwell eigenvalue problem has the following Galerkin Sampled formulation for an arbitrary domain terminated with dirichlet boundary conditions:
 
->Find a solution: $  \quad \text{U} = \{{\mathbf{u}}, \lambda \} \in B_0 \times \Bbb{R}  \quad  $ which satisfies:
->
-> $$ b(\mathbf{u}, \phi) = \lambda a(\mathbf{u}, \phi) \quad \forall \phi \in B_0 $$ 
->$$\text{where: } \left\{\begin{array}{l}
+>Find a solution: \begin{equation} \quad \text{U} = \{{\mathbf{u}}, \lambda \} \in B_0 \times \Bbb{R} \quad \end{equation} which satisfies:
+
+> \begin{equation} b(\mathbf{u}, \phi) = \lambda a(\mathbf{u}, \phi) \quad \forall \phi \in B_0 \end{equation}
+
+>\begin{equation} \text{where: } \left\{\begin{array}{l}
 a(\mathbf{u}, \phi) = \langle \nabla_t \times \mathbf{u}, \nabla_t \times \phi \rangle \cr
 b(\mathbf{u}, \phi) = \langle \mathbf{u}, \phi \rangle \cr
 B_0 \subset H(\text{curl}; \Omega)
-\end{array}\right.$$
+\end{array}\right.\end{equation}
 
 The system matrices for this equation are populated in `fem_2d` using a call to `galerkin_sample_gep` with three generic arguments:
 ```Rust
