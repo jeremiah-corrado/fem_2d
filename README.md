@@ -28,8 +28,10 @@ Add this to your `Cargo.toml` file:
 fem_2d = "0.1.0"
 ```
 
-If you are using this library for any academic or commercial purpose, please sight the following paper in addition to this repository:
+If you are using this library for any academic or commercial purpose, please site the following paper in addition to this repository:
 > ['fem_2d: A Rust Package for 2D Finite Element Method Computations with Extensive Support for *hp*-refinement'](...)
+
+
 
 ## Example
 
