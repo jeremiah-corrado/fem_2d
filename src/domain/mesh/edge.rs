@@ -1,7 +1,6 @@
 use super::{elem::Elem, h_refinement::HRefError, node::Node, space::ParaDir, MIN_EDGE_LENGTH};
-
-use json::JsonValue;
-use smallvec::SmallVec;
+use json::{array, object, JsonValue};
+use smallvec::{smallvec, SmallVec};
 use std::collections::BTreeMap;
 
 /// Edges describe a strait line in parametric space between two `Node`s

@@ -23,7 +23,7 @@ use space::{ParaDir, Point};
 
 use super::IdTracker;
 
-use json::JsonValue;
+use json::{object, JsonValue};
 use smallvec::SmallVec;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;

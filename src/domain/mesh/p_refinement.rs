@@ -1,6 +1,6 @@
 use super::MAX_POLYNOMIAL_ORDER;
 use crate::domain::dof::basis_spec::BasisDir;
-use json::JsonValue;
+use json::{object, JsonValue};
 use std::fmt;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

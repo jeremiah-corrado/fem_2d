@@ -1,11 +1,9 @@
+use json::{object, JsonValue};
 use std::cmp::Ordering;
+use std::f64::consts::FRAC_PI_4;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::ops::{Add, Div, Index, Mul};
-
-use std::f64::consts::FRAC_PI_4;
-
-use json::JsonValue;
 
 #[derive(Clone, Copy, Debug)]
 /// 2D vector in Parametric Space

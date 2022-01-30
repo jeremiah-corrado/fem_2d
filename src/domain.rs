@@ -15,6 +15,7 @@ use dof::{
 use mesh::*;
 
 use rayon::prelude::*;
+use smallvec::smallvec;
 use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 

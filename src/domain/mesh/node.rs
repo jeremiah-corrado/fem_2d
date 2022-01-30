@@ -1,6 +1,6 @@
 use super::super::space::Point;
 use super::elem::Elem;
-use json::JsonValue;
+use json::{object, JsonValue};
 use std::collections::BTreeMap;
 
 /// A point in Real 2D space

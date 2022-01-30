@@ -3,7 +3,7 @@
 pub mod basis_spec;
 
 use basis_spec::BSAddress;
-use smallvec::SmallVec;
+use smallvec::{smallvec, SmallVec};
 use std::fmt;
 
 /// A single degree of freedom

@@ -5,8 +5,7 @@ use super::{
     space::{M2D, V2D},
     EXPECTED_NUM_H_REFINEMENTS,
 };
-
-use json::JsonValue;
+use json::{array, object, JsonValue};
 use smallvec::SmallVec;
 use std::fmt;
 use std::sync::Arc;

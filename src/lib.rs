@@ -50,17 +50,6 @@
     feature(const_fn_floating_point_arithmetic)
 )]
 
-// extern crate bytes;
-// extern crate nalgebra;
-// extern crate num_complex;
-// extern crate rayon;
-
-#[macro_use]
-extern crate smallvec;
-
-#[macro_use]
-extern crate json;
-
 /// Structures and Traits for Basis Function Evaluation
 pub mod basis;
 /// Structures to define the geometric characteristics and refinement state of an FEM Domain
