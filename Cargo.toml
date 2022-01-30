@@ -1,21 +1,23 @@
 [package]
-name = "fem_2d"
-version = "0.1.0"
-edition = "2021"
 authors = ["Jeremiah Corrado"]
+categories = ["Science", "Simulation", "Mathematics"]
+description = "2D Finite Element Method Toolkit"
+edition = "2021"
+keywords = ["fem", "math", "finite element analysis", "simulation", "solver"]
 license = "MIT"
+name = "fem_2d"
 readme = "README.md"
 repository = "https://github.com/jeremiah-corrado/fem_2d/"
-description = "2D Finite Element Solver"
+version = "0.1.0"
 
 [features]
-nighly = ["max_ortho_basis"]
 max_ortho_basis = []
+nighly = ["max_ortho_basis"]
 
 [dependencies]
-rayon="1.5.1"
 bytes = "1.1.0"
+json = "0.12.4"
 nalgebra = "0.30.1"
-smallvec="1.7.0"
-num-complex="0.4.0"
-json="0.12.4"
+num-complex = "0.4.0"
+rayon = "1.5.1"
+smallvec = "1.7.0"
