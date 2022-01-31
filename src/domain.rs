@@ -208,7 +208,7 @@ impl Domain {
     }
 
     /// Retrieve a list of an `Elem`s ancestor [BasisSpec]s (All the [`BasisSpec`]s on its ancestor `Elem`s)
-    pub fn ancestor_basis_specs(&self, elem_id: usize) -> Result<Vec<&BasisSpec>, String> {
+    pub fn ancestor_basis_specs(&self, elem_id: usize) -> Result<Vec<(usize, &Vec<BasisSpec>)>, String> {
         if elem_id >= self.mesh.elems.len() {
             Err(format!(
                 "Elem {} doesn't exist; Cannot retrieve Ancestor BasisSpecs!",
@@ -218,7 +218,7 @@ impl Domain {
             let anc_elem_ids = self.mesh.ancestor_elems(elem_id, false)?;
             Ok(anc_elem_ids
                 .iter()
-                .flat_map(|elem_id| self.basis_specs[*elem_id].iter())
+                .map(|elem_id| (*elem_id, &self.basis_specs[*elem_id]))
                 .collect())
         }
     }
