@@ -15,7 +15,6 @@ affiliations:
    index: 1
 date: 29 January 2022
 bibliography: paper.bib
-abstract: "FEM_2D is an open-source Finite Element Method library implemented in Rust. This Metapaper describes some of the libraries basic functionality, as well as its unique contributions to the FEM research community. This package exhibits a powerful *hp*-refinement API with anisotropic refinements and no constraints on mesh irregularity. It also leverages Rust's Trait-Based Genericism to provide straightforward application to many problem domains. This library has been featured in some recent research (see references) in Computational Electromagnetics, depicting the validity of the underlying methodology. FEM_2D has been made available as an open-source library with the intention of providing additional explanatory value to research, as well as facilitating the expansion of this research area"
 ---
 
 # Summary
