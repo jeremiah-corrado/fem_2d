@@ -57,6 +57,7 @@ impl Element {
     }
 
     /// Produce a Json Object that describes this Element
+    #[cfg(feature = "json_export")]
     pub fn to_json(&self) -> JsonValue {
         object! {
             "id": self.id,

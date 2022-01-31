@@ -107,6 +107,7 @@ impl Node {
     // }
 
     /// Produce a Json Object that describes this Node
+    #[cfg(feature = "json_export")]
     pub fn to_json(&self) -> JsonValue {
         object! {
             "id": self.id,

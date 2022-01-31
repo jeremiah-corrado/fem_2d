@@ -252,6 +252,7 @@ impl Edge {
     }
 
     /// Produce a Json Object that describes this Edge
+    #[cfg(feature = "json_export")]
     pub fn to_json(&self) -> JsonValue {
         let mut edge_json = object! {
             "id": self.id,

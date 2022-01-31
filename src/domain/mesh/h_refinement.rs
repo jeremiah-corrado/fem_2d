@@ -40,6 +40,7 @@ impl Default for HLevels {
     }
 }
 
+#[cfg(feature = "json_export")]
 impl From<HLevels> for JsonValue {
     fn from(h: HLevels) -> Self {
         object! {

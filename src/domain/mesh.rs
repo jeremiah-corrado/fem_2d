@@ -288,6 +288,7 @@ impl Mesh {
     }
 
     /// Print the mesh to a JSON file specified by path.
+    #[cfg(feature = "json_export")]
     pub fn export_to_json(&self, path: impl AsRef<str>) -> std::io::Result<()> {
         let f = File::create(path.as_ref())?;
         let mut w = BufWriter::new(&f);

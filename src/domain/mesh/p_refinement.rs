@@ -71,6 +71,7 @@ impl Default for PolyOrders {
     }
 }
 
+#[cfg(feature = "json_export")]
 impl From<PolyOrders> for JsonValue {
     fn from(orders: PolyOrders) -> Self {
         object! {
