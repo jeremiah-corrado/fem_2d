@@ -1,17 +1,17 @@
 ---
-title: 'FEM_2D: A Rust Package for 2D Finite Element Method Computations with Extensive Support for *hp*-refinement'
+title: "FEM_2D: A Rust Package for 2D Finite Element Method Computations with Extensive Support for *hp*-refinement"
 tags:
   - Rust
   - FEM
   - CEM
   - hp-refinement
   - PDE Solvers
-author:
-  - name: Jeremiah Corrado^[first author]
+authors:
+  - name: Jeremiah Corrado
     orcid: 0000-0003-2688-0600
     affiliation: 1
 affiliations:
- - name: Colorado State University, Department of Electrical and Computer Engineering
+ - name: "Colorado State University; Department of Electrical and Computer Engineering"
    index: 1
 date: 29 January 2022
 bibliography: paper.bib
@@ -19,13 +19,13 @@ bibliography: paper.bib
 
 # Summary
 
-The Finite Element Method (FEM) is a powerful tool used to solve Partial Differential Equations (PDE)s on arbitrary geometries. As its name suggests, the method works by breaking a geometric model (a Domain) into a set of small elements, each of which assigned a set of Basis Functions. A solution is expressed in terms of a weighted superposition of all the functions in the Domain such that the PDE is satisfied along with some continuity and boundary conditions. Some common applications include the Navier-Stokes equations which characterize the behavior of fluids, Schrödinger's equation which governs the evolution of quantum systems, and Maxwells Equations which are a macroscopic description of essentially all Electromagnetic phenomena.
+The Finite Element Method (FEM) is a powerful tool used to solve Partial Differential Equations (PDE)s on arbitrary geometries. As its name suggests, the method works by breaking a geometric model (a Domain) into a set of small elements, each of which assigned a set of Basis Functions. A solution is expressed in terms of a weighted superposition of all the functions in the Domain such that the PDE is satisfied along with some continuity and boundary conditions. Some common applications include the Navier-Stokes equations which characterize the behavior of fluids, Schrödinger's equation which governs the evolution of quantum systems, and Maxwell's Equations which are a macroscopic description of essentially all Electromagnetic phenomena.
 
 The `FEM_2D` library is a powerful FEM simulation tool implemented in Rust. It was designed within the domain of Computational Electromagnetics (CEM) with a specific focus on solving Maxwell's Equations over a 2D waveguide cross-sections with very high accuracy. This problem has practical engineering applications for the design of waveguides; however, it is used here as a research tool for exploring and evaluating improvements upon FEM.
 
 Although its initial use case was domain specific, `FEM_2D`'s functionality extends easily to other domains using an API based on Rust `Traits` (which are similar to C++20 `Concepts` or Java `Interfaces`). Traits are a highly expressive form of genericism which allow functions to act on any data structure so long as it implements some shared functionality. In the case of solving PDEs with FEM, the generic functionality is the ability to compute an integral of some function of a basis function and a testing function. As such, the libraries entire functionality can be leveraged against a PDE problem simply by implementing FEM_2D's `Integral` trait to express the variational form of the problem of interest.
 
-`FEM_2D` has all the functionality needed to formulate and solve Generalized Eigenvalue Problems. This includes a solver based on Nalgebra [@nalgebra], a native Rust linear algebra library. There is also an external sparse solver for larger or more challenging problems implemented using SLEPc [@slepc] [@petsc-web-page] [@petsc-user-ref] [@petsc-efficient]. The libray also has extensive functionality for generating `.vtk` files of solutions which can be plotted using external tools.
+`FEM_2D` has all the functionality needed to formulate and solve Generalized Eigenvalue Problems. This includes a solver based on Nalgebra [@nalgebra], a native Rust linear algebra library. There is also an external sparse solver for larger or more challenging problems implemented using SLEPc [@slepc] [@petsc-web-page] [@petsc-user-ref] [@petsc-efficient]. The library also has extensive functionality for generating `.vtk` files of solutions which can be plotted using external tools.
 
 # Statement of Need
 FEM_2D's primary advantage over other FEM libraries, such as the Deal.II library [@dealII93], is its highly dynamic and expressive *hp*-refinement API. Unlike many other quadrilateral-element FEM packages, `FEM_2D` supports n-irregular anisotropic *h*-refinement as well as anisotropic *p*-refinement. In other words, there are far fewer limitations on the shape, location, or orientation of new elements when adding them to the Mesh. The polynomial expansion orders of the Basis Functions associated with each element can also be modified separately in each direction. 
@@ -78,7 +78,7 @@ The library is set up to solve the Maxwell Eigenvalue Problem out of the box; ho
 
 The following example shows how the mathematical formulation of the problem maps to the corresponding code in the library. This is intended to give some idea of how an alternative PDE can be solved leveraging the existing code.
 
-The Maxwell eigenvalue problem has the following Galerkin Sampled formulation for an arbitrary domain terminated with dirichlet boundary conditions:
+The Maxwell eigenvalue problem has the following Galerkin Sampled formulation for an arbitrary domain terminated with Dirichlet boundary conditions:
 
 >Find a solution: \begin{equation} \label{eq:solution} \quad \text{U} = \{{\mathbf{u}}, \lambda \} \in B_0 \times \Bbb{R} \quad \end{equation} which satisfies:
 > \begin{equation} \label{eq:formulation} b(\mathbf{u}, \phi) = \lambda a(\mathbf{u}, \phi) \quad \forall \phi \in B_0 \end{equation}
@@ -98,7 +98,7 @@ let domain = Domain::from(mesh);
 let gep = domain.galerkin_sample_gep::<KOLShapeFn, CurlCurl, L2Inner>(None);
 ```
 
-The generic arguments correspond to the three lins of \autoref{eq:gen_args}
+The generic arguments correspond to the three lines of \autoref{eq:gen_args}
 
 1. The curl-conforming basis $B_0$, which must implement the `ShapeFn` Trait. In this case `KOLShapeFn` is used.
 2. The integral associated with the Stiffness Matrix (A). This argument must implement the `Integral` trait. In this case, `CurlCurl` is used.
