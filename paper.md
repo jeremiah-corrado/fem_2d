@@ -6,7 +6,7 @@ tags:
   - CEM
   - hp-refinement
   - PDE Solvers
-authors:
+author:
   - name: Jeremiah Corrado^[first author]
     orcid: 0000-0003-2688-0600
     affiliation: 1

@@ -1,6 +1,18 @@
-/// Use Nalgebra's Eigen decomposition to solve a GEP (not recommended)
+/// An Nalgebra Eigen decomposition to solve a GEP (not recommended)
 pub mod nalgebra_solve;
-/// Use External SLEPC solver to solve a GEP
+/// Link to an External SLEPc solver to solve a GEP
+///
+/// This module relies on an external SLEPc solver. Source code and installation instructions are found [here](https://github.com/jeremiah-corrado/slepc_gep_solver/blob/main/README.md)
+///
+/// > The environment variable `GEP_SOLVE_DIR` must be set to the location of the solver executable for this module to work
+///
+/// # Execution Details:
+///
+/// 1. System matrices are printed to the `/tmp/` directory under the `GEP_SOLVE_DIR` directory
+/// 2. The solver is then called with **`mpiexec`** on a single thread
+/// 3. If the solver is successful, the solution is retrieved from the `/tmp/` directory and returned
+/// 4. All Matrix and Vector files are then deleted from the `/tmp/` directory
+///
 pub mod slepc_solve;
 /// Sparsely Packed Matrix
 pub mod sparse_matrix;
