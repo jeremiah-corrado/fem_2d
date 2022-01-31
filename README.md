@@ -30,6 +30,7 @@ fem_2d = "0.1.0"
 
 If you are using this library for any academic or commercial purpose, please site the following papers:
 > ['fem_2d: A Rust Package for 2D Finite Element Method Computations with Extensive Support for *hp*-refinement'](...)
+> 
 > ['A Refinement-by-Superposition Approach to Fully Anisotropic hp-Refinement for Improved Efficiencyin CEM'](https://www.techrxiv.org/articles/preprint/A_Refinement-by-Superposition_Approach_to_Fully_Anisotropic_hp-Refinement_for_Improved_Efficiency_in_CEM/16695163)
 
 ## Example
