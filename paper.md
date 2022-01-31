@@ -10,10 +10,6 @@ authors:
   - name: Jeremiah Corrado
     orcid: 0000-0003-2688-0600
     affiliation: 1
-  - name: Jake J. Harmon
-    affiliation: 1
-  - name: Branislav Notaroš
-    affiliation: 1
 affiliations:
  - name: "Colorado State University; Department of Electrical and Computer Engineering"
    index: 1
@@ -78,11 +74,9 @@ mesh.p_refine_with_filter(|elem| {
 
 ## Example of Problem Definition
 
-The library is set up to solve the Maxwell Eigenvalue Problem out of the box; however its generic API provides a straightforward and efficient path to solving other PDEs. Unlike C++ Templates, Rust Traits are compiled away entirely, leaving no low-level generic instructions in the binary. In other words, the first step of compilation "re-writes" the code as if the generic types were given explicitly, for each invocation of a generic function. 
+`FEM_2D` also features a straightforward path to extending its functionality into other problem domains. The following example shows how a simplified formulation of the Maxwell Eigenvalue Problem maps to the corresponding code in the library. This is intended provide a general depiction of how one might translate a mathematical problem into an `FEM_2D` implementation. 
 
-The following example shows how the mathematical formulation of the problem maps to the corresponding code in the library. This is intended to give some idea of how an alternative PDE can be solved leveraging the existing code.
-
-The Maxwell eigenvalue problem has the following Galerkin Sampled formulation for an arbitrary domain terminated with Dirichlet boundary conditions:
+The Maxwell eigenvalue problem has the following Continuous-Galerkin formulation for an arbitrary Domain terminated with Dirichlet boundary conditions, (constraining the solution to TE modes only):
 
 >Find a solution: \begin{equation} \label{eq:solution} \quad \text{U} = \{{\mathbf{u}}, \lambda \} \in B_0 \times \Bbb{R} \quad \end{equation} which satisfies:
 > \begin{equation} \label{eq:formulation} b(\mathbf{u}, \phi) = \lambda a(\mathbf{u}, \phi) \quad \forall \phi \in B_0 \end{equation}
