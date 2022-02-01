@@ -1,10 +1,9 @@
-mod glq_integration;
-
+pub mod glq;
 use super::{Integral, IntegralResult};
 use crate::basis::{BasisFn, ShapeFn};
 use crate::domain::{dof::basis_spec::BasisDir, mesh::element::Materials, mesh::space::V2D};
 
-use glq_integration::*;
+use glq::*;
 
 /// <∇ × u, ∇ × ρ>
 pub mod curl_curl {

@@ -100,7 +100,7 @@ The generic arguments correspond to the three lines of \autoref{eq:gen_args}
 
 1. The curl-conforming basis $B_0$, which must implement the `ShapeFn` Trait. In this case `KOLShapeFn` is used.
 2. The integral associated with the Stiffness Matrix (A). This argument must implement the `Integral` trait. In this case, `CurlCurl` is used.
-3. The integral associated with the B Matrix. This argument also must implement the `Integral` trait. In this case, `L2Inner` is used.
+3. The integral associated with the Mass Matrix (B). This argument also must implement the `Integral` trait. In this case, `L2Inner` is used.
 
 The eigenvalue problem can be solved for some target eigenvalue with the following code:
 
