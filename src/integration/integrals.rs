@@ -2,13 +2,12 @@ mod glq_integration;
 
 use super::{Integral, IntegralResult};
 use crate::basis::{BasisFn, ShapeFn};
-use crate::domain::{dof::basis_spec::BasisDir, mesh::space::V2D};
+use crate::domain::{dof::basis_spec::BasisDir, mesh::element::Materials, mesh::space::V2D};
 
 use glq_integration::*;
 
 /// <∇ × u, ∇ × ρ>
 pub mod curl_curl {
-
     use super::*;
 
     /// The L2 Inner product of the Curl of two Basis Functions
@@ -33,9 +32,11 @@ pub mod curl_curl {
             q_orders: [usize; 2],
             p_basis: &BasisFn<SF>,
             q_basis: &BasisFn<SF>,
+            materials: &Materials,
         ) -> IntegralResult {
             IntegralResult::Full(
-                p_basis.glq_scale()
+                (1.0 / materials.mu_rel.re)
+                    * p_basis.glq_scale()
                     * q_basis.glq_scale()
                     * match (p_dir, q_dir) {
                         (BasisDir::U, BasisDir::U) => {
@@ -99,8 +100,10 @@ pub mod curl_curl {
             q_orders: [usize; 2],
             p_basis: &BasisFn<SF>,
             q_basis: &BasisFn<SF>,
+            materials: &Materials,
         ) -> IntegralResult {
-            let surface_term = p_basis.glq_scale()
+            let surface_term = (1.0 / materials.mu_rel.re)
+                * p_basis.glq_scale()
                 * q_basis.glq_scale()
                 * match (p_dir, q_dir) {
                     (BasisDir::U, BasisDir::U) => {
@@ -266,9 +269,11 @@ pub mod inner {
             q_orders: [usize; 2],
             p_basis: &BasisFn<SF>,
             q_basis: &BasisFn<SF>,
+            materials: &Materials,
         ) -> IntegralResult {
             IntegralResult::Full(
-                p_basis.glq_scale()
+                materials.eps_rel.re
+                    * p_basis.glq_scale()
                     * q_basis.glq_scale()
                     * match (p_dir, q_dir) {
                         (BasisDir::U, BasisDir::U) => {
@@ -328,9 +333,11 @@ pub mod inner {
             q_orders: [usize; 2],
             p_basis: &BasisFn<SF>,
             q_basis: &BasisFn<SF>,
+            materials: &Materials,
         ) -> IntegralResult {
             IntegralResult::Full(
-                p_basis.glq_scale()
+                materials.eps_rel.re
+                    * p_basis.glq_scale()
                     * q_basis.glq_scale()
                     * match (p_dir, q_dir) {
                         (BasisDir::U, BasisDir::U) => {

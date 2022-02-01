@@ -1,5 +1,5 @@
 use crate::basis::{BasisFn, ShapeFn};
-use crate::domain::dof::basis_spec::BasisDir;
+use crate::domain::{dof::basis_spec::BasisDir, mesh::element::Materials};
 
 /// Specific Implementations of the `Integral` Trait
 pub mod integrals;
@@ -52,9 +52,11 @@ impl IntegralResult {
     }
 }
 
+// TODO: make the use of &Materials generic s.t. multiple problems can leverage identical Integrals with slight variations in material parameter invocation
+
 /// A trait to describe an "integrator" which can compute 2D integrals over some function of two [BasisFn]'s
 pub trait Integral: Sync + Send {
-    /// Construct the Integral with u and v directed Gauss-Leg-Quad weights.
+    /// Assign a set of Gauss-Legendre-Quadrature weights to this integrator.
     ///
     /// The weight vectors must match the dimension of the [BasisFn]s used in later calls to `integrate` or `integrate_by_parts`
     fn with_weights(u_weights: &[f64], v_weights: &[f64]) -> Self;
@@ -68,6 +70,7 @@ pub trait Integral: Sync + Send {
         q_orders: [usize; 2],
         p_basis: &BasisFn<SF>,
         q_basis: &BasisFn<SF>,
+        materials: &Materials,
     ) -> IntegralResult;
 
     /// Compute an integral-by-parts between [BasisFn]'s P and Q, where P and Q both have a direction ([BasisDir]) and orders `i` and `j`.
@@ -81,5 +84,6 @@ pub trait Integral: Sync + Send {
         q_orders: [usize; 2],
         p_basis: &BasisFn<SF>,
         q_basis: &BasisFn<SF>,
+        materials: &Materials,
     ) -> IntegralResult;
 }

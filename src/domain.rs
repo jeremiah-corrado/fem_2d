@@ -208,7 +208,10 @@ impl Domain {
     }
 
     /// Retrieve a list of an `Elem`s ancestor [BasisSpec]s (All the [`BasisSpec`]s on its ancestor `Elem`s)
-    pub fn ancestor_basis_specs(&self, elem_id: usize) -> Result<Vec<(usize, &Vec<BasisSpec>)>, String> {
+    pub fn ancestor_basis_specs(
+        &self,
+        elem_id: usize,
+    ) -> Result<Vec<(usize, &Vec<BasisSpec>)>, String> {
         if elem_id >= self.mesh.elems.len() {
             Err(format!(
                 "Elem {} doesn't exist; Cannot retrieve Ancestor BasisSpecs!",
@@ -290,14 +293,30 @@ impl Domain {
                     .map(|bs_q| bs_q.integration_data())
                 {
                     let a = a_integrator
-                        .integrate(p_dir, q_dir, p_orders, q_orders, &bs_local, &bs_local)
+                        .integrate(
+                            p_dir,
+                            q_dir,
+                            p_orders,
+                            q_orders,
+                            &bs_local,
+                            &bs_local,
+                            &elem_materials,
+                        )
                         .full_solution();
                     let b = b_integrator
-                        .integrate(p_dir, q_dir, p_orders, q_orders, &bs_local, &bs_local)
+                        .integrate(
+                            p_dir,
+                            q_dir,
+                            p_orders,
+                            q_orders,
+                            &bs_local,
+                            &bs_local,
+                            &elem_materials,
+                        )
                         .full_solution();
 
-                    local_a_entries.push(([p_dof_id, q_dof_id], a / elem_materials.mu_rel.re));
-                    local_b_entries.push(([p_dof_id, q_dof_id], b * elem_materials.eps_rel.re));
+                    local_a_entries.push(([p_dof_id, q_dof_id], a));
+                    local_b_entries.push(([p_dof_id, q_dof_id], b));
                 }
             }
 
@@ -324,10 +343,26 @@ impl Domain {
                         .map(|bs_q| bs_q.integration_data())
                     {
                         let a = a_integrator
-                            .integrate(p_dir, q_dir, p_orders, q_orders, &bs_p_sampled, &bs_q_local)
+                            .integrate(
+                                p_dir,
+                                q_dir,
+                                p_orders,
+                                q_orders,
+                                &bs_p_sampled,
+                                &bs_q_local,
+                                &elem_materials,
+                            )
                             .full_solution();
                         let b = b_integrator
-                            .integrate(p_dir, q_dir, p_orders, q_orders, &bs_p_sampled, &bs_q_local)
+                            .integrate(
+                                p_dir,
+                                q_dir,
+                                p_orders,
+                                q_orders,
+                                &bs_p_sampled,
+                                &bs_q_local,
+                                &elem_materials,
+                            )
                             .full_solution();
 
                         desc_a_entries.push(([p_dof_id, q_dof_id], a / elem_materials.mu_rel.re));
@@ -399,10 +434,26 @@ impl Domain {
                     .map(|bs_q| bs_q.integration_data())
                 {
                     let a = a_integrator
-                        .integrate(p_dir, q_dir, p_orders, q_orders, &bs_local, &bs_local)
+                        .integrate(
+                            p_dir,
+                            q_dir,
+                            p_orders,
+                            q_orders,
+                            &bs_local,
+                            &bs_local,
+                            elem_materials,
+                        )
                         .full_solution();
                     let b = b_integrator
-                        .integrate(p_dir, q_dir, p_orders, q_orders, &bs_local, &bs_local)
+                        .integrate(
+                            p_dir,
+                            q_dir,
+                            p_orders,
+                            q_orders,
+                            &bs_local,
+                            &bs_local,
+                            elem_materials,
+                        )
                         .full_solution();
 
                     local_a_entries.push(([p_dof_id, q_dof_id], a / elem_materials.mu_rel.re));
@@ -437,10 +488,26 @@ impl Domain {
                         .map(|bs_q| bs_q.integration_data())
                     {
                         let a = a_integrator
-                            .integrate(p_dir, q_dir, p_orders, q_orders, &bs_p_sampled, &bs_q_local)
+                            .integrate(
+                                p_dir,
+                                q_dir,
+                                p_orders,
+                                q_orders,
+                                &bs_p_sampled,
+                                &bs_q_local,
+                                elem_materials,
+                            )
                             .full_solution();
                         let b = b_integrator
-                            .integrate(p_dir, q_dir, p_orders, q_orders, &bs_p_sampled, &bs_q_local)
+                            .integrate(
+                                p_dir,
+                                q_dir,
+                                p_orders,
+                                q_orders,
+                                &bs_p_sampled,
+                                &bs_q_local,
+                                elem_materials,
+                            )
                             .full_solution();
 
                         desc_a_entries.push(([p_dof_id, q_dof_id], a / elem_materials.mu_rel.re));

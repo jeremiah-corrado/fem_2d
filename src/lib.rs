@@ -44,9 +44,9 @@
 //! field_space.print_all_to_vtk("./test_output/electric_field_solution.vtk").unwrap();
 //!
 //! ````
-//! 
+//!
 //! # Features
-//! 
+//!
 //! * `json_export` (default): Functionality to export Mesh files for visualization with [this](https://github.com/jeremiah-corrado/fem_2d_mesh_plot) tool
 //! * `max_ortho_basis`: A maximally orthogonal basis (requires Nightly toolchain!)
 
