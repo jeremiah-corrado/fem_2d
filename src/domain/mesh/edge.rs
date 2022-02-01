@@ -228,7 +228,7 @@ impl Edge {
     /// Get the ID of the other active `Elem` connected to this Edge
     ///
     /// *Returns None if this Edge doesn't have a pair of Active `Elem`s
-    /// *Panics if the `elem_id` argument isn't one of the active `Elem`s
+    /// *Panics if the edge has an active pair, but the `elem_id` argument isn't one of the active `Elem`s
     pub fn other_active_elem_id(&self, elem_id: usize) -> Option<usize> {
         match self.active_elems {
             Some(active_elem_ids) => {

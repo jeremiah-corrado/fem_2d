@@ -484,6 +484,7 @@ impl Mesh {
         self.execute_h_refinements(
             self.elems
                 .iter()
+                .filter(|elem| self.elem_is_h_refineable(elem.id).unwrap())
                 .map(|elem| (elem.id, filt(elem)))
                 .filter(|(_, refinement)| refinement.is_some())
                 .map(|(id, refinement)| (id, refinement.unwrap()))

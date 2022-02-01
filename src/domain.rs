@@ -365,8 +365,8 @@ impl Domain {
                             )
                             .full_solution();
 
-                        desc_a_entries.push(([p_dof_id, q_dof_id], a / elem_materials.mu_rel.re));
-                        desc_b_entries.push(([p_dof_id, q_dof_id], b * elem_materials.eps_rel.re));
+                        desc_a_entries.push(([p_dof_id, q_dof_id], a));
+                        desc_b_entries.push(([p_dof_id, q_dof_id], b));
                     }
                 }
             }
@@ -456,8 +456,8 @@ impl Domain {
                         )
                         .full_solution();
 
-                    local_a_entries.push(([p_dof_id, q_dof_id], a / elem_materials.mu_rel.re));
-                    local_b_entries.push(([p_dof_id, q_dof_id], b * elem_materials.eps_rel.re));
+                    local_a_entries.push(([p_dof_id, q_dof_id], a));
+                    local_b_entries.push(([p_dof_id, q_dof_id], b));
                 }
             }
 
@@ -510,8 +510,8 @@ impl Domain {
                             )
                             .full_solution();
 
-                        desc_a_entries.push(([p_dof_id, q_dof_id], a / elem_materials.mu_rel.re));
-                        desc_b_entries.push(([p_dof_id, q_dof_id], b * elem_materials.eps_rel.re));
+                        desc_a_entries.push(([p_dof_id, q_dof_id], a));
+                        desc_b_entries.push(([p_dof_id, q_dof_id], b));
                     }
                 }
             }

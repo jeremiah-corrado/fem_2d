@@ -131,6 +131,15 @@ impl fmt::Display for BasisSpec {
     }
 }
 
+impl PartialEq for BasisSpec {
+    fn eq(&self, other: &Self) -> bool {
+        self.i == other.i &&
+        self.j == other.j &&
+        self.loc == other.loc &&
+        self.dir == other.dir
+    }
+}
+
 /// Orientation of a Basis Function in Parametric Space
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BasisDir {
@@ -149,7 +158,7 @@ impl fmt::Display for BasisDir {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum BasisLoc {
     ElemBs,
     EdgeBs(u8, usize),
