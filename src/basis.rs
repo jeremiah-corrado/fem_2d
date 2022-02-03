@@ -374,14 +374,14 @@ impl<SF: ShapeFn> BasisFn<SF> {
     #[inline]
     pub fn edge_glq_scale(&self, edge_idx: usize) -> f64 {
         match edge_idx {
-            0 | 1 => self.para_scale[1],
-            2 | 3 => self.para_scale[0],
+            0 | 1 => self.para_scale[0],
+            2 | 3 => self.para_scale[1],
             _ => panic!("edge_idx must not exceed 3; cannot get glq scaling factor!"),
         }
     }
 
     #[inline]
-    pub fn u_glq_scpara_scaleale(&self) -> f64 {
+    pub fn u_glq_scale(&self) -> f64 {
         self.para_scale[0]
     }
 

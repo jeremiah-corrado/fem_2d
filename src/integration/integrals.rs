@@ -170,7 +170,8 @@ pub mod curl_curl {
                                         .f_u(q_orders, [m, n])
                                         .dot_with(&EDGE_UNIT_VECTORS[edge_idx]);
 
-                                    p_curl * q / q_basis.edge_glq_scale(edge_idx)
+                                    p_curl * q / q_basis.glq_scale()
+                                    // / q_basis.v_glq_scale().powi(2)
                                 },
                             ),
                             (BasisDir::V, BasisDir::U, 0 | 1) => real_gauss_quad_edge(
@@ -185,7 +186,8 @@ pub mod curl_curl {
                                         .f_u(q_orders, [m, n])
                                         .dot_with(&EDGE_UNIT_VECTORS[edge_idx]);
 
-                                    p_curl * q / q_basis.edge_glq_scale(edge_idx)
+                                    p_curl * q / q_basis.glq_scale()
+                                    // / q_basis.v_glq_scale().powi(2)
                                 },
                             ),
                             (BasisDir::U, BasisDir::V, 2 | 3) => {
@@ -201,7 +203,8 @@ pub mod curl_curl {
                                             .f_v(q_orders, [m, n])
                                             .dot_with(&EDGE_UNIT_VECTORS[edge_idx]);
 
-                                        p_curl * q / q_basis.edge_glq_scale(edge_idx)
+                                        p_curl * q / q_basis.glq_scale()
+                                        // / q_basis.u_glq_scale().powi(2)
                                     },
                                 ) * -1.0
                             }
@@ -218,7 +221,8 @@ pub mod curl_curl {
                                             .f_v(q_orders, [m, n])
                                             .dot_with(&EDGE_UNIT_VECTORS[edge_idx]);
 
-                                        p_curl * q / q_basis.edge_glq_scale(edge_idx)
+                                        p_curl * q / q_basis.glq_scale()
+                                        // / q_basis.u_glq_scale().powi(2)
                                     },
                                 ) * -1.0
                             }
