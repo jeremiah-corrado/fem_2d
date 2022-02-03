@@ -844,18 +844,15 @@ impl Mesh {
 
     fn rec_set_edge_activation_in_tree(&mut self, edge_id: usize) -> bool {
         if self.edges[edge_id].set_activation() {
-            if let Some(mut child_edge_ids) = self.edges[edge_id].child_ids() {
-                let mut children_found_matches: [bool; 2] = [false; 2];
-
-                for (i, cei) in child_edge_ids.drain(0..).enumerate() {
-                    children_found_matches[i] = self.rec_set_edge_activation_in_tree(cei);
-                }
-
-                assert_eq!(children_found_matches[0], children_found_matches[1]);
-
-                if children_found_matches[0] {
-                    self.edges[edge_id].reset_activation();
-                }
+            if let Some(child_edge_ids) = self.edges[edge_id].child_ids() {
+                match (
+                    self.rec_set_edge_activation_in_tree(child_edge_ids[0]), 
+                    self.rec_set_edge_activation_in_tree(child_edge_ids[1]),
+                ) { 
+                    (true, true) => self.edges[edge_id].reset_activation(),
+                    (false, false) => (),
+                    _ => panic!("Children of Edge {} do not have consistent support for Basis Functions; Cannot set activation states!", edge_id),
+                };
             }
             true
         } else {
