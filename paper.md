@@ -10,6 +10,10 @@ authors:
   - name: Jeremiah Corrado
     orcid: 0000-0003-2688-0600
     affiliation: 1
+  - name: Jake J. Harmon
+    affiliation: 1
+  - name: Branislav Notaroš
+    affiliation: 1
 affiliations:
  - name: "Colorado State University; Department of Electrical and Computer Engineering"
    index: 1
@@ -30,7 +34,9 @@ Although its initial use case was domain specific, `FEM_2D`'s functionality exte
 # Statement of Need
 FEM_2D's primary advantage over other FEM libraries, such as the Deal.II library [@dealII93], is its highly dynamic and expressive *hp*-refinement API. Unlike many other quadrilateral-element FEM packages, `FEM_2D` supports n-irregular anisotropic *h*-refinement as well as anisotropic *p*-refinement. In other words, there are far fewer limitations on the shape, location, or orientation of new elements when adding them to the Mesh. The polynomial expansion orders of the Basis Functions associated with each element can also be modified separately in each direction. 
 
-Isotropic *h*-refinement alone is a useful --and even necessary-- feature for computing solutions over geometries with sharp edges or stark material discontinuities, as these tend to introduce very small-scale solution behavior which is otherwise addressed only with excessive amounts of *p*-refinement [@harmon:2021]. The addition of anisotropic *h*- and *p*-refinement presents an even lager capacity for improved solution efficiency, as small-scale behavior is targeted more directly and redundant Degrees of Freedom are left out of the system [@corrado:2021]. 
+*h*-refinement (wheather isotropic or anisotropic) is a necessary feature for efficiently computing solutions over geometries with sharp edges or stark material discontinuities. These situations tend to introduce very small-scale solution behavior which is otherwise addressed only with excessive amounts of *p*-refinement [@harmon:2021]. The addition of anisotropic *h*- and *p*-refinement --over their more commonly used isotropic counterparts-- presents an even lager capacity for solution efficiency, as small-scale behavior is targeted more directly and redundant Degrees of Freedom are left out of the system [@corrado:2021]. 
+
+The theory and implementation details of this libraries *h*-refinement methodology can be found in the associated research [@corrado:2021], [@harmon:2021]. 
 
 ## Examples of *hp*-Refinement:
 
@@ -79,9 +85,9 @@ mesh.p_refine_with_filter(|elem| {
 The Maxwell eigenvalue problem has the following Continuous-Galerkin formulation for an arbitrary Domain terminated with Dirichlet boundary conditions, (constraining the solution to TE modes only):
 
 >Find a solution: \begin{equation} \label{eq:solution} \quad \text{U} = \{{\mathbf{u}}, \lambda \} \in B_0 \times \Bbb{R} \quad \end{equation} which satisfies:
-> \begin{equation} \label{eq:formulation} b(\mathbf{u}, \phi) = \lambda a(\mathbf{u}, \phi) \quad \forall \phi \in B_0 \end{equation}
+> \begin{equation} \label{eq:formulation} b(\mathbf{u}, \phi) = \lambda a(\mathbf{u}, \phi) \quad \forall \phi \in B \end{equation}
 >\begin{equation} \label{eq:gen_args} \text{where: } \left\{\begin{array}{l}
-B_0 \subset H(\text{curl}; \Omega) \cr
+B \subset H_0(\text{curl}; \Omega) \cr
 a(\mathbf{u}, \phi) = \langle \nabla_t \times \mathbf{u}, \nabla_t \times \phi \rangle \cr
 b(\mathbf{u}, \phi) = \langle \mathbf{u}, \phi \rangle
 \end{array}\right.\end{equation}
@@ -98,7 +104,7 @@ let gep = domain.galerkin_sample_gep::<KOLShapeFn, CurlCurl, L2Inner>(None);
 
 The generic arguments correspond to the three lines of \autoref{eq:gen_args}
 
-1. The curl-conforming basis $B_0$, which must implement the `ShapeFn` Trait. In this case `KOLShapeFn` is used.
+1. The curl-conforming basis $B$, which must implement the `ShapeFn` Trait. In this case `KOLShapeFn` is used.
 2. The integral associated with the Stiffness Matrix (A). This argument must implement the `Integral` trait. In this case, `CurlCurl` is used.
 3. The integral associated with the Mass Matrix (B). This argument also must implement the `Integral` trait. In this case, `L2Inner` is used.
 
