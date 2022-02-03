@@ -113,7 +113,7 @@ pub mod curl_curl {
                             let p = V2D::from([p_dd[1] + p_d2[0], p_d2[1] + p_dd[0]]);
                             let q = q_basis.f_u(q_orders, [m, n]);
 
-                            V2D::dot(p, q)
+                            V2D::dot(p, q) / q_basis.glq_scale().powi(2)
                         }) * -1.0
                     }
                     (BasisDir::U, BasisDir::V) => {
@@ -124,7 +124,7 @@ pub mod curl_curl {
                             let p = V2D::from([p_dd[1] + p_d2[0], p_d2[1] + p_dd[0]]);
                             let q = q_basis.f_v(q_orders, [m, n]);
 
-                            V2D::dot(p, q)
+                            V2D::dot(p, q) / q_basis.glq_scale().powi(2)
                         })
                     }
                     (BasisDir::V, BasisDir::U) => {
@@ -135,7 +135,7 @@ pub mod curl_curl {
                             let p = V2D::from([p_dd[1] + p_d2[0], p_d2[1] + p_dd[0]]);
                             let q = q_basis.f_u(q_orders, [m, n]);
 
-                            V2D::dot(p, q)
+                            V2D::dot(p, q) / q_basis.glq_scale().powi(2)
                         })
                     }
                     (BasisDir::V, BasisDir::V) => {
@@ -146,7 +146,7 @@ pub mod curl_curl {
                             let p = V2D::from([p_dd[1] + p_d2[0], p_d2[1] + p_dd[0]]);
                             let q = q_basis.f_v(q_orders, [m, n]);
 
-                            V2D::dot(p, q)
+                            V2D::dot(p, q) / q_basis.glq_scale().powi(2)
                         }) * -1.0
                     }
                     (_, _) => 0.0,
@@ -154,7 +154,8 @@ pub mod curl_curl {
 
             let edge_terms = (0..4)
                 .map(|edge_idx| {
-                    -1.0 * p_basis.edge_glq_scale(edge_idx)
+                    -1.0 * (1.0 / materials.mu_rel.re)
+                        * p_basis.edge_glq_scale(edge_idx)
                         * q_basis.edge_glq_scale(edge_idx)
                         * match (p_dir, q_dir, edge_idx) {
                             (BasisDir::U, BasisDir::U, 0 | 1) => real_gauss_quad_edge(
@@ -169,7 +170,7 @@ pub mod curl_curl {
                                         .f_u(q_orders, [m, n])
                                         .dot_with(&EDGE_UNIT_VECTORS[edge_idx]);
 
-                                    p_curl * q
+                                    p_curl * q / q_basis.edge_glq_scale(edge_idx)
                                 },
                             ),
                             (BasisDir::V, BasisDir::U, 0 | 1) => real_gauss_quad_edge(
@@ -184,7 +185,7 @@ pub mod curl_curl {
                                         .f_u(q_orders, [m, n])
                                         .dot_with(&EDGE_UNIT_VECTORS[edge_idx]);
 
-                                    p_curl * q
+                                    p_curl * q / q_basis.edge_glq_scale(edge_idx)
                                 },
                             ),
                             (BasisDir::U, BasisDir::V, 2 | 3) => {
@@ -200,7 +201,7 @@ pub mod curl_curl {
                                             .f_v(q_orders, [m, n])
                                             .dot_with(&EDGE_UNIT_VECTORS[edge_idx]);
 
-                                        p_curl * q
+                                        p_curl * q / q_basis.edge_glq_scale(edge_idx)
                                     },
                                 ) * -1.0
                             }
@@ -217,7 +218,7 @@ pub mod curl_curl {
                                             .f_v(q_orders, [m, n])
                                             .dot_with(&EDGE_UNIT_VECTORS[edge_idx]);
 
-                                        p_curl * q
+                                        p_curl * q / q_basis.edge_glq_scale(edge_idx)
                                     },
                                 ) * -1.0
                             }

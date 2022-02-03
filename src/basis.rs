@@ -381,7 +381,7 @@ impl<SF: ShapeFn> BasisFn<SF> {
     }
 
     #[inline]
-    pub fn u_glq_scale(&self) -> f64 {
+    pub fn u_glq_scpara_scaleale(&self) -> f64 {
         self.para_scale[0]
     }
 
