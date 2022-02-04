@@ -289,7 +289,9 @@ impl Mesh {
 
     /// Print the mesh to a JSON file specified by path.
     #[cfg(feature = "json_export")]
-    pub fn export_to_json(&self, path: impl AsRef<str>) -> std::io::Result<()> {
+    pub fn export_to_json(&mut self, path: impl AsRef<str>) -> std::io::Result<()> {
+        self.set_edge_activation();
+
         let f = File::create(path.as_ref())?;
         let mut w = BufWriter::new(&f);
 
@@ -803,10 +805,10 @@ impl Mesh {
 
     fn upgrade_uninit_elems(
         &mut self,
-        elems_uninit: Vec<ElemUninit>,
+        mut elems_uninit: Vec<ElemUninit>,
     ) -> Result<Vec<Elem>, HRefError> {
         let mut elems = Vec::with_capacity(4);
-        for elem_uninit in elems_uninit {
+        for elem_uninit in elems_uninit.drain(0..) {
             elems.push(elem_uninit.into_elem()?);
         }
 

@@ -45,7 +45,6 @@ impl Domain {
         };
 
         dom.gen_dofs();
-
         dom
     }
 

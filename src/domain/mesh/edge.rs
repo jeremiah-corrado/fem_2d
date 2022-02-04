@@ -265,6 +265,9 @@ impl Edge {
                 None => array![],
             },
             "elems": array![array![], array![]],
+            "active_elems": self.active_elems.map_or(array![], |[ee_bl, ee_tr]| {
+                array![ee_bl, ee_tr]
+            })
         };
 
         for side_idx in 0..2 {
@@ -276,12 +279,6 @@ impl Edge {
                     })
                     .unwrap();
             }
-        }
-
-        if let Some([active_elem_bl, active_elem_tr]) = self.active_elems {
-            edge_json["active_elems"] = array![active_elem_bl, active_elem_tr];
-        } else {
-            edge_json["active_elems"] = array![]
         }
 
         edge_json
