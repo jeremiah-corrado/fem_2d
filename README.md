@@ -13,7 +13,7 @@ A Rust library for 2D Finite Element Method computations, featuring:
   - Or you can define your own problem by implementing the `Integral` Trait
 - Two Eigensolvers
   - Sparse: Using an external Slepc Solver (code and installation instructions found [here](https://github.com/jeremiah-corrado/slepc_gep_solver))
-  - Dense: Using [Nalgebra](C:\Users\School\Documents\Research\fem_2d_library\arxiv_paper)'s Eigen-Decomposition (not recommended for large or ill-conditioned problems)
+  - Dense: Using [Nalgebra](https://nalgebra.org/docs/user_guide/decompositions_and_lapack#eigendecomposition-of-a-hermitian-matrix)'s Eigen-Decomposition (not recommended for large or ill-conditioned problems)
 - Expressive Solution Evaluation
   - Field solutions can easily be generated from an eigenvector
   - Arbitrary functions of solutions can also be evaluated (ex: magnitude of a field)
