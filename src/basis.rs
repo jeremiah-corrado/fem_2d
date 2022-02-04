@@ -87,8 +87,8 @@ impl<SF: ShapeFn> BasisFnSampler<SF> {
         over_desc_elem: Option<&Elem>,
     ) -> Rc<BasisFn<SF>> {
         let desc = BSDescription {
-            space: [elem.nodes[0], elem.nodes[1]],
-            sample: over_desc_elem.map(|desc_elem| [desc_elem.nodes[0], desc_elem.nodes[1]]),
+            space: [elem.nodes[0], elem.nodes[3]],
+            sample: over_desc_elem.map(|desc_elem| [desc_elem.nodes[0], desc_elem.nodes[3]]),
         };
 
         if let Some(computed_bs) = self.computed.get(&desc) {
@@ -169,8 +169,8 @@ impl<SF: ShapeFn> ParBasisFnSampler<SF> {
         over_desc_elem: Option<&Elem>,
     ) -> Arc<BasisFn<SF>> {
         let desc = BSDescription {
-            space: [elem.nodes[0], elem.nodes[1]],
-            sample: over_desc_elem.map(|desc_elem| [desc_elem.nodes[0], desc_elem.nodes[1]]),
+            space: [elem.nodes[0], elem.nodes[3]],
+            sample: over_desc_elem.map(|desc_elem| [desc_elem.nodes[0], desc_elem.nodes[3]]),
         };
 
         match self.computed.lock() {

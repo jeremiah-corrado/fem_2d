@@ -290,7 +290,7 @@ impl Mesh {
     /// Print the mesh to a JSON file specified by path.
     #[cfg(feature = "json_export")]
     pub fn export_to_json(&mut self, path: impl AsRef<str>) -> std::io::Result<()> {
-        self.set_edge_activation();
+        // self.set_edge_activation();
 
         let f = File::create(path.as_ref())?;
         let mut w = BufWriter::new(&f);
