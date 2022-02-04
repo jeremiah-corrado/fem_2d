@@ -46,11 +46,11 @@ use fem_2d::prelude::*;
 let mut mesh = Mesh::from_file("./some_mesh.json").unwrap();
 
 // isotopically h-refine all elements
-mesh.global_h_refinment(HRef::t()).unwrap();;
+mesh.global_h_refinment(HRef::t()).unwrap();
 
 // anisotropically p-refine all elements 
     //(+2 in the u-direction, +4 in the v-direction)
-mesh.global_p_refinement(PRef::from(2, 4)).unwrap();;
+mesh.global_p_refinement(PRef::from(2, 4)).unwrap();
 
 // anisotropically h-refine all elements connected 
     // to some target_node in the v-direction
@@ -65,7 +65,7 @@ mesh.h_refine_with_filter(|elem| {
 }).unwrap();
 
 // positively p-refine all elements on the border of the mesh,
-// and negatively p-refine all other elements
+    // and negatively p-refine all other elements
 mesh.p_refine_with_filter(|elem| {
     if elem.edges.iter().any(|edge_id| {
         mesh.edges[*edge_id].is_boundary()
