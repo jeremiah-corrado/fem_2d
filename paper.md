@@ -34,9 +34,9 @@ Although its initial use case was domain specific, `FEM_2D`'s functionality exte
 # Statement of Need
 FEM_2D's primary advantage over other FEM libraries, such as the Deal.II library [@dealII93], is its highly dynamic and expressive *hp*-refinement API. Unlike many other quadrilateral-element FEM packages, `FEM_2D` supports n-irregular anisotropic *h*-refinement as well as anisotropic *p*-refinement. In other words, there are far fewer limitations on the shape, location, or orientation of new elements when adding them to the Mesh. The polynomial expansion orders of the Basis Functions associated with each element can also be modified separately in each direction. 
 
-*h*-refinement (wheather isotropic or anisotropic) is a necessary feature for efficiently computing solutions over geometries with sharp edges or stark material discontinuities. These situations tend to introduce very small-scale solution behavior which is otherwise addressed only with excessive amounts of *p*-refinement [@harmon:2021]. The addition of anisotropic *h*- and *p*-refinement --over their more commonly used isotropic counterparts-- presents an even lager capacity for solution efficiency, as small-scale behavior is targeted more directly and redundant Degrees of Freedom are left out of the system [@corrado:2021]. 
+Efficiently computing solutions over geometries with sharp edges or stark material discontinuities necessitates hp-refinement (whether isotropic or anisotropic). These situations tend to introduce multi-scale solution behavior which is challenging to model with pure p- or pure h-refinements, motivating combined hp-refinements [@harmon:2021]. Within the class of hp-refinements, the addition of anisotropic hp-refinements (over isotropic ones) presents a significantly larger capacity for solution efficiency, as small-scale behavior is targeted more directly and ineffectual Degrees of Freedom are left out of the system [@corrado:2021].
 
-The theory and implementation details of this libraries *h*-refinement methodology can be found in the associated research [@corrado:2021], [@harmon:2021]. 
+The theory and implementation details of this libraries *h*-refinement methodology can be found in the associated research [@corrado:2021], [@harmon:2021].
 
 ## Examples of *hp*-Refinement:
 
