@@ -5,7 +5,7 @@ pub mod fields;
 /// The internal geometric structure of a Domain
 pub mod mesh;
 
-use crate::basis::{BasisFnSampler, ParBasisFnSampler, ShapeFn};
+use crate::basis::{BasisFnSampler, ParBasisFnSampler, ShapeFn, BasisFn, glq::gauss_quadrature_points};
 use crate::integration::Integral;
 use crate::linalg::{sparse_matrix::SparseMatrix, GEP};
 use dof::{
@@ -252,16 +252,19 @@ impl Domain {
         // construct an eigenproblem with a and b matrices
         let mut gep = GEP::new(self.dofs.len());
 
+        let (u_points, u_weights) = gauss_quadrature_points(32, false);
+        let (v_points, v_weights) = gauss_quadrature_points(32, false);
+
         // construct basis sampler
         let [i_max, j_max] = self.mesh.max_expansion_orders();
-        let (mut bf_sampler, [u_weights, v_weights]): (BasisFnSampler<SF>, _) =
-            BasisFnSampler::with(
-                i_max as usize,
-                j_max as usize,
-                num_gauss_quad,
-                num_gauss_quad,
-                false,
-            );
+        // let (mut bf_sampler, [u_weights, v_weights]): (BasisFnSampler<SF>, _) =
+        //     BasisFnSampler::with(
+        //         i_max as usize,
+        //         j_max as usize,
+        //         num_gauss_quad,
+        //         num_gauss_quad,
+        //         false,
+        //     );
 
         // setup integration
         let a_integrator = AI::with_weights(&u_weights, &v_weights);
@@ -271,7 +274,18 @@ impl Domain {
             // get relevant data for this Elem
             let local_basis_specs = self.local_basis_specs(elem.id).unwrap();
             let desc_basis_specs = self.descendant_basis_specs(elem.id).unwrap();
-            let bs_local = bf_sampler.sample_basis_fn(elem, None);
+
+            let bs_local : BasisFn<SF> = BasisFn::mapped_over_desc(
+                i_max as usize, 
+                j_max as usize, 
+                false, 
+                &u_points, 
+                &v_points, 
+                elem, 
+                None
+            );
+
+            // let bs_local = bf_sampler.sample_basis_fn(elem, None);
 
             let elem_materials = elem.get_materials();
 
@@ -332,10 +346,30 @@ impl Domain {
                 local_basis_specs.iter().map(|bs_p| bs_p.integration_data())
             {
                 for &(q_elem_id, q_elem_basis_specs) in desc_basis_specs.iter() {
-                    let bs_p_sampled =
-                        bf_sampler.sample_basis_fn(elem, Some(&self.mesh.elems[q_elem_id]));
+                    // let bs_p_sampled =
+                    //     bf_sampler.sample_basis_fn(elem, Some(&self.mesh.elems[q_elem_id]));
 
-                    let bs_q_local = bf_sampler.sample_basis_fn(&self.mesh.elems[q_elem_id], None);
+                    // let bs_q_local = bf_sampler.sample_basis_fn(&self.mesh.elems[q_elem_id], None);
+
+                    let bs_p_sampled : BasisFn<SF> = BasisFn::mapped_over_desc(
+                        i_max as usize, 
+                        j_max as usize, 
+                        false, 
+                        &u_points, 
+                        &v_points, 
+                        elem, 
+                        Some(&self.mesh.elems[q_elem_id]),
+                    );
+                    
+                    let bs_q_local : BasisFn<SF> = BasisFn::mapped_over_desc(
+                        i_max as usize, 
+                        j_max as usize, 
+                        false, 
+                        &u_points, 
+                        &v_points, 
+                        &self.mesh.elems[q_elem_id], 
+                        None, 
+                    );
 
                     for (q_orders, q_dir, q_dof_id) in q_elem_basis_specs
                         .iter()
@@ -352,6 +386,7 @@ impl Domain {
                                 &elem_materials,
                             )
                             .full_solution();
+                            
                         let b = b_integrator
                             .integrate(
                                 p_dir,

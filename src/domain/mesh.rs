@@ -1194,6 +1194,42 @@ mod tests {
     }
 
     #[test]
+    fn proper_edge_order() {
+        let mut mesh_b = Mesh::from_file("./test_input/test_mesh_b.json").unwrap();
+
+        mesh_b.global_h_refinement(HRef::T).unwrap();
+        let boundary_edges: Vec<bool> = mesh_b.edges.iter().map(|edge| edge.boundary).collect();
+        mesh_b.h_refine_with_filter(|elem| {
+            if elem.edges.iter().any(|edge_id| {
+                boundary_edges[*edge_id]
+            }) {
+                Some(HRef::U(None))
+            } else {
+                None
+            }
+        }).unwrap();
+        mesh_b.h_refine_with_filter(|elem| {
+            if elem.nodes.contains(&4) {
+                Some(HRef::T)
+            } else {
+                Some(HRef::V(None))
+            }
+        }).unwrap();
+        mesh_b.global_h_refinement(HRef::U(Some(1))).unwrap();
+
+        for elem in mesh_b.elems.iter() {
+            let points = mesh_b.elem_points(elem.id);
+            assert!(points[0].x < points[3].x);
+            assert!(points[0].y < points[3].y);
+            assert_eq!(points[0].y_cmp, points[1].y_cmp);
+            assert_eq!(points[0].x_cmp, points[2].x_cmp);
+            assert_eq!(points[3].y_cmp, points[2].y_cmp);
+            assert_eq!(points[3].x_cmp, points[1].x_cmp);
+        }
+
+    }
+
+    #[test]
     fn refined_mesh_to_file() {
         let mut mesh_b = Mesh::from_file("./test_input/test_mesh_b.json").unwrap();
         mesh_b

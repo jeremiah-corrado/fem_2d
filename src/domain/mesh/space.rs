@@ -200,8 +200,8 @@ const POINT_UNIQUENESS_ACCURACY: f64 = 1e-12;
 pub struct Point {
     pub x: f64,
     pub y: f64,
-    x_cmp: FloatRep,
-    y_cmp: FloatRep,
+    pub(crate) x_cmp: FloatRep,
+    pub(crate) y_cmp: FloatRep,
 }
 
 impl Point {
@@ -322,7 +322,7 @@ impl fmt::Display for Point {
 }
 
 #[derive(Hash, PartialEq, Eq, Clone, Copy, Debug)]
-struct FloatRep {
+pub(crate) struct FloatRep {
     sign: bool,
     bits: u64,
 }

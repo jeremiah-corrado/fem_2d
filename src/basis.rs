@@ -1,4 +1,5 @@
-mod glq;
+/// Functions to generate and scale Gauss-Legendre Quadrature points and weights.
+pub mod glq;
 /// Specific implementations of the `ShapeFn` Trait (MaxOrthoShapeFn can be added as a Feature on the Nightly Toolchain)
 pub mod shape_fns;
 
@@ -86,10 +87,7 @@ impl<SF: ShapeFn> BasisFnSampler<SF> {
         elem: &Elem,
         over_desc_elem: Option<&Elem>,
     ) -> Rc<BasisFn<SF>> {
-        let desc = BSDescription {
-            space: [elem.nodes[0], elem.nodes[3]],
-            sample: over_desc_elem.map(|desc_elem| [desc_elem.nodes[0], desc_elem.nodes[3]]),
-        };
+        let desc = BSDescription::new(elem, over_desc_elem);
 
         if let Some(computed_bs) = self.computed.get(&desc) {
             computed_bs.clone()
@@ -168,10 +166,7 @@ impl<SF: ShapeFn> ParBasisFnSampler<SF> {
         elem: &Elem,
         over_desc_elem: Option<&Elem>,
     ) -> Arc<BasisFn<SF>> {
-        let desc = BSDescription {
-            space: [elem.nodes[0], elem.nodes[3]],
-            sample: over_desc_elem.map(|desc_elem| [desc_elem.nodes[0], desc_elem.nodes[3]]),
-        };
+        let desc = BSDescription::new(elem, over_desc_elem);
 
         match self.computed.lock() {
             Ok(mut comp_guard) => {
@@ -211,6 +206,19 @@ impl<SF: ShapeFn> ParBasisFnSampler<SF> {
 struct BSDescription {
     space: [usize; 2],
     sample: Option<[usize; 2]>,
+    base_id: usize,
+    desc_id: Option<usize>,
+}
+
+impl BSDescription {
+    pub fn new(elem: &Elem, sampled_over: Option<&Elem>) -> Self {
+        Self {
+            space: [elem.nodes[0], elem.nodes[3]],
+            sample: sampled_over.map(|so_elem| [so_elem.nodes[0], so_elem.nodes[3]]),
+            base_id: elem.id,
+            desc_id: sampled_over.map(|so_elem| so_elem.id)
+        }
+    }
 }
 
 // 5 * the maximum order (rounded up to the nearest power of 2)
@@ -281,6 +289,8 @@ impl<SF: ShapeFn> BasisFn<SF> {
                     .collect()
             })
             .collect();
+
+        println!("T: {}", t[1][1]);
 
         let ti: Vec<Vec<M2D>> = t
             .iter()
@@ -398,5 +408,11 @@ impl<SF: ShapeFn> BasisFn<SF> {
     #[inline]
     pub fn sample_scale(&self, [m, n]: [usize; 2]) -> f64 {
         self.dt[m][n]
+    }
+
+    pub fn max_uv_ratio(&self, [m, n]: [usize; 2]) -> f64 {
+        let r0 = self.t[m][n].u[0] / self.t[m][n].v[1];
+        let r1 = self.t[m][n].u[0] / self.t[m][n].v[1];
+        std::cmp::max_by(r0, r1, |a, b| a.partial_cmp(b).unwrap())
     }
 }

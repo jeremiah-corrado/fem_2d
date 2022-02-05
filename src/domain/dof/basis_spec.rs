@@ -16,6 +16,7 @@ pub struct BasisSpec {
 impl BasisSpec {
     pub fn new(id: usize, [i, j]: [u8; 2], dir: BasisDir, elem: &Elem) -> Self {
         let loc = match (i, j, dir) {
+            (2..=u8::MAX, 2..=u8::MAX, _) => BasisLoc::ElemBs,
             (_, 0..=1, BasisDir::U) => BasisLoc::edge_bs(elem, j),
             (0..=1, _, BasisDir::V) => BasisLoc::edge_bs(elem, i + 2),
             (_, _, BasisDir::W) => match (i < 2, j < 2) {
@@ -24,7 +25,6 @@ impl BasisSpec {
                 (true, true) => BasisLoc::node_bs(elem, i + 2 * j),
                 (false, false) => BasisLoc::ElemBs,
             },
-            (2..=u8::MAX, 2..=u8::MAX, _) => BasisLoc::ElemBs,
             (_, _, _) => BasisLoc::ElemBs,
         };
 

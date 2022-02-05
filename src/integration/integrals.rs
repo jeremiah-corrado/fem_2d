@@ -39,6 +39,8 @@ pub mod curl_curl {
                     * q_basis.glq_scale()
                     * match (p_dir, q_dir) {
                         (BasisDir::U, BasisDir::U) => {
+                            println!("P: {:.5} \t Q: {:.5}", p_basis.max_uv_ratio([1, 1]), q_basis.max_uv_ratio([1, 1]));
+
                             real_gauss_quad(&self.u_weights, &self.v_weights, |m, n| {
                                 let p_curl = p_basis
                                     .f_u_d1(p_orders, [m, n], q_basis.deriv_scale())
@@ -245,6 +247,7 @@ pub mod curl_curl {
         V2D::from([0.0, -1.0]),
         V2D::from([0.0, 1.0]),
     ];
+
 }
 
 /// <u, ρ>
