@@ -35,12 +35,10 @@ pub mod curl_curl {
         ) -> IntegralResult {
             IntegralResult::Full(
                 (1.0 / materials.mu_rel.re)
-                    * p_basis.glq_scale()
-                    * q_basis.glq_scale()
+                    // * p_basis.glq_scale()
+                    // * q_basis.glq_scale()
                     * match (p_dir, q_dir) {
                         (BasisDir::U, BasisDir::U) => {
-                            println!("P: {:.5} \t Q: {:.5}", p_basis.max_uv_ratio([1, 1]), q_basis.max_uv_ratio([1, 1]));
-
                             real_gauss_quad(&self.u_weights, &self.v_weights, |m, n| {
                                 let p_curl = p_basis
                                     .f_u_d1(p_orders, [m, n], q_basis.deriv_scale())
@@ -49,7 +47,7 @@ pub mod curl_curl {
                                     .f_u_d1(q_orders, [m, n], p_basis.deriv_scale())
                                     .dot_with(&CURL_OP);
 
-                                p_curl * q_curl / p_basis.glq_scale() / q_basis.glq_scale()
+                                p_curl * q_curl * max_uv_ratios(p_basis, q_basis, [m, n])
                             })
                         }
                         (BasisDir::U, BasisDir::V) => {
@@ -61,7 +59,7 @@ pub mod curl_curl {
                                     .f_v_d1(q_orders, [m, n], p_basis.deriv_scale())
                                     .dot_with(&CURL_OP);
 
-                                p_curl * q_curl / p_basis.glq_scale() / q_basis.glq_scale()
+                                p_curl * q_curl 
                             })
                         }
                         (BasisDir::V, BasisDir::U) => {
@@ -73,7 +71,7 @@ pub mod curl_curl {
                                     .f_u_d1(q_orders, [m, n], p_basis.deriv_scale())
                                     .dot_with(&CURL_OP);
 
-                                p_curl * q_curl / p_basis.glq_scale() / q_basis.glq_scale()
+                                p_curl * q_curl 
                             })
                         }
                         (BasisDir::V, BasisDir::V) => {
@@ -85,7 +83,7 @@ pub mod curl_curl {
                                     .f_v_d1(q_orders, [m, n], p_basis.deriv_scale())
                                     .dot_with(&CURL_OP);
 
-                                p_curl * q_curl / p_basis.glq_scale() / q_basis.glq_scale()
+                                p_curl * q_curl * max_vu_ratios(p_basis, q_basis, [m, n])
                             })
                         }
                         (_, _) => 0.0,
@@ -247,6 +245,18 @@ pub mod curl_curl {
         V2D::from([0.0, -1.0]),
         V2D::from([0.0, 1.0]),
     ];
+
+    #[inline]
+    fn max_uv_ratios<SF: ShapeFn>(p_basis: &BasisFn<SF>, q_basis: &BasisFn<SF>, [m, n]: [usize; 2]) -> f64 {
+        ((p_basis.dt[m][n] >= q_basis.dt[m][n]) as u8) as f64 * p_basis.uv_ratio([m, n]) + 
+            ((p_basis.dt[m][n] < q_basis.dt[m][n]) as u8) as f64 * q_basis.uv_ratio([m, n])
+    }
+
+    #[inline]
+    fn max_vu_ratios<SF: ShapeFn>(p_basis: &BasisFn<SF>, q_basis: &BasisFn<SF>, [m, n]: [usize; 2]) -> f64 {
+        ((p_basis.dt[m][n] >= q_basis.dt[m][n]) as u8) as f64 * p_basis.vu_ratio([m, n]) + 
+            ((p_basis.dt[m][n] < q_basis.dt[m][n]) as u8) as f64 * q_basis.vu_ratio([m, n])
+    }
 
 }
 

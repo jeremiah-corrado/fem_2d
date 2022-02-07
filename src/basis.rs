@@ -290,7 +290,7 @@ impl<SF: ShapeFn> BasisFn<SF> {
             })
             .collect();
 
-        println!("T: {}", t[1][1]);
+        // println!("T: {}", t[1][1]);
 
         let ti: Vec<Vec<M2D>> = t
             .iter()
@@ -414,5 +414,13 @@ impl<SF: ShapeFn> BasisFn<SF> {
         let r0 = self.t[m][n].u[0] / self.t[m][n].v[1];
         let r1 = self.t[m][n].u[0] / self.t[m][n].v[1];
         std::cmp::max_by(r0, r1, |a, b| a.partial_cmp(b).unwrap())
+    }
+
+    pub fn uv_ratio(&self, [m, n]: [usize; 2]) -> f64 {
+        self.t[m][n].u[0] / self.t[m][n].v[1]
+    }
+
+    pub fn vu_ratio(&self, [m, n]: [usize; 2]) -> f64 {
+        self.t[m][n].v[1] / self.t[m][n].u[0]
     }
 }
