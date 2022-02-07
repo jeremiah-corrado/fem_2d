@@ -113,7 +113,8 @@ pub mod curl_curl {
                             let p = V2D::from([p_dd[1] + p_d2[0], p_d2[1] + p_dd[0]]);
                             let q = q_basis.f_u(q_orders, [m, n]);
 
-                            V2D::dot(p, q) / q_basis.glq_scale().powi(2) * max_uv_ratios(p_basis, q_basis, [m, n])
+                            V2D::dot(p, q) / q_basis.glq_scale().powi(2)
+                                * max_uv_ratios(p_basis, q_basis, [m, n])
                         }) * -1.0
                     }
                     (BasisDir::U, BasisDir::V) => {
@@ -146,7 +147,8 @@ pub mod curl_curl {
                             let p = V2D::from([p_dd[1] + p_d2[0], p_d2[1] + p_dd[0]]);
                             let q = q_basis.f_v(q_orders, [m, n]);
 
-                            V2D::dot(p, q) / q_basis.glq_scale().powi(2) * max_vu_ratios(p_basis, q_basis, [m, n])
+                            V2D::dot(p, q) / q_basis.glq_scale().powi(2)
+                                * max_vu_ratios(p_basis, q_basis, [m, n])
                         }) * -1.0
                     }
                     (_, _) => 0.0,
@@ -170,7 +172,8 @@ pub mod curl_curl {
                                         .f_u(q_orders, [m, n])
                                         .dot_with(&EDGE_UNIT_VECTORS[edge_idx]);
 
-                                    p_curl * q / q_basis.glq_scale() * max_uv_ratios(p_basis, q_basis, [m, n])
+                                    p_curl * q / q_basis.glq_scale()
+                                        * max_uv_ratios(p_basis, q_basis, [m, n])
                                 },
                             ),
                             (BasisDir::V, BasisDir::U, 0 | 1) => real_gauss_quad_edge(
@@ -218,7 +221,8 @@ pub mod curl_curl {
                                             .f_v(q_orders, [m, n])
                                             .dot_with(&EDGE_UNIT_VECTORS[edge_idx]);
 
-                                        p_curl * q / q_basis.glq_scale() * max_vu_ratios(p_basis, q_basis, [m, n])
+                                        p_curl * q / q_basis.glq_scale()
+                                            * max_vu_ratios(p_basis, q_basis, [m, n])
                                     },
                                 ) * -1.0
                             }
@@ -248,8 +252,8 @@ pub mod curl_curl {
         q_basis: &BasisFn<SF>,
         [m, n]: [usize; 2],
     ) -> f64 {
-        ((p_basis.dt[m][n] >= q_basis.dt[m][n]) as u8) as f64 * p_basis.uv_ratio([m, n]) +
-            ((p_basis.dt[m][n] < q_basis.dt[m][n]) as u8) as f64 * q_basis.uv_ratio([m, n])
+        ((p_basis.dt[m][n] >= q_basis.dt[m][n]) as u8) as f64 * p_basis.uv_ratio([m, n])
+            + ((p_basis.dt[m][n] < q_basis.dt[m][n]) as u8) as f64 * q_basis.uv_ratio([m, n])
         // p_basis.uv_ratio([m, n])
     }
 
@@ -259,8 +263,8 @@ pub mod curl_curl {
         q_basis: &BasisFn<SF>,
         [m, n]: [usize; 2],
     ) -> f64 {
-        ((p_basis.dt[m][n] >= q_basis.dt[m][n]) as u8) as f64 * p_basis.vu_ratio([m, n]) +
-            ((p_basis.dt[m][n] < q_basis.dt[m][n]) as u8) as f64 * q_basis.vu_ratio([m, n])
+        ((p_basis.dt[m][n] >= q_basis.dt[m][n]) as u8) as f64 * p_basis.vu_ratio([m, n])
+            + ((p_basis.dt[m][n] < q_basis.dt[m][n]) as u8) as f64 * q_basis.vu_ratio([m, n])
         // p_basis.vu_ratio([m, n])
     }
 }
