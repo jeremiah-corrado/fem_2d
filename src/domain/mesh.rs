@@ -848,9 +848,9 @@ impl Mesh {
         if self.edges[edge_id].set_activation() {
             if let Some(child_edge_ids) = self.edges[edge_id].child_ids() {
                 match (
-                    self.rec_set_edge_activation_in_tree(child_edge_ids[0]), 
+                    self.rec_set_edge_activation_in_tree(child_edge_ids[0]),
                     self.rec_set_edge_activation_in_tree(child_edge_ids[1]),
-                ) { 
+                ) {
                     (true, true) => self.edges[edge_id].reset_activation(),
                     (false, false) => (),
                     _ => panic!("Children of Edge {} do not have consistent support for Basis Functions; Cannot set activation states!", edge_id),
@@ -1199,22 +1199,24 @@ mod tests {
 
         mesh_b.global_h_refinement(HRef::T).unwrap();
         let boundary_edges: Vec<bool> = mesh_b.edges.iter().map(|edge| edge.boundary).collect();
-        mesh_b.h_refine_with_filter(|elem| {
-            if elem.edges.iter().any(|edge_id| {
-                boundary_edges[*edge_id]
-            }) {
-                Some(HRef::U(None))
-            } else {
-                None
-            }
-        }).unwrap();
-        mesh_b.h_refine_with_filter(|elem| {
-            if elem.nodes.contains(&4) {
-                Some(HRef::T)
-            } else {
-                Some(HRef::V(None))
-            }
-        }).unwrap();
+        mesh_b
+            .h_refine_with_filter(|elem| {
+                if elem.edges.iter().any(|edge_id| boundary_edges[*edge_id]) {
+                    Some(HRef::U(None))
+                } else {
+                    None
+                }
+            })
+            .unwrap();
+        mesh_b
+            .h_refine_with_filter(|elem| {
+                if elem.nodes.contains(&4) {
+                    Some(HRef::T)
+                } else {
+                    Some(HRef::V(None))
+                }
+            })
+            .unwrap();
         mesh_b.global_h_refinement(HRef::U(Some(1))).unwrap();
 
         for elem in mesh_b.elems.iter() {
@@ -1226,7 +1228,6 @@ mod tests {
             assert_eq!(points[3].y_cmp, points[2].y_cmp);
             assert_eq!(points[3].x_cmp, points[1].x_cmp);
         }
-
     }
 
     #[test]

@@ -59,7 +59,7 @@ pub mod curl_curl {
                                     .f_v_d1(q_orders, [m, n], p_basis.deriv_scale())
                                     .dot_with(&CURL_OP);
 
-                                p_curl * q_curl 
+                                p_curl * q_curl
                             })
                         }
                         (BasisDir::V, BasisDir::U) => {
@@ -71,7 +71,7 @@ pub mod curl_curl {
                                     .f_u_d1(q_orders, [m, n], p_basis.deriv_scale())
                                     .dot_with(&CURL_OP);
 
-                                p_curl * q_curl 
+                                p_curl * q_curl
                             })
                         }
                         (BasisDir::V, BasisDir::V) => {
@@ -113,7 +113,7 @@ pub mod curl_curl {
                             let p = V2D::from([p_dd[1] + p_d2[0], p_d2[1] + p_dd[0]]);
                             let q = q_basis.f_u(q_orders, [m, n]);
 
-                            V2D::dot(p, q) / q_basis.glq_scale().powi(2)
+                            V2D::dot(p, q) / q_basis.glq_scale().powi(2) * max_uv_ratios(p_basis, q_basis, [m, n])
                         }) * -1.0
                     }
                     (BasisDir::U, BasisDir::V) => {
@@ -146,7 +146,7 @@ pub mod curl_curl {
                             let p = V2D::from([p_dd[1] + p_d2[0], p_d2[1] + p_dd[0]]);
                             let q = q_basis.f_v(q_orders, [m, n]);
 
-                            V2D::dot(p, q) / q_basis.glq_scale().powi(2)
+                            V2D::dot(p, q) / q_basis.glq_scale().powi(2) * max_vu_ratios(p_basis, q_basis, [m, n])
                         }) * -1.0
                     }
                     (_, _) => 0.0,
@@ -243,17 +243,26 @@ pub mod curl_curl {
     ];
 
     #[inline]
-    fn max_uv_ratios<SF: ShapeFn>(p_basis: &BasisFn<SF>, q_basis: &BasisFn<SF>, [m, n]: [usize; 2]) -> f64 {
-        ((p_basis.dt[m][n] >= q_basis.dt[m][n]) as u8) as f64 * p_basis.uv_ratio([m, n]) + 
+    fn max_uv_ratios<SF: ShapeFn>(
+        p_basis: &BasisFn<SF>,
+        q_basis: &BasisFn<SF>,
+        [m, n]: [usize; 2],
+    ) -> f64 {
+        ((p_basis.dt[m][n] >= q_basis.dt[m][n]) as u8) as f64 * p_basis.uv_ratio([m, n]) +
             ((p_basis.dt[m][n] < q_basis.dt[m][n]) as u8) as f64 * q_basis.uv_ratio([m, n])
+        // p_basis.uv_ratio([m, n])
     }
 
     #[inline]
-    fn max_vu_ratios<SF: ShapeFn>(p_basis: &BasisFn<SF>, q_basis: &BasisFn<SF>, [m, n]: [usize; 2]) -> f64 {
-        ((p_basis.dt[m][n] >= q_basis.dt[m][n]) as u8) as f64 * p_basis.vu_ratio([m, n]) + 
+    fn max_vu_ratios<SF: ShapeFn>(
+        p_basis: &BasisFn<SF>,
+        q_basis: &BasisFn<SF>,
+        [m, n]: [usize; 2],
+    ) -> f64 {
+        ((p_basis.dt[m][n] >= q_basis.dt[m][n]) as u8) as f64 * p_basis.vu_ratio([m, n]) +
             ((p_basis.dt[m][n] < q_basis.dt[m][n]) as u8) as f64 * q_basis.vu_ratio([m, n])
+        // p_basis.vu_ratio([m, n])
     }
-
 }
 
 /// <u, ρ>

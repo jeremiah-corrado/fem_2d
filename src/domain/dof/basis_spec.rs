@@ -133,10 +133,7 @@ impl fmt::Display for BasisSpec {
 
 impl PartialEq for BasisSpec {
     fn eq(&self, other: &Self) -> bool {
-        self.i == other.i &&
-        self.j == other.j &&
-        self.loc == other.loc &&
-        self.dir == other.dir
+        self.i == other.i && self.j == other.j && self.loc == other.loc && self.dir == other.dir
     }
 }
 

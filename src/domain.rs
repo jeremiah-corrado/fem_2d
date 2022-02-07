@@ -5,7 +5,9 @@ pub mod fields;
 /// The internal geometric structure of a Domain
 pub mod mesh;
 
-use crate::basis::{BasisFnSampler, ParBasisFnSampler, ShapeFn, BasisFn, glq::gauss_quadrature_points};
+use crate::basis::{
+    glq::gauss_quadrature_points, BasisFn, BasisFnSampler, ParBasisFnSampler, ShapeFn,
+};
 use crate::integration::Integral;
 use crate::linalg::{sparse_matrix::SparseMatrix, GEP};
 use dof::{
@@ -275,14 +277,14 @@ impl Domain {
             let local_basis_specs = self.local_basis_specs(elem.id).unwrap();
             let desc_basis_specs = self.descendant_basis_specs(elem.id).unwrap();
 
-            let bs_local : BasisFn<SF> = BasisFn::mapped_over_desc(
-                i_max as usize, 
-                j_max as usize, 
-                false, 
-                &u_points, 
-                &v_points, 
-                elem, 
-                None
+            let bs_local: BasisFn<SF> = BasisFn::mapped_over_desc(
+                i_max as usize,
+                j_max as usize,
+                false,
+                &u_points,
+                &v_points,
+                elem,
+                None,
             );
 
             // let bs_local = bf_sampler.sample_basis_fn(elem, None);
@@ -351,24 +353,24 @@ impl Domain {
 
                     // let bs_q_local = bf_sampler.sample_basis_fn(&self.mesh.elems[q_elem_id], None);
 
-                    let bs_p_sampled : BasisFn<SF> = BasisFn::mapped_over_desc(
-                        i_max as usize, 
-                        j_max as usize, 
-                        false, 
-                        &u_points, 
-                        &v_points, 
-                        elem, 
+                    let bs_p_sampled: BasisFn<SF> = BasisFn::mapped_over_desc(
+                        i_max as usize,
+                        j_max as usize,
+                        false,
+                        &u_points,
+                        &v_points,
+                        elem,
                         Some(&self.mesh.elems[q_elem_id]),
                     );
-                    
-                    let bs_q_local : BasisFn<SF> = BasisFn::mapped_over_desc(
-                        i_max as usize, 
-                        j_max as usize, 
-                        false, 
-                        &u_points, 
-                        &v_points, 
-                        &self.mesh.elems[q_elem_id], 
-                        None, 
+
+                    let bs_q_local: BasisFn<SF> = BasisFn::mapped_over_desc(
+                        i_max as usize,
+                        j_max as usize,
+                        false,
+                        &u_points,
+                        &v_points,
+                        &self.mesh.elems[q_elem_id],
+                        None,
                     );
 
                     for (q_orders, q_dir, q_dof_id) in q_elem_basis_specs
@@ -386,7 +388,7 @@ impl Domain {
                                 &elem_materials,
                             )
                             .full_solution();
-                            
+
                         let b = b_integrator
                             .integrate(
                                 p_dir,

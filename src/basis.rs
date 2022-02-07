@@ -216,7 +216,7 @@ impl BSDescription {
             space: [elem.nodes[0], elem.nodes[3]],
             sample: sampled_over.map(|so_elem| [so_elem.nodes[0], so_elem.nodes[3]]),
             base_id: elem.id,
-            desc_id: sampled_over.map(|so_elem| so_elem.id)
+            desc_id: sampled_over.map(|so_elem| so_elem.id),
         }
     }
 }
