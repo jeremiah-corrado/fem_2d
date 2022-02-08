@@ -63,6 +63,27 @@ impl Domain {
         self.mesh.nodes.iter()
     }
 
+    /// Retrieve a [BasisSpec] at a particular [BSAddress]
+    ///
+    /// Returns an error if the designated `Elem` does not exist, or does not have that [BasisSpec]
+    pub fn get_basis_spec(&self, bs_address: BSAddress) -> Result<&BasisSpec, String> {
+        if bs_address.elem_id > self.mesh.elems.len() {
+            Err(format!(
+                "Elem {} does not exist; cannot retrieve BasisSpec!",
+                bs_address.elem_id
+            ))
+        } else if self.basis_specs[bs_address.elem_id].len() <= bs_address.elem_idx {
+            Err(format!(
+                "Elem {} only has {} BasisSpecs; cannot retrive BasisSpec({})",
+                bs_address.elem_id,
+                self.basis_specs[bs_address.elem_id].len(),
+                bs_address.elem_idx
+            ))
+        } else {
+            Ok(&self.basis_specs[bs_address.elem_id][bs_address.elem_idx])
+        }
+    }
+
     // Generate Degrees of Freedom over the mesh according to the Polynomial Expansion orders on each Elem
     fn gen_dofs(&mut self) {
         // prepare for fresh set of DoFs and BasisSpecs
@@ -522,21 +543,6 @@ impl Domain {
         }));
 
         gep
-    }
-
-    /// Retrieve a [BasisSpec] at a particular [BSAddress]
-    ///
-    /// Returns an error if the designated `Elem` does not exist, or does not have that [BasisSpec]
-    pub fn get_basis_spec(&self, address: BSAddress) -> Result<&BasisSpec, String> {
-        if address.elem_id < self.basis_specs.len() {
-            if address.elem_idx < self.basis_specs[address.elem_id].len() {
-                Ok(&self.basis_specs[address.elem_id][address.elem_idx])
-            } else {
-                Err(format!("Could not retrieve {}", address))
-            }
-        } else {
-            Err(format!("Could not retrieve {}", address))
-        }
     }
 }
 

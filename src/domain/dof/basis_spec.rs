@@ -10,7 +10,7 @@ pub struct BasisSpec {
     pub elem_id: usize,
     pub elem_idx: Option<usize>,
     pub dof_id: Option<usize>,
-    pub(crate) loc: BasisLoc,
+    pub loc: BasisLoc,
 }
 
 impl BasisSpec {
@@ -155,10 +155,14 @@ impl fmt::Display for BasisDir {
     }
 }
 
+/// The geometric unit a particular [BasisSpec] is associated with (for the purpose of matching)
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum BasisLoc {
+pub enum BasisLoc {
+    /// The BasisSpec's location is the same as its `elem_id`
     ElemBs,
+    /// (`edge_index` [0, 1, 2, or 3], `edge_id`)
     EdgeBs(u8, usize),
+    /// (`node_index` [0, 1, 2, or 3], `node_id`)
     NodeBs(u8, usize),
 }
 
