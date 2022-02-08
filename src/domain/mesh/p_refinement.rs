@@ -1,7 +1,7 @@
 use super::MAX_POLYNOMIAL_ORDER;
 use crate::domain::dof::basis_spec::BasisDir;
 use json::{object, JsonValue};
-use std::fmt;
+use std::{cmp::Ordering, fmt, ops::AddAssign};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct PolyOrders {
@@ -110,6 +110,34 @@ impl PRefInt {
     }
 }
 
+impl AddAssign for PRefInt {
+    fn add_assign(&mut self, rhs: Self) {
+        let sum = match *self {
+            Self::Increment(s_delta) => match rhs {
+                Self::Increment(r_delta) => Self::Increment(s_delta + r_delta),
+                Self::Decrement(r_delta) => match s_delta.cmp(&r_delta) {
+                    Ordering::Equal => Self::None,
+                    Ordering::Greater => Self::Increment(s_delta - r_delta),
+                    Ordering::Less => Self::Decrement(r_delta - s_delta),
+                },
+                Self::None => self.clone(),
+            },
+            Self::Decrement(s_delta) => match rhs {
+                Self::Decrement(r_delta) => Self::Decrement(s_delta + r_delta),
+                Self::Increment(r_delta) => match s_delta.cmp(&r_delta) {
+                    Ordering::Equal => Self::None,
+                    Ordering::Greater => Self::Decrement(s_delta - r_delta),
+                    Ordering::Less => Self::Increment(r_delta - s_delta),
+                },
+                Self::None => self.clone(),
+            },
+            Self::None => rhs.clone(),
+        };
+
+        *self = sum;
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 /// Description of a p-Refinement
 pub struct PRef {
@@ -141,6 +169,13 @@ impl PRef {
 
     fn refine_j(&self, j_current: u8) -> Result<u8, PRefError> {
         self.dj.refine(j_current)
+    }
+}
+
+impl AddAssign for PRef {
+    fn add_assign(&mut self, rhs: Self) {
+        self.di += rhs.di;
+        self.dj += rhs.dj;
     }
 }
 
