@@ -50,6 +50,36 @@ pub struct Mesh {
 }
 
 impl Mesh {
+    /// Construct a Mesh with a single unit sized cell
+    /// * The cell is defined over [-1, +1] on the U and V axes
+    /// * The Element has unit material Parameters
+    pub fn unit() -> Self {
+        let points = [
+            Point::from([-1.0, -1.0]),
+            Point::from([1.0, -1.0]),
+            Point::from([-1.0, 1.0]),
+            Point::from([1.0, 1.0]),
+        ];
+
+        let unit_element = Arc::new(Element::new(0, points.clone(), Materials::default()));
+        let unit_elem = Elem::new(0, [0, 1, 2, 3], [0, 1, 2, 3], unit_element.clone());
+
+        let nodes: Vec<Node> = points.iter().enumerate().map(|(n_id, p)| Node::new(n_id, *p, true)).collect();
+        let edges: Vec<Edge> = vec![
+            Edge::new(0, [&nodes[0], &nodes[1]], true),
+            Edge::new(0, [&nodes[2], &nodes[3]], true),
+            Edge::new(0, [&nodes[0], &nodes[2]], true),
+            Edge::new(0, [&nodes[1], &nodes[3]], true),
+        ];
+
+        Self {
+            elements: vec![unit_element],
+            elems: vec![unit_elem],
+            nodes,
+            edges,
+        }
+    }
+
     /// Construct a completely empty Mesh
     pub fn blank() -> Self {
         Self {
