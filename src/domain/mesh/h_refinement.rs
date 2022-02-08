@@ -1,6 +1,7 @@
 use super::ParaDir;
 use json::{object, JsonValue};
 use std::fmt;
+use std::ops::AddAssign;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 /// Description of an Elem's h-Refinement levels in the u and v directions
@@ -137,6 +138,53 @@ impl HRef {
                 1 => HRefLoc::N,
                 _ => unreachable!(),
             },
+        }
+    }
+}
+
+impl AddAssign for HRef {
+    fn add_assign(&mut self, rhs: Self) {
+        match self {
+            HRef::T => (),
+            HRef::U(None) => match rhs {
+                HRef::V(_) => *self = HRef::T,
+                HRef::T => *self = HRef::T,
+                _ => (),
+            },
+            HRef::V(None) => match rhs {
+                HRef::U(_) => *self = HRef::T,
+                HRef::T => *self = HRef::T,
+                _ => (),
+            },
+            HRef::U(Some(idx)) => match rhs {
+                HRef::U(Some(r_idx)) => if r_idx != *idx {
+                    *self = HRef::T;
+                },
+                HRef::V(_) => *self = HRef::T,
+                HRef::T => *self = HRef::T,
+                _ => (),
+            },
+            HRef::V(Some(idx)) => match rhs {
+                HRef::V(Some(r_idx)) => if r_idx != *idx {
+                    *self = HRef::T;
+                },
+                HRef::U(_) => *self = HRef::T,
+                HRef::T => *self = HRef::T,
+                _ => (),
+            }
+        }
+    }
+}
+
+impl fmt::Display for HRef {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "HRef ")?;
+        match self {
+            HRef::T => write!(f, "T"),
+            HRef::U(None) => write!(f, "U"),
+            HRef::V(None) => write!(f, "V"),
+            HRef::U(Some(idx)) => write!(f, "U->V({})", idx),
+            HRef::V(Some(idx)) => write!(f, "V->U({})", idx),
         }
     }
 }

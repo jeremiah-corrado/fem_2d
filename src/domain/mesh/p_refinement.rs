@@ -138,6 +138,16 @@ impl AddAssign for PRefInt {
     }
 }
 
+impl fmt::Display for PRefInt {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            PRefInt::None => write!(f, "0"),
+            PRefInt::Decrement(delta) => write!(f, "-{}", delta),
+            PRefInt::Increment(delta) => write!(f, "+{}", delta),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 /// Description of a p-Refinement
 pub struct PRef {
@@ -176,6 +186,12 @@ impl AddAssign for PRef {
     fn add_assign(&mut self, rhs: Self) {
         self.di += rhs.di;
         self.dj += rhs.dj;
+    }
+}
+
+impl fmt::Display for PRef {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "PRef (i: {}, j: {})", self.di, self.dj)
     }
 }
 

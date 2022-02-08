@@ -279,12 +279,16 @@ impl Mesh {
             })
             .collect();
 
-        Ok(Self {
+        let mut mesh = Self {
             elements,
             elems,
             nodes,
             edges,
-        })
+        };
+
+        mesh.set_edge_activation();
+
+        Ok(mesh)
     }
 
     /// Print the mesh to a JSON file specified by path.
@@ -557,6 +561,8 @@ impl Mesh {
         if !refinement_extensions.is_empty() {
             self.execute_h_refinements(refinement_extensions)?;
         }
+
+        self.set_edge_activation();
 
         Ok(())
     }
