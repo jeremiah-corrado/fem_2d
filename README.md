@@ -28,10 +28,10 @@ Add this to your `Cargo.toml` file:
 fem_2d = "0.1.0"
 ```
 
-If you are using this library for any academic or commercial purpose, please site the following papers:
-> ['fem_2d: A Rust Package for 2D Finite Element Method Computations with Extensive Support for *hp*-refinement'](...)
-> 
-> ['A Refinement-by-Superposition Approach to Fully Anisotropic hp-Refinement for Improved Efficiencyin CEM'](https://www.techrxiv.org/articles/preprint/A_Refinement-by-Superposition_Approach_to_Fully_Anisotropic_hp-Refinement_for_Improved_Efficiency_in_CEM/16695163)
+Please include one or more of the following citations in any academic or commercial work based on this repository:
+* ***metapaper***
+* [Corrado, Jeremiah; Harmon, Jake; Notaros, Branislav (2021): A Refinement-by-Superposition Approach to Fully Anisotropic hp-Refinement for Improved Efficiency in CEM. TechRxiv. Preprint. https://doi.org/10.36227/techrxiv.16695163.v1](https://doi.org/10.36227/techrxiv.16695163.v1){:target="_blank"}
+* [Harmon, Jake; Corrado, Jeremiah; Notaros, Branislav (2021): A Refinement-by-Superposition hp-Method for H(curl)- and H(div)-Conforming Discretizations. TechRxiv. Preprint. https://doi.org/10.36227/techrxiv.14807895.v1](https://doi.org/10.36227/techrxiv.14807895.v1){:target="_blank"}
 
 ## Example
 
