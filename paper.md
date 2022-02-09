@@ -17,7 +17,7 @@ authors:
 affiliations:
  - name: "Colorado State University; Department of Electrical and Computer Engineering"
    index: 1
-date: 29 January 2022
+date: 9 February 2022
 bibliography: paper.bib
 ---
 
