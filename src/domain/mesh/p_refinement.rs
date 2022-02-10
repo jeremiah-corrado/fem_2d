@@ -63,6 +63,10 @@ impl PolyOrders {
             std::cmp::max(self.nj, orders[1]),
         ]
     }
+
+    pub fn as_array(&self) -> [usize; 2] {
+        [self.ni as usize, self.nj as usize]
+    }
 }
 
 impl Default for PolyOrders {
