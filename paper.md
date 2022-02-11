@@ -12,11 +12,15 @@ authors:
     affiliation: 1
   - name: Jake J. Harmon
     affiliation: 1
+  - name: Milan M. Ilic
+  - affiliation: [1, 2]
   - name: Branislav Notaroš
     affiliation: 1
 affiliations:
  - name: "Colorado State University; Department of Electrical and Computer Engineering"
    index: 1
+ - name: "University of Belgrade; School of Electrical Engineering"
+   index: 2
 date: 9 February 2022
 bibliography: paper.bib
 ---
