@@ -112,6 +112,14 @@ impl PRefInt {
             Self::None => Ok(n),
         }
     }
+
+    pub fn as_i8(&self) -> i8 {
+        match self {
+            Self::None => 0,
+            Self::Increment(delta) => *delta as i8,
+            Self::Decrement(delta) => -1 * (*delta as i8),
+        }
+    }
 }
 
 impl AddAssign for PRefInt {
@@ -175,6 +183,13 @@ impl PRef {
                 _ => unreachable!(),
             },
         }
+    }
+
+    pub fn as_array(&self) -> [i8; 2] {
+        [
+            self.di.as_i8(),
+            self.dj.as_i8(),
+        ]
     }
 
     fn refine_i(&self, i_current: u8) -> Result<u8, PRefError> {
