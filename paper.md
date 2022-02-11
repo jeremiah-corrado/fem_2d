@@ -13,7 +13,7 @@ authors:
   - name: Jake J. Harmon
     affiliation: 1
   - name: Milan M. Ilic
-  - affiliation: "1, 2"
+    affiliation: "1, 2"
   - name: Branislav Notaroš
     affiliation: 1
 affiliations:
