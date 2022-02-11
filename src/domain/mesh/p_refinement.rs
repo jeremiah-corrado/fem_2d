@@ -1,5 +1,5 @@
 use super::MAX_POLYNOMIAL_ORDER;
-use crate::domain::dof::basis_spec::BasisDir;
+use crate::domain::{mesh::space::ParaDir, dof::basis_spec::BasisDir};
 use json::{object, JsonValue};
 use std::{cmp::Ordering, fmt, ops::AddAssign};
 
@@ -182,6 +182,13 @@ impl PRef {
                 d if d < 0 => PRefInt::Decrement(-d as u8),
                 _ => unreachable!(),
             },
+        }
+    }
+
+    pub fn on_dir(dir: ParaDir, delta: i8) -> Self {
+        match dir {
+            ParaDir::U => Self::from(delta, 0),
+            ParaDir::V => Self::from(0, delta),
         }
     }
 
