@@ -39,6 +39,16 @@ impl Default for V2D {
     }
 }
 
+impl fmt::Display for V2D {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if let Some(precision) = f.precision() {
+            write!(f, "({:.*}, {:.*})", precision, self.inner[0], precision, self.inner[1])
+        } else {
+            write!(f, "[{}, {}]", self.inner[0], self.inner[1])  
+        }
+    }
+}
+
 impl Index<usize> for V2D {
     type Output = f64;
     fn index(&self, index: usize) -> &Self::Output {
