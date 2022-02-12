@@ -179,11 +179,11 @@ impl Mul<V2D> for M2D {
 
 impl fmt::Display for M2D {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "u: [{:.5}, {:.5}]  v: [{:.5}, {:.5}]",
-            self.u[0], self.u[1], self.v[0], self.v[1]
-        )
+        if let Some(precision) = f.precision() {
+            write!(f, "u: {:.*}, v: {:.*}", precision, self.u, precision, self.v)
+        } else {
+            write!(f, "u: {}, v: {}", self.u, self.v)
+        }
     }
 }
 
