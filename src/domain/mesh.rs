@@ -67,9 +67,9 @@ impl Mesh {
         let nodes: Vec<Node> = points.iter().enumerate().map(|(n_id, p)| Node::new(n_id, *p, true)).collect();
         let edges: Vec<Edge> = vec![
             Edge::new(0, [&nodes[0], &nodes[1]], true),
-            Edge::new(0, [&nodes[2], &nodes[3]], true),
-            Edge::new(0, [&nodes[0], &nodes[2]], true),
-            Edge::new(0, [&nodes[1], &nodes[3]], true),
+            Edge::new(1, [&nodes[2], &nodes[3]], true),
+            Edge::new(2, [&nodes[0], &nodes[2]], true),
+            Edge::new(3, [&nodes[1], &nodes[3]], true),
         ];
 
         Self {
