@@ -14,7 +14,7 @@ authors:
     affiliation: 1
   - name: Milan M. Ilic
     affiliation: "1, 2"
-  - name: Branislav Notaroš
+  - name: Branislav M. Notaroš
     affiliation: 1
 affiliations:
  - name: "Colorado State University; Department of Electrical and Computer Engineering"
