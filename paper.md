@@ -21,7 +21,7 @@ affiliations:
    index: 1
  - name: "University of Belgrade; School of Electrical Engineering"
    index: 2
-date: 10 February 2022
+date: 14 February 2022
 bibliography: paper.bib
 ---
 
