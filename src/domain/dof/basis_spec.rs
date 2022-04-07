@@ -177,12 +177,14 @@ impl BasisLoc {
 }
 
 #[derive(Clone, Copy, Debug)]
+/// A BasisSpec's index in an Elem's Vec<BasisSpec>
 pub struct BSAddress {
     pub elem_id: usize,
     pub elem_idx: usize,
 }
 
 impl BSAddress {
+    /// Create a new BSAddress from an Elem's id and an index into its Vec<BasisSpec>
     pub fn new(elem_id: usize, elem_idx: usize) -> Self {
         Self { elem_id, elem_idx }
     }

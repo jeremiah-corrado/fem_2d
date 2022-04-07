@@ -29,6 +29,7 @@ pub struct Domain {
 }
 
 impl Domain {
+    /// Create a Domain around a Blank-Mesh
     pub fn blank() -> Self {
         Self {
             mesh: Mesh::blank(),
@@ -37,6 +38,12 @@ impl Domain {
         }
     }
 
+    /// Create a Domain from a Unit-Mesh
+    pub fn unit() -> Self {
+        Self::from_mesh(Mesh::unit())
+    }
+
+    /// Create a Domain from a Mesh
     pub fn from_mesh(mesh: Mesh) -> Self {
         let mut dom = Self {
             mesh,
@@ -197,6 +204,20 @@ impl Domain {
     }
 
     /// Retrieve a list of [BasisSpec]s on an `Elem` by ID
+    ///
+    /// ```
+    /// use fem_2d::prelude::*;
+    /// let mut mesh = Mesh::unit();
+    /// mesh.set_global_expansion_orders([2, 2]).unwrap();
+    ///
+    /// let dom = Domain::from_mesh(mesh);
+    ///
+    /// // get Elem 0's basis specs
+    /// let basis_specs = dom.local_basis_specs(0).unwrap();
+    ///
+    /// // 2 elem-type basis specs in each direction
+    /// assert_eq!(basis_specs.len(), 4);
+    /// ```
     pub fn local_basis_specs(&self, elem_id: usize) -> Result<&Vec<BasisSpec>, String> {
         if elem_id >= self.mesh.elems.len() {
             Err(format!(
@@ -209,6 +230,30 @@ impl Domain {
     }
 
     /// Retrieve a list of an `Elem`s descendant [BasisSpec]s (All the [`BasisSpec`]s on its descendant `Elem`s)
+    ///
+    /// Lists are returned as tuples of the form `(elem_id, [basis_specs])`
+    ///
+    /// ```
+    /// use fem_2d::prelude::*;
+    ///
+    /// let mut mesh = Mesh::unit();
+    /// mesh.set_global_expansion_orders([2, 2]).unwrap();
+    /// mesh.global_h_refinement(HRef::T).unwrap();
+    ///
+    /// let dom = Domain::from_mesh(mesh);
+    ///
+    /// // get the basis specs from all of Elem 0's descendants
+    /// let basis_specs = dom.descendant_basis_specs(0).unwrap();
+    ///
+    /// // Elem 0 has 4 descendant Elems due to the T-Type h-Refinement
+    /// assert_eq!(basis_specs.len(), 4);
+    ///
+    /// // there are 4 element-type and 4 edge-type basis specs in each direction on each descendant Elem
+    /// assert_eq!(basis_specs[0].1.len(), 8);
+    /// assert_eq!(basis_specs[1].1.len(), 8);
+    /// assert_eq!(basis_specs[2].1.len(), 8);
+    /// assert_eq!(basis_specs[3].1.len(), 8);
+    /// ```
     pub fn descendant_basis_specs(
         &self,
         elem_id: usize,
@@ -228,6 +273,33 @@ impl Domain {
     }
 
     /// Retrieve a list of an `Elem`s ancestor [BasisSpec]s (All the [`BasisSpec`]s on its ancestor `Elem`s)
+    ///
+    /// Lists are returned as tuples of the form `(elem_id, [basis_specs])`
+    ///
+    /// ```
+    /// use fem_2d::prelude::*;
+    ///
+    /// let mut mesh = Mesh::unit();
+    /// mesh.set_global_expansion_orders([2, 2]).unwrap();
+    /// mesh.global_h_refinement(HRef::T).unwrap();
+    /// mesh.h_refine_elems(vec![1], HRef::T).unwrap();
+    ///
+    /// let dom = Domain::from_mesh(mesh);
+    ///
+    /// // get the basis specs from elem 5's ancestors
+    /// let basis_specs = dom.ancestor_basis_specs(5).unwrap();
+    ///
+    /// // there are two ancestor Elems: 0 and 1
+    /// assert_eq!(basis_specs.len(), 2);
+    ///
+    /// // elem 0 is inactive and has no basis specs
+    /// let elem_0_bs = basis_specs.iter().find(|(elem_id, _)| *elem_id == 0).unwrap().1;
+    /// assert!(elem_0_bs.is_empty());
+    ///
+    /// // elem 1 has 2 edge-type basis specs on two of its edges
+    /// let elem_1_bs = basis_specs.iter().find(|(elem_id, _)| *elem_id == 1).unwrap().1;
+    /// assert_eq!(elem_1_bs.len(), 4);
+    /// ```
     pub fn ancestor_basis_specs(
         &self,
         elem_id: usize,

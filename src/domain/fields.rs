@@ -161,7 +161,7 @@ impl<'d> UniformFieldSpace<'d> {
             .iter()
             .filter(|elem| !elem.has_children())
         {
-            let diag_points = self.domain.mesh.elem_diag_points(shell_elem.id);
+            let diag_points = self.domain.mesh.elem_diag_points(shell_elem.id).unwrap();
             for x in uniform_range(diag_points[0].x, diag_points[1].x, self.densities[0]) {
                 for y in uniform_range(diag_points[0].y, diag_points[1].y, self.densities[1]) {
                     writeln!(writer, "{:.10} {:.10} 0.0", x, y)?;
