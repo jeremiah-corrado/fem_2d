@@ -160,6 +160,8 @@ impl Elem {
     }
 
     /// Get the stack of [HRefLoc]s and Elem-IDs back to this `Elem`s ancestor on the base layer of the mesh
+    ///
+    /// This is useful for generating mappings between Elem's in parametric space
     pub fn loc_stack(&self) -> &[(usize, HRefLoc)] {
         &self.ancestors
     }
@@ -185,7 +187,7 @@ impl Elem {
         }
     }
 
-    /// Get the bounds of this `Elem` in parametric space relative to its ancestor `Element`
+    /// Get the bounds of this `Elem` in parametric space relative to its associated `Element`
     pub fn parametric_range(&self) -> [[f64; 2]; 2] {
         self.ancestors
             .iter()
@@ -194,7 +196,7 @@ impl Elem {
             })
     }
 
-    /// Get a reference to the Material properties in this part of the Mesh
+    /// Get a reference to the Material properties in this region of the Mesh (Defined by this Elem's associated Element)
     pub fn get_materials(&self) -> &Materials {
         &self.element.materials
     }
@@ -205,12 +207,12 @@ impl Elem {
             .parametric_mapping(parametric_point, over_range)
     }
 
-    /// Returns a vector of child Elem ids. Will return an empty vector if this Elem has no children.
+    /// Returns a vector of ids for this Elem's children. Returns `None` if this Elem has no children.
     pub fn child_ids(&self) -> Option<SmallVec<[usize; 4]>> {
         self.children.clone()
     }
 
-    /// Has this Elem been h-Refined
+    /// Has this `Elem` been h-Refined
     pub fn has_children(&self) -> bool {
         self.children.is_some()
     }
@@ -237,9 +239,9 @@ impl Elem {
     }
 }
 
-/// Intermediate data structure used to represent a child [Elem] during the execution of an [HRef]
+// Intermediate data structure used to represent a child [Elem] during the execution of an [HRef]
 #[derive(Debug, Clone)]
-pub struct ElemUninit {
+pub(crate) struct ElemUninit {
     pub id: usize,
     pub nodes: [Option<usize>; 4],
     pub edges: [Option<usize>; 4],

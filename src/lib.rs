@@ -54,6 +54,7 @@
     feature = "max_ortho_basis",
     feature(const_fn_floating_point_arithmetic)
 )]
+#![doc = include_str!("../README.md")]
 
 /// Structures and Traits for Basis Function Evaluation
 pub mod basis;

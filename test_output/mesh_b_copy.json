@@ -346,7 +346,10 @@
                     }
                 ]
             ],
-            "active_elems": []
+            "active_elems": [
+                0,
+                1
+            ]
         },
         {
             "id": 4,
@@ -402,7 +405,10 @@
                     }
                 ]
             ],
-            "active_elems": []
+            "active_elems": [
+                0,
+                2
+            ]
         },
         {
             "id": 6,

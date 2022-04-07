@@ -1,8 +1,9 @@
 use super::MAX_POLYNOMIAL_ORDER;
-use crate::domain::{mesh::space::ParaDir, dof::basis_spec::BasisDir};
+use crate::domain::{dof::basis_spec::BasisDir, mesh::space::ParaDir};
 use json::{object, JsonValue};
 use std::{cmp::Ordering, fmt, ops::AddAssign};
 
+/// The record of polynomial expansion orders associated with an Elem
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct PolyOrders {
     /// Maximum u-directed polynomial expansion order
@@ -12,11 +13,9 @@ pub struct PolyOrders {
 }
 
 impl PolyOrders {
-    pub const fn from(i: u8, j: u8) -> Self {
-        Self { ni: i, nj: j }
-    }
-
     /// Update the u- and v-directed expansion orders according to a [PRef]
+    ///
+    /// Return an `Err` if the refinement causes the expansion orders to fall outside of the valid range
     pub fn refine(&mut self, refinement: PRef) -> Result<(), PRefError> {
         self.ni = refinement.refine_i(self.ni)?;
         self.nj = refinement.refine_j(self.nj)?;
@@ -24,9 +23,15 @@ impl PolyOrders {
         Ok(())
     }
 
+    /// Directly update the u- and v-directed expansion orders to the given values
+    ///
+    /// Return an `Err` if the given values are out of the valid range
     pub fn set(&mut self, [ni, nj]: [u8; 2]) -> Result<(), PRefError> {
         if ni > MAX_POLYNOMIAL_ORDER || nj > MAX_POLYNOMIAL_ORDER {
             return Err(PRefError::ExceededMaxExpansion);
+        }
+        if ni < 1 || nj < 1 {
+            return Err(PRefError::NegExpansion);
         }
 
         self.ni = ni;
@@ -35,7 +40,7 @@ impl PolyOrders {
         Ok(())
     }
 
-    /// Get the permutations of [i, j] for the u- or v-directed shape functions.
+    /// Get the permutations of [i, j] for the u-, v- or w-directed basis functions
     ///
     /// * For u-directed: i ∈ [0, Ni) and j ∈ [0, Nj]
     /// * For v-directed: i ∈ [0, Ni] and j ∈ [0, Nj)
@@ -57,6 +62,7 @@ impl PolyOrders {
         }
     }
 
+    /// The maximum orders from self and the given orders
     pub fn max_with(&self, orders: [u8; 2]) -> [u8; 2] {
         [
             std::cmp::max(self.ni, orders[0]),
@@ -64,6 +70,7 @@ impl PolyOrders {
         ]
     }
 
+    /// Return the expansion orders as an array of `usize`
     pub fn as_array(&self) -> [usize; 2] {
         [self.ni as usize, self.nj as usize]
     }
@@ -85,6 +92,7 @@ impl From<PolyOrders> for JsonValue {
     }
 }
 
+// the internal p-refinement type
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum PRefInt {
     Increment(u8),
@@ -118,6 +126,18 @@ impl PRefInt {
             Self::None => 0,
             Self::Increment(delta) => *delta as i8,
             Self::Decrement(delta) => -1 * (*delta as i8),
+        }
+    }
+
+    pub fn constrain(&mut self, bounds: [i8; 2]) {
+        match self {
+            Self::Increment(delta) => {
+                *delta = std::cmp::min(*delta, bounds[1] as u8);
+            }
+            Self::Decrement(delta) => {
+                *delta = std::cmp::min(*delta, bounds[0] as u8);
+            }
+            Self::None => (),
         }
     }
 }
@@ -160,23 +180,26 @@ impl fmt::Display for PRefInt {
     }
 }
 
+/// The p-Refinement Type
+///
+/// p-refinements are used to modify the expansion orders associated with an Elem
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-/// Description of a p-Refinement
 pub struct PRef {
     di: PRefInt,
     dj: PRefInt,
 }
 
 impl PRef {
-    pub const fn from(i: i8, j: i8) -> Self {
+    /// Create a new p-refinement with the given deltas for the i and j expansion orders
+    pub const fn from(delta_i: i8, delta_j: i8) -> Self {
         Self {
-            di: match i {
+            di: match delta_i {
                 0 => PRefInt::None,
                 d if d > 0 => PRefInt::Increment(d as u8),
                 d if d < 0 => PRefInt::Decrement(-d as u8),
                 _ => unreachable!(),
             },
-            dj: match j {
+            dj: match delta_j {
                 0 => PRefInt::None,
                 d if d > 0 => PRefInt::Increment(d as u8),
                 d if d < 0 => PRefInt::Decrement(-d as u8),
@@ -185,6 +208,7 @@ impl PRef {
         }
     }
 
+    /// Create a new p-refinement with the given deltas in a specific parametric direction
     pub fn on_dir(dir: ParaDir, delta: i8) -> Self {
         match dir {
             ParaDir::U => Self::from(delta, 0),
@@ -192,11 +216,17 @@ impl PRef {
         }
     }
 
+    /// Get the p-refinement deltas as an array of `i8`s
     pub fn as_array(&self) -> [i8; 2] {
-        [
-            self.di.as_i8(),
-            self.dj.as_i8(),
-        ]
+        [self.di.as_i8(), self.dj.as_i8()]
+    }
+
+    /// Constrict the p-refinement to sit within a given range
+    pub fn constrain_within(mut self, [u_bounds, v_bounds]: [[i8; 2]; 2]) -> Self {
+        self.di.constrain(u_bounds);
+        self.dj.constrain(v_bounds);
+
+        self
     }
 
     fn refine_i(&self, i_current: u8) -> Result<u8, PRefError> {
@@ -221,6 +251,7 @@ impl fmt::Display for PRef {
     }
 }
 
+/// The Error Type for invalid p-refinements
 #[derive(Debug)]
 pub enum PRefError {
     NegExpansion,

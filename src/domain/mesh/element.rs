@@ -29,6 +29,7 @@ impl Element {
     }
 
     // TODO: update this method to support curvilinear Elements
+    /// Get the mapping between Real and Parametric Space in the Element
     pub fn parametric_mapping(
         &self,
         _: V2D,
@@ -49,6 +50,9 @@ impl Element {
     }
 
     // TODO: update this method to support curvilinear Elements
+    /// Get the ordering of two points within the Element
+    ///
+    /// Points closer to the origin (0.0, 0.0) are smaller than points further from the origin
     pub fn order_points(&self, p0: &Point, p1: &Point) -> std::cmp::Ordering {
         match p0.orientation_with(p1) {
             ParaDir::U => p0.x_order(p1),

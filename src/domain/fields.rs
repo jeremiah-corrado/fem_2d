@@ -6,12 +6,12 @@ use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::time::SystemTime;
 
-// TODO: rework UniformFieldSpace and print_to_vtk functions to support curvilinear elements
+// TODO: update UniformFieldSpace and print_to_vtk functions after curvilinear elements are implemented
 // TODO: implement a constant (over x and y) density FieldSpace structure which supports field image exports
 
-/// A collection of Field Solutions over a [Domain].
+/// A collection of Field Solutions over a [Domain]
 ///
-/// Solutions can be operated on and printed to VTK files for visualization.
+/// Solutions can be operated on and printed to VTK files for visualization
 pub struct UniformFieldSpace<'d> {
     quantities: HashMap<String, FieldQuantity>,
     parametric_points: [Vec<f64>; 2],
@@ -22,8 +22,8 @@ pub struct UniformFieldSpace<'d> {
 impl<'d> UniformFieldSpace<'d> {
     /// Generate a FieldSpace over a [Domain]
     ///
-    /// * `domain`: is a reference to a Domain which must outlive this Structure. It is used for all subsequent computations
-    /// * `densities`: the number of evaluation points in the u and v directions respectively. These values apply to Elems on the shell of the Domain (their ancestor Elems will have more evaluation points)
+    /// The `densities` argument defines the size of the points grid that should be generated on the leaf-`Elems` (the most h-refined `Elem`s without children).
+    /// Non-leaf-`Elem`s will have denser point-grids because they are overlapped by multiple leaf-`Elem`s.
     pub fn new(domain: &'d Domain, densities: [usize; 2]) -> Self {
         Self {
             quantities: HashMap::new(),
@@ -38,19 +38,35 @@ impl<'d> UniformFieldSpace<'d> {
 
     // TODO: add option to include z-directed fields (after W-Dir & node-type Basis functions are implemented)
 
-    /// Use an eigenvector and associated [ShapeFn] to compute the X and Y fields over the `Domain`
+    /// Use an eigenvector and associated [ShapeFn] to compute the X and Y fields over the [Domain]
     ///
-    /// The X and Y field quantities will be stored as X_{vector_name} and Y_{vector_name} respectively. The Names are returned in an array in that order.
+    /// The X and Y field quantities will be stored as {vector_name}_x and {vector_name}_y respectively. The Names are returned in an array in that order.
+    ///
+    /// ```
+    /// use fem_2d::prelude::*;
+    ///
+    /// let domain = Domain::unit();
+    /// let unit_solution = vec![1.0; domain.dofs.len()];
+    ///
+    /// // construct a field space with a 10x10 grid on each leaf-`Elem`
+    /// let mut ufs = UniformFieldSpace::new(&domain, [10, 10]);
+    ///
+    /// // compute the X and Y fields over the domain using the unit eigenvector
+    /// let [x_name, y_name] = ufs.xy_fields::<KOLShapeFn>("unit_fields", unit_solution).unwrap();
+    ///
+    /// assert_eq!(x_name, String::from("unit_fields_x"));
+    /// assert_eq!(y_name, String::from("unit_fields_y"));
+    /// ```
     pub fn xy_fields<SF: ShapeFn>(
         &mut self,
         vector_name: &'static str,
-        eigenvector: Vec<f64>,
+        solution: Vec<f64>,
     ) -> Result<[String; 2], String> {
-        if eigenvector.len() != self.domain.dofs.len() {
+        if solution.len() != self.domain.dofs.len() {
             Err(format!(
-                "NDofs != Eigenvector length ({} != {}); Cannot compute xy fields over Domain",
+                "NDofs != Solution length ({} != {}); Cannot compute xy fields over Domain",
                 self.domain.dofs.len(),
-                eigenvector.len()
+                solution.len()
             ))
         } else {
             let x_q_name = format!("{}_x", vector_name);
@@ -90,7 +106,7 @@ impl<'d> UniformFieldSpace<'d> {
                                     BasisDir::U => bf.f_u([bs.i as usize, bs.j as usize], [m, n]),
                                     BasisDir::V => bf.f_v([bs.i as usize, bs.j as usize], [m, n]),
                                     _ => V2D::from([0.0, 0.0]),
-                                } * eigenvector[dof_id];
+                                } * solution[dof_id];
 
                                 x_values[m][n] += value.x();
                                 y_values[m][n] += value.y();
@@ -161,7 +177,7 @@ impl<'d> UniformFieldSpace<'d> {
             .iter()
             .filter(|elem| !elem.has_children())
         {
-            let diag_points = self.domain.mesh.elem_diag_points(shell_elem.id);
+            let diag_points = self.domain.mesh.elem_diag_points(shell_elem.id).unwrap();
             for x in uniform_range(diag_points[0].x, diag_points[1].x, self.densities[0]) {
                 for y in uniform_range(diag_points[0].y, diag_points[1].y, self.densities[1]) {
                     writeln!(writer, "{:.10} {:.10} 0.0", x, y)?;
@@ -215,6 +231,22 @@ impl<'d> UniformFieldSpace<'d> {
     }
 
     /// map an operation over a field quantity (`name`) and store the result in a new quantity (`result_name`)
+    ///
+    /// ```
+    /// use fem_2d::prelude::*;
+    ///
+    /// let domain = Domain::unit();
+    /// let unit_evec = vec![1.0; domain.dofs.len()];
+    ///
+    /// // construct a field space with a 10x10 grid on each leaf-`Elem`
+    /// let mut ufs = UniformFieldSpace::new(&domain, [10, 10]);
+    ///
+    /// // compute the X and Y fields over the domain using the unit eigenvector
+    /// let [x_name, _] = ufs.xy_fields::<KOLShapeFn>("unit_fields", unit_evec).unwrap();
+    ///
+    /// // take the absolute value of the X field
+    /// ufs.map_to_quantity(&x_name, "X_unit_abs", |x| x.abs());
+    /// ```
     pub fn map_to_quantity<F>(
         &mut self,
         name: impl AsRef<str>,
@@ -244,6 +276,22 @@ impl<'d> UniformFieldSpace<'d> {
     }
 
     /// evaluate an expression of two field quantities and store the result in a new quantity (`result_name`)
+    ///
+    /// ```
+    /// use fem_2d::prelude::*;
+    ///
+    /// let domain = Domain::unit();
+    /// let unit_evec = vec![1.0; domain.dofs.len()];
+    ///
+    /// // construct a field space with a 10x10 grid on each leaf-`Elem`
+    /// let mut ufs = UniformFieldSpace::new(&domain, [10, 10]);
+    ///
+    /// // compute the X and Y fields over the domain using the unit eigenvector
+    /// let xy_names = ufs.xy_fields::<KOLShapeFn>("unit_fields", unit_evec).unwrap();
+    ///
+    /// // compute the magnitude of the X and Y fields
+    /// ufs.expression_2arg(xy_names, "XY_Mag", |x, y| (x * x + y * y).sqrt());
+    /// ```
     pub fn expression_2arg<F>(
         &mut self,
         operand_names: [impl AsRef<str>; 2],
