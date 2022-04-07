@@ -1,5 +1,3 @@
-/// Functions to generate and scale Gauss-Legendre Quadrature points and weights.
-pub mod glq;
 /// Specific implementations of the `ShapeFn` Trait (MaxOrthoShapeFn can be added as a Feature on the Nightly Toolchain)
 pub mod shape_fns;
 
@@ -7,7 +5,7 @@ use crate::domain::mesh::{
     elem::Elem,
     space::{M2D, V2D},
 };
-use glq::{gauss_quadrature_points, scale_gauss_quad_points};
+use crate::integration::glq::{gauss_quadrature_points, scale_gauss_quad_points};
 
 use std::collections::HashMap;
 use std::rc::Rc;

@@ -1,6 +1,8 @@
 use crate::basis::{BasisFn, ShapeFn};
 use crate::domain::{dof::basis_spec::BasisDir, mesh::element::Materials};
 
+/// Methods to assist in Gauss-Legendre-Quadrature integration
+pub mod glq;
 /// Specific Implementations of the `Integral` Trait
 pub mod integrals;
 
@@ -13,9 +15,9 @@ pub enum IntegralResult {
 }
 
 impl IntegralResult {
-    /// get the full solution regardless of the variant
+    /// Retrieve the full solution regardless of the variant
     /// * Full: yields the solution as is
-    /// * ByPars: yields "face + edges.sum()""
+    /// * ByPars: yields "face + edges.sum()"
     pub fn full_solution(self) -> f64 {
         match self {
             Self::Full(full) => full,
@@ -23,7 +25,7 @@ impl IntegralResult {
         }
     }
 
-    /// get the `face` and `edge` solutions, panicking if the variant is Full
+    /// Retrieve the `face` and `edge` solutions separately, panicking if the variant is Full
     pub fn unwrap_parts(self) -> (f64, [f64; 4]) {
         match self {
             Self::Full(_) => {
@@ -33,7 +35,7 @@ impl IntegralResult {
         }
     }
 
-    /// get the solution over the `face` of the integrated area regardless of the variant
+    /// Retrieve the solution over the `face` of the integrated area regardless of the variant
     pub fn get_face(&self) -> f64 {
         match self {
             Self::Full(full) => *full,
@@ -41,9 +43,7 @@ impl IntegralResult {
         }
     }
 
-    /// get the solution over the `edges` of the integrated area regardless of the variant
-    ///
-    /// returns an array of zeros for the `Full` variant
+    /// Retrieve the solution over the `edges` of the integrated area regardless of the variant. (returns an array of zeros for the `Full` variant)
     pub fn get_edges(&self) -> [f64; 4] {
         match self {
             Self::Full(_) => [0.0; 4],

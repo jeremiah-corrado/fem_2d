@@ -1,6 +1,9 @@
 use crate::domain::mesh::elem::Elem;
 use std::fmt;
 
+/// A description of a basis function
+///
+/// This is used to describe a basis function and facilitate the construction of degrees-of-freedom. The information in this struct is also used to construct the actual `BasisFn` during Galerkin Sampling
 #[derive(Clone, Debug)]
 pub struct BasisSpec {
     pub id: usize,
@@ -14,6 +17,7 @@ pub struct BasisSpec {
 }
 
 impl BasisSpec {
+    /// Create a new `BasisSpec` over a given [Elem]
     pub fn new(id: usize, [i, j]: [u8; 2], dir: BasisDir, elem: &Elem) -> Self {
         let loc = match (i, j, dir) {
             (2..=u8::MAX, 2..=u8::MAX, _) => BasisLoc::ElemBs,
@@ -155,7 +159,7 @@ impl fmt::Display for BasisDir {
     }
 }
 
-/// The geometric unit a particular [BasisSpec] is associated with (for the purpose of matching)
+/// A Descriptionn of a basis functions geometric associations within a given [Elem]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BasisLoc {
     /// The BasisSpec's location is the same as its `elem_id`
@@ -167,24 +171,26 @@ pub enum BasisLoc {
 }
 
 impl BasisLoc {
+    /// Generate an Edge-Type `BasisLoc`
     pub fn edge_bs(elem: &Elem, idx: u8) -> Self {
         Self::EdgeBs(idx, elem.edges[idx as usize])
     }
 
+    /// Generate an Node-Type `BasisLoc`
     pub fn node_bs(elem: &Elem, idx: u8) -> Self {
         Self::NodeBs(idx, elem.nodes[idx as usize])
     }
 }
 
 #[derive(Clone, Copy, Debug)]
-/// A BasisSpec's index in an Elem's Vec<BasisSpec>
+/// A BasisSpec's index in an Elem's `Vec<BasisSpec>`
 pub struct BSAddress {
     pub elem_id: usize,
     pub elem_idx: usize,
 }
 
 impl BSAddress {
-    /// Create a new BSAddress from an Elem's id and an index into its Vec<BasisSpec>
+    /// Create a new BSAddress from an Elem's id and an index into its `Vec<BasisSpec>`
     pub fn new(elem_id: usize, elem_idx: usize) -> Self {
         Self { elem_id, elem_idx }
     }

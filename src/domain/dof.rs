@@ -6,13 +6,16 @@ use basis_spec::BSAddress;
 use smallvec::{smallvec, SmallVec};
 use std::fmt;
 
-/// A single degree of freedom
+/// A single Degree-of-Freedom in the connected system
+///
+/// A DoF specifies a basis function or group of basis functions who must share the same solution values
 pub struct DoF {
     pub id: usize,
     basis_specs: BasisSpecGroup,
 }
 
 impl DoF {
+    /// Create a new DoF with the given id and the associated basis functions
     pub fn new(id: usize, bs_addresses: SmallVec<[BSAddress; 4]>) -> Self {
         Self {
             id,
