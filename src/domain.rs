@@ -29,7 +29,7 @@ pub struct Domain {
 }
 
 impl Domain {
-    /// Create a Domain around a Blank-Mesh
+    /// Create a Domain around an empty mesh
     pub fn blank() -> Self {
         Self {
             mesh: Mesh::blank(),
@@ -38,7 +38,7 @@ impl Domain {
         }
     }
 
-    /// Create a Domain from a Unit-Mesh
+    /// Create a Domain from a unit Mesh
     pub fn unit() -> Self {
         Self::from_mesh(Mesh::unit())
     }
@@ -72,7 +72,15 @@ impl Domain {
 
     /// Retrieve a [BasisSpec] at a particular [BSAddress]
     ///
-    /// Returns an error if the designated `Elem` does not exist, or does not have that [BasisSpec]
+    /// # Returns
+    /// * A reference to the [BasisSpec] if it exists
+    /// * An `Err` if the `elem` does not exist
+    /// * An `Err` if the `elem` does not have a [BasisSpec] at the given `address`
+    ///
+    /// # Example
+    /// ```
+    ///
+    /// ```
     pub fn get_basis_spec(&self, bs_address: BSAddress) -> Result<&BasisSpec, String> {
         if bs_address.elem_id > self.mesh.elems.len() {
             Err(format!(
@@ -220,10 +228,7 @@ impl Domain {
     /// ```
     pub fn local_basis_specs(&self, elem_id: usize) -> Result<&Vec<BasisSpec>, MeshAccessError> {
         if elem_id >= self.mesh.elems.len() {
-            Err(format!(
-                "Elem {} doesn't exist; Cannot retrieve BasisSpecs!",
-                elem_id
-            ))
+            Err(MeshAccessError::ElemDoesNotExist(elem_id))
         } else {
             Ok(&self.basis_specs[elem_id])
         }
@@ -238,14 +243,14 @@ impl Domain {
     ///
     /// let mut mesh = Mesh::unit();
     /// mesh.set_global_expansion_orders([2, 2]).unwrap();
-    /// mesh.global_h_refinement(HRef::T).unwrap();
+    /// mesh.global_h_refinement(HRef::T);
     ///
     /// let dom = Domain::from_mesh(mesh);
     ///
     /// // get the basis specs from all of Elem 0's descendants
     /// let basis_specs = dom.descendant_basis_specs(0).unwrap();
     ///
-    /// // Elem 0 has 4 descendant Elems due to the T-Type h-Refinement
+    /// // Elem 0 has 4 descendant `Elem`s due to the T-Type h-Refinement
     /// assert_eq!(basis_specs.len(), 4);
     ///
     /// // there are 4 element-type and 4 edge-type basis specs in each direction on each descendant Elem
@@ -259,10 +264,7 @@ impl Domain {
         elem_id: usize,
     ) -> Result<Vec<(usize, &Vec<BasisSpec>)>, MeshAccessError> {
         if elem_id >= self.mesh.elems.len() {
-            Err(format!(
-                "Elem {} doesn't exist; Cannot retrieve Descendant BasisSpecs!",
-                elem_id
-            ))
+            Err(MeshAccessError::ElemDoesNotExist(elem_id))
         } else {
             let desc_elem_ids = self.mesh.descendant_elems(elem_id, false)?;
             Ok(desc_elem_ids
@@ -280,8 +282,8 @@ impl Domain {
     /// use fem_2d::prelude::*;
     ///
     /// let mut mesh = Mesh::unit();
-    /// mesh.set_global_expansion_orders([2, 2]).unwrap();
-    /// mesh.global_h_refinement(HRef::T).unwrap();
+    /// mesh.set_global_expansion_orders([2, 2]);
+    /// mesh.global_h_refinement(HRef::T);
     /// mesh.h_refine_elems(vec![1], HRef::T).unwrap();
     ///
     /// let dom = Domain::from_mesh(mesh);
@@ -305,10 +307,7 @@ impl Domain {
         elem_id: usize,
     ) -> Result<Vec<(usize, &Vec<BasisSpec>)>, MeshAccessError> {
         if elem_id >= self.mesh.elems.len() {
-            Err(format!(
-                "Elem {} doesn't exist; Cannot retrieve Ancestor BasisSpecs!",
-                elem_id
-            ))
+            Err(MeshAccessError::ElemDoesNotExist(elem_id))
         } else {
             let anc_elem_ids = self.mesh.ancestor_elems(elem_id, false)?;
             Ok(anc_elem_ids

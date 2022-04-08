@@ -122,6 +122,15 @@ impl PRefInt {
         }
     }
 
+    pub const fn from_i8(delta: i8) -> Self {
+        match delta {
+            0 => PRefInt::None,
+            d if d > 0 => PRefInt::Increment(d as u8),
+            d if d < 0 => PRefInt::Decrement(-d as u8),
+            _ => unreachable!(),
+        }
+    }
+
     pub fn as_i8(&self) -> i8 {
         match self {
             Self::None => 0,
@@ -131,15 +140,18 @@ impl PRefInt {
     }
 
     pub fn constrain(&mut self, bounds: [i8; 2]) {
-        match self {
-            Self::Increment(delta) => {
-                *delta = std::cmp::min(*delta, bounds[1] as u8);
-            }
-            Self::Decrement(delta) => {
-                *delta = std::cmp::min(*delta, bounds[0] as u8);
-            }
-            Self::None => (),
+        let si = self.as_i8();
+
+        if si < bounds[0] {
+            *self = Self::from_i8(bounds[0]);
+        } else if si > bounds[1] {
+            *self = Self::from_i8(bounds[1]);
         }
+    }
+
+    pub fn within(&self, bounds: [i8; 2]) -> bool {
+        let si = self.as_i8();
+        si >= bounds[0] && si <= bounds[1]
     }
 }
 
@@ -194,18 +206,8 @@ impl PRef {
     /// Create a new p-refinement with the given deltas for the i and j expansion orders
     pub const fn from(delta_i: i8, delta_j: i8) -> Self {
         Self {
-            di: match delta_i {
-                0 => PRefInt::None,
-                d if d > 0 => PRefInt::Increment(d as u8),
-                d if d < 0 => PRefInt::Decrement(-d as u8),
-                _ => unreachable!(),
-            },
-            dj: match delta_j {
-                0 => PRefInt::None,
-                d if d > 0 => PRefInt::Increment(d as u8),
-                d if d < 0 => PRefInt::Decrement(-d as u8),
-                _ => unreachable!(),
-            },
+            di: PRefInt::from_i8(delta_i),
+            dj: PRefInt::from_i8(delta_j),
         }
     }
 
@@ -232,10 +234,7 @@ impl PRef {
 
     /// Check if the refinement falls within the given bounds
     pub fn falls_within(&self, [u_bounds, v_bounds]: [[i8; 2]; 2]) -> bool {
-        self.di.as_i8() >= u_bounds[0]
-            && self.di.as_i8() <= u_bounds[1]
-            && self.dj.as_i8() >= v_bounds[0]
-            && self.dj.as_i8() <= v_bounds[1]
+        self.di.within(u_bounds) && self.dj.within(v_bounds)
     }
 
     fn refine_i(&self, i_current: u8) -> Result<u8, PRefError> {
@@ -307,5 +306,31 @@ impl From<MeshAccessError> for PRefError {
             MeshAccessError::ElemDoesNotExist(elem_id) => Self::ElemDoesNotExist(elem_id),
             _ => unreachable!(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn p_ref_constraints() {
+        let pr = PRef::from(4, 6);
+        let prc = pr.constrained_to([[0, 1], [-2, 5]]).as_array();
+        assert_eq!(prc[0], 1);
+        assert_eq!(prc[1], 5);
+
+        let pr_neg = PRef::from(-3, -2);
+        let prc_neg = pr_neg.constrained_to([[-2, 4], [0, 3]]).as_array();
+        assert_eq!(prc_neg[0], -2);
+        assert_eq!(prc_neg[1], 0);
+    }
+
+    #[test]
+    fn p_ref_falls_within() {
+        let pr = PRef::from(0, 10);
+        assert!(pr.falls_within([[0, 1], [-2, 10]]));
+        assert!(!pr.falls_within([[-2, -1], [3, 10]]));
+        assert!(!pr.falls_within([[-1, 1], [11, 14]]));
     }
 }

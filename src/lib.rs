@@ -50,11 +50,11 @@
 // ! * `json_export` (default): Functionality to export Mesh files for visualization with [this](https://github.com/jeremiah-corrado/fem_2d_mesh_plot) tool
 // ! * `max_ortho_basis`: A maximally orthogonal basis (requires Nightly toolchain!)
 
-// #![cfg_attr(
-//     feature = "max_ortho_basis",
-//     feature(const_fn_floating_point_arithmetic)
-// )]
-// #![doc = include_str!("../README.md")]
+#![cfg_attr(
+    feature = "max_ortho_basis",
+    feature(const_fn_floating_point_arithmetic)
+)]
+#![doc = include_str!("../README.md")]
 
 /// Structures and Traits for Basis Function Evaluation
 pub mod basis;
