@@ -1,3 +1,4 @@
+use super::MeshAccessError;
 use super::MAX_POLYNOMIAL_ORDER;
 use crate::domain::{dof::basis_spec::BasisDir, mesh::space::ParaDir};
 use json::{object, JsonValue};
@@ -222,11 +223,19 @@ impl PRef {
     }
 
     /// Constrict the p-refinement to sit within a given range
-    pub fn constrain_within(mut self, [u_bounds, v_bounds]: [[i8; 2]; 2]) -> Self {
+    pub fn constrained_to(mut self, [u_bounds, v_bounds]: [[i8; 2]; 2]) -> Self {
         self.di.constrain(u_bounds);
         self.dj.constrain(v_bounds);
 
         self
+    }
+
+    /// Check if the refinement falls within the given bounds
+    pub fn falls_within(&self, [u_bounds, v_bounds]: [[i8; 2]; 2]) -> bool {
+        self.di.as_i8() >= u_bounds[0]
+            && self.di.as_i8() <= u_bounds[1]
+            && self.dj.as_i8() >= v_bounds[0]
+            && self.dj.as_i8() <= v_bounds[1]
     }
 
     fn refine_i(&self, i_current: u8) -> Result<u8, PRefError> {
@@ -254,19 +263,49 @@ impl fmt::Display for PRef {
 /// The Error Type for invalid p-refinements
 #[derive(Debug)]
 pub enum PRefError {
+    // Errors caused by internal problems with the Mesh (Should never happen)
     NegExpansion,
     ExceededMaxExpansion,
-    ElemDoesntExist(usize),
-    DoubleRefinement(usize),
+    // Public Errors
+    DuplicateElemIds,
+    ElemDoesNotExist(usize),
+    RefinementOutOfBounds(usize),
 }
 
 impl fmt::Display for PRefError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::NegExpansion => write!(f, "Negative p-Refinement will result in 0 or negative expansion; Cannot p-Refine!"),
-            Self::ExceededMaxExpansion => write!(f, "Positive p-Refinement will result in expansion order over maximum; Cannot p-Refine!"),
-            Self::ElemDoesntExist(elem_id) => write!(f, "Elem {} does not exist; Cannot apply p-Refinement!", elem_id),
-            Self::DoubleRefinement(elem_id) => write!(f, "Multiple p-refinements were specified for Elem {}; Cannot apply p-Refinements", elem_id),
+            Self::NegExpansion => write!(
+                f,
+                "Negative p-Refinement results in 0 or negative expansion order; Cannot p-Refine!"
+            ),
+            Self::ExceededMaxExpansion => write!(
+                f,
+                "Positive p-Refinement results in expansion order over maximum; Cannot p-Refine!"
+            ),
+            Self::DuplicateElemIds => write!(
+                f,
+                "Duplicate element ids in p-Refinement; Cannot apply p-Refinement!"
+            ),
+            Self::ElemDoesNotExist(elem_id) => write!(
+                f,
+                "Elem {} does not exist; Cannot apply p-Refinement!",
+                elem_id
+            ),
+            Self::RefinementOutOfBounds(elem_id) => write!(
+                f,
+                "Refinement out of bounds for Elem {}; Cannot apply p-Refinement!",
+                elem_id
+            ),
+        }
+    }
+}
+
+impl From<MeshAccessError> for PRefError {
+    fn from(err: MeshAccessError) -> Self {
+        match err {
+            MeshAccessError::ElemDoesNotExist(elem_id) => Self::ElemDoesNotExist(elem_id),
+            _ => unreachable!(),
         }
     }
 }

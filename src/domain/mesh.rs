@@ -27,6 +27,7 @@ use json::{object, JsonValue};
 use smallvec::SmallVec;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
+use std::fmt;
 use std::fs::{read_to_string, File};
 use std::io::BufWriter;
 use std::sync::Arc;
@@ -51,8 +52,10 @@ pub struct Mesh {
 
 impl Mesh {
     /// Construct a Mesh with a single unit sized cell
+    ///
     /// * The cell is defined over [-1, +1] on the U and V axes
     /// * The Element has unit material Parameters
+    /// * The Element has an expansion order of 1 in both directions
     pub fn unit() -> Self {
         let points = [
             Point::from([-1.0, -1.0]),
@@ -94,11 +97,9 @@ impl Mesh {
         }
     }
 
-    /// Construct a Mesh from a JSON file with the following format
-    ///
-    /// The first "Element" and "Node" describe the meaning of each variable
-    ///
-    /// The following entries in each array describe this two element mesh:
+    /// Construct a Mesh from a JSON file with the following format:
+    /// * The first "Element" and "Node" describe the meaning of each variable
+    /// * The following entries in each array describe this two element mesh:
     /// ```text
     ///     3               4               5
     /// 0.5 *---------------*---------------*
@@ -327,7 +328,9 @@ impl Mesh {
 
     /// Print the mesh to a JSON file specified by path
     ///
-    /// The file format is designed to be plotted with [this](https://github.com/jeremiah-corrado/fem_2d_mesh_plot) tool. It is NOT the same format imported by the `Mesh::from_file` method.
+    /// This file format is designed to be plotted with [this](https://github.com/jeremiah-corrado/fem_2d_mesh_plot) tool. It is NOT the same format imported by the `Mesh::from_file` method.
+    ///
+    /// These files can also be very useful for debugging, as they contain most of the internal information for [Elem]s, [Edge]s, and [Node]s.
     #[cfg(feature = "json_export")]
     pub fn export_to_json(&mut self, path: impl AsRef<str>) -> std::io::Result<()> {
         self.set_edge_activation();
@@ -351,8 +354,13 @@ impl Mesh {
     // General Data Retrieval
     // ----------------------------------------------------------------------------------------------------
 
-    /// Get the four [Point]s composing an [`Elem`]
+    /// Get the four [Point]s connected to an [Elem]
     ///
+    /// # Returns
+    /// * `Ok([&Point; 4])`: References to the four points of the element
+    /// * `MeshAccessError`: If `elem_id` does not exist
+    ///
+    /// # Example
     /// ```
     /// use fem_2d::prelude::*;
     ///
@@ -365,46 +373,50 @@ impl Mesh {
     /// assert!((2.0 - height).abs() < 1e-14);
     /// assert!((2.0 - width).abs() < 1e-14);
     /// ```
-    pub fn elem_points(&self, elem_id: usize) -> Result<[&Point; 4], String> {
+    pub fn elem_points(&self, elem_id: usize) -> Result<[&Point; 4], MeshAccessError> {
         if elem_id < self.elems.len() {
             Ok(self.elems[elem_id]
                 .nodes
                 .map(|node_id| &self.nodes[node_id].coords))
         } else {
-            Err(format!(
-                "Elem {} does not exist; cannot retrieve points",
-                elem_id
-            ))
+            Err(MeshAccessError::ElemDoesNotExist(elem_id))
         }
     }
 
-    /// Get the minimum (idx 0) and maximum (idx 3) [Point]s from an [`Elem`]
+    /// Get the minimum (idx: 0) and maximum (idx: 3) [Point]s connected to an [Elem]
     ///
+    /// # Returns
+    /// * `Ok([&Point; 2])`: References to the two diagonal points of the element
+    /// * `MeshAccessError`: If `elem_id` does not exist
+    ///
+    /// # Example
     /// ```
     /// use fem_2d::prelude::*;
     ///
     /// let mesh = Mesh::unit();
     /// let [smallest, largest] = mesh.elem_diag_points(0).unwrap();
     ///
-    /// assert!((8.0_f64.sqrt() - smallest.dist(&largest)).abs() < 1e-14);
+    /// let diag_length = smallest.dist(&largest);
+    /// assert!((8.0_f64.sqrt() - diag_length).abs() < 1e-14);
     /// ```
-    pub fn elem_diag_points(&self, elem_id: usize) -> Result<[&Point; 2], String> {
+    pub fn elem_diag_points(&self, elem_id: usize) -> Result<[&Point; 2], MeshAccessError> {
         if elem_id < self.elems.len() {
             Ok([
                 &self.nodes[self.elems[elem_id].nodes[0]].coords,
                 &self.nodes[self.elems[elem_id].nodes[3]].coords,
             ])
         } else {
-            Err(format!(
-                "Elem {} does not exist; cannot retrieve diagonal points",
-                elem_id
-            ))
+            Err(MeshAccessError::ElemDoesNotExist(elem_id))
         }
     }
 
-    /// Get the two [Point]s composing an [`Edge`]
+    /// Get the two [Point]s composing an [Edge]
     ///
+    /// # Returns
+    /// * `Ok([&Point; 2])`: References to the two points of the [Edge]
+    /// * `MeshAccessError`: If the `edge_id` does not exist
     ///
+    /// # Example
     /// ```
     /// use fem_2d::prelude::*;
     ///
@@ -414,22 +426,26 @@ impl Mesh {
     /// let edge_length = points[0].dist(&points[1]);
     /// assert!((2.0 - edge_length).abs() < 1e-14);
     /// ```
-    pub fn edge_points(&self, edge_id: usize) -> Result<[&Point; 2], String> {
+    pub fn edge_points(&self, edge_id: usize) -> Result<[&Point; 2], MeshAccessError> {
         if edge_id < self.edges.len() {
             Ok([
                 &self.nodes[self.edges[edge_id].nodes[0]].coords,
                 &self.nodes[self.edges[edge_id].nodes[1]].coords,
             ])
         } else {
-            Err(format!(
-                "Edge {} does not exist; cannot retrieve points",
-                edge_id
-            ))
+            Err(MeshAccessError::EdgeDoesNotExist(edge_id))
         }
     }
 
-    /// Get a list of an [`Elem`]s descendant's IDs
+    /// Get a list of an [Elem]s descendant's IDs
     ///
+    /// The order of the descendant ids is effectively arbitrary (ids are accumulated through a recursive DFS of the elem-tree). The `elem_id` itself can be included with the `include_starting_elem` argument.
+    ///
+    /// # Returns
+    /// * `Ok(Vec<usize>)`: A list of descendant IDs
+    /// * `MeshAccessError`: If the `elem_id` does not exist
+    ///
+    /// # Example
     /// ```
     /// use std::collections::HashSet;
     /// use fem_2d::prelude::*;
@@ -455,12 +471,9 @@ impl Mesh {
         &self,
         elem_id: usize,
         include_starting_elem: bool,
-    ) -> Result<Vec<usize>, String> {
+    ) -> Result<Vec<usize>, MeshAccessError> {
         if elem_id >= self.elems.len() {
-            Err(format!(
-                "Elem {} doesn't exist; Cannot retrieve descendant Elems!",
-                elem_id
-            ))
+            Err(MeshAccessError::ElemDoesNotExist(elem_id))
         } else {
             let mut descendants = Vec::new();
             self.rec_descendant_elems(elem_id, include_starting_elem, &mut descendants);
@@ -479,10 +492,16 @@ impl Mesh {
         }
     }
 
-    /// Get a list of an [`Elem`]s ancestors's IDs
+    /// Get a list of an [Elem]s ancestors's IDs
     ///
+    /// The ancestors are in order (starting with `elem_id` moving towards the base of the tree). The `elem_id` itself can be included with the `include_starting_elem` argument.
+    ///
+    /// # Returns
+    /// * `Ok(Vec<usize>)`: A list of ancestor IDs
+    /// * `MeshAccessError`: If the `elem_id` does not exist
+    ///
+    /// # Example
     /// ```
-    /// use std::collections::HashSet;
     /// use fem_2d::prelude::*;
     ///
     /// let mut mesh = Mesh::unit();
@@ -490,28 +509,19 @@ impl Mesh {
     /// mesh.h_refine_elems(vec![1], HRef::T).unwrap();
     /// mesh.h_refine_elems(vec![5], HRef::U(None)).unwrap();
     ///
-    /// let ancestors_with_start: HashSet<usize> = mesh.ancestor_elems(10, true)
-    ///    .unwrap()
-    ///    .drain(0..)
-    ///    .collect();
-    /// assert_eq!(ancestors_with_start, HashSet::from([0, 1, 5, 10]));
+    /// let ancestors_with_start = mesh.ancestor_elems(10, true).unwrap();
+    /// assert_eq!(ancestors_with_start, vec![10, 5, 1, 0]);
     ///
-    /// let ancestors_without_start: HashSet<usize> = mesh.ancestor_elems(10, false)
-    ///    .unwrap()
-    ///    .drain(0..)
-    ///    .collect();
-    /// assert_eq!(ancestors_without_start, HashSet::from([0, 1, 5]));
+    /// let ancestors_without_start = mesh.ancestor_elems(10, false).collect();
+    /// assert_eq!(ancestors_without_start, vec![5, 1, 0]);
     /// ```
     pub fn ancestor_elems(
         &self,
         elem_id: usize,
         include_starting_elem: bool,
-    ) -> Result<Vec<usize>, String> {
+    ) -> Result<Vec<usize>, MeshAccessError> {
         if elem_id >= self.elems.len() {
-            Err(format!(
-                "Elem {} doesn't exist; Cannot retrieve ancestor Elems!",
-                elem_id
-            ))
+            Err(MeshAccessError::ElemDoesNotExist(elem_id))
         } else {
             let mut ancestors = Vec::new();
             self.rec_ancestor_elems(elem_id, include_starting_elem, &mut ancestors);
@@ -528,8 +538,16 @@ impl Mesh {
         }
     }
 
-    /// Get a list of an [`Edge`]s descendant's IDs
+    /// Get a list of an [Edge]s descendant's IDs
     ///
+    /// The order of the descendant ids is effectively arbitrary (ids are accumulated through a recursive DFS of the edge-tree). The `edge_id` itself can be included with the `include_starting_edge` argument.
+    ///
+    /// # Returns
+    /// * `Ok(Vec<usize>)`: The list of descendant IDs
+    /// * `MeshAccessError`: If the `edge_id` does not exist
+    ///
+    /// # Example
+    /// showing that descendant edges share the same nodes
     /// ```
     /// use fem_2d::prelude::*;
     ///
@@ -558,12 +576,9 @@ impl Mesh {
         &self,
         edge_id: usize,
         include_starting_edge: bool,
-    ) -> Result<Vec<usize>, String> {
+    ) -> Result<Vec<usize>, MeshAccessError> {
         if edge_id > self.edges.len() {
-            Err(format!(
-                "Edge {} does not exist; Cannot retrieve descendant Edges!",
-                edge_id
-            ))
+            Err(MeshAccessError::EdgeDoesNotExist(edge_id))
         } else {
             let mut descendants = Vec::new();
             self.rec_descendant_edges(edge_id, include_starting_edge, &mut descendants);
@@ -582,8 +597,13 @@ impl Mesh {
         }
     }
 
-    /// Maximum polynomial expansion orders represented among all `Elem`s in the `Mesh`
+    /// Get the maximum polynomial expansion orders represented among all [Elem]s in the `Mesh`
     ///
+    /// # Returns
+    /// * An array of the form: `[u_max, v_max]`
+    /// * `[0, 0]` if the `Mesh` is empty
+    ///
+    /// # Example
     /// ```
     /// use fem_2d::prelude::*;
     ///
@@ -607,15 +627,18 @@ impl Mesh {
             .fold([0; 2], |acc, elem| elem.poly_orders.max_with(acc))
     }
 
-    /// Determine if this Elem can be h-refined
-    /// * returns false if the Elem already has children (meaning it can't be h-refined again)
-    /// * returns false if any of the Elem's Edges are shorter than [MIN_EDGE_LENGTH]
-    /// * returns an `Err` if the Mesh doesn't have `elem_id`
+    /// Determine if an [Elem] can be h-refined
     ///
-    /// This can be useful for manually filtering a list of h-refinements before applying them to a mesh.
-    pub fn elem_is_h_refineable(&self, elem_id: usize) -> Result<bool, HRefError> {
+    /// # Returns
+    /// * `Ok(false)`: if the Elem already has children (meaning it can't be h-refined again)
+    /// * `Ok(false)`: if any of the Elem's Edges are shorter than [MIN_EDGE_LENGTH]
+    /// * `MeshAccessError`: if `elem_id` does not exist
+    /// * `Ok(true)`: otherwise
+    ///
+    /// This can be useful for manually filtering a list of h-refinements before applying them to a mesh
+    pub fn elem_is_h_refineable(&self, elem_id: usize) -> Result<bool, MeshAccessError> {
         if elem_id >= self.elems.len() {
-            Err(HRefError::ElemDoesntExist(elem_id))
+            Err(MeshAccessError::ElemDoesNotExist(elem_id))
         } else {
             let elem = &self.elems[elem_id];
             Ok(!elem.has_children()
@@ -626,29 +649,23 @@ impl Mesh {
         }
     }
 
-    /// Determine if this Elem can be p-refined (in the positive direction)
-    /// * returns false if the Elem's expansion orders have exceeded [MAX_POLYNOMIAL_ORDER] in the u- or v-directions
-    /// * returns an `Err` if the Mesh doesn't have `elem_id`
+    /// Compute the window of valid p-refinement magnitudes for an [Elem]
     ///
-    /// This can be useful for manually filtering a list of p-refinements before applying them to a mesh.
-    pub fn elem_is_p_refineable(&self, elem_id: usize) -> Result<bool, PRefError> {
+    /// Valid magnitudes will keep expansion orders within the range `[1, MAX_POLYNOMIAL_ORDER]`
+    ///
+    /// For example, if an [Elem] has expansion orders of `[4, 6]`, then the valid p-refinement windows are:
+    /// * `u_window` = `[-3, MAX_POLYNOMIAL_ORDER - 4]`
+    /// * `v_window` = `[-5, MAX_POLYNOMIAL_ORDER - 6]`
+    ///
+    /// # Returns:
+    /// * `Ok([u_window, v_window])`, where `u_window` and `v_window` have the valid minimum and maximum p-refinement magnitudes in the u- and v-directions, respectively
+    /// * `MeshAccessError` if the `elem_id` does not exist
+    pub fn elem_p_refinement_window(
+        &self,
+        elem_id: usize,
+    ) -> Result<[[i8; 2]; 2], MeshAccessError> {
         if elem_id >= self.elems.len() {
-            Err(PRefError::ElemDoesntExist(elem_id))
-        } else {
-            Ok(self.elems[elem_id].poly_orders.ni < MAX_POLYNOMIAL_ORDER
-                && self.elems[elem_id].poly_orders.nj < MAX_POLYNOMIAL_ORDER)
-        }
-    }
-
-    /// Compute the minimum and maximum allowable p-refinement magnitudes for an `Elem` in the u- and v-directions.
-    ///
-    /// * returns and `Err` if the Mesh doesn't have `elem_id`
-    /// * otherwise, returns an array of the form: [[min_u_ref_mag, max_u_ref_mag], [min_v_ref_mag, max_v_ref_mag]]
-    ///
-    /// p-refinements within these bounds will ensure that the Elem's polynomial expansion orders remain within [1, MAX_POLYNOMIAL_ORDER]
-    pub fn elem_p_refinement_window(&self, elem_id: usize) -> Result<[[i8; 2]; 2], PRefError> {
-        if elem_id >= self.elems.len() {
-            Err(PRefError::ElemDoesntExist(elem_id))
+            Err(MeshAccessError::ElemDoesNotExist(elem_id))
         } else {
             let elem = &self.elems[elem_id];
 
@@ -672,20 +689,21 @@ impl Mesh {
 
     /// Apply an [HRef] to all [Elem]s in the Mesh that are eligible for h-refinement
     ///
+    /// # Example
     /// ```
     /// use fem_2d::prelude::*;
     ///
     /// let mut mesh = Mesh::unit();
     /// assert_eq!(mesh.elems.len(), 1);
     ///
-    /// mesh.global_h_refinement(HRef::T).unwrap();
+    /// mesh.global_h_refinement(HRef::T);
     /// assert_eq!(mesh.elems.len(), 5);
     ///
-    /// mesh.global_h_refinement(HRef::V(None)).unwrap();
+    /// mesh.global_h_refinement(HRef::V(None));
     /// assert_eq!(mesh.elems.len(), 13);
     ///
     /// ```
-    pub fn global_h_refinement(&mut self, refinement: HRef) -> Result<(), HRefError> {
+    pub fn global_h_refinement(&mut self, refinement: HRef) {
         self.execute_h_refinements(
             self.elems
                 .iter()
@@ -693,10 +711,17 @@ impl Mesh {
                 .map(|shell_elem| (shell_elem.id, refinement))
                 .collect(),
         )
+        .unwrap()
     }
 
-    /// Apply an [HRef] to a group of [Elem]s in the Mesh (specified by their IDs)
+    /// Apply an [HRef] to a list of [Elem]s by their IDs
     ///
+    /// # Returns an `Err` if
+    /// * any of the `elem_ids` do not exist
+    /// * any of the `elem_ids` are not eligible for h-refinement
+    /// * there are any duplicate `elem_ids`
+    ///
+    /// # Example
     /// ```
     /// use fem_2d::prelude::*;
     ///
@@ -710,17 +735,27 @@ impl Mesh {
     /// assert_eq!(mesh.elems.len(), 11);
     ///
     /// assert!(mesh.h_refine_elems(vec![0], HRef::T).is_err());
+    /// assert!(mesh.h_refine_elems(vec![1, 1], HRef::T).is_err());
     /// ```
     pub fn h_refine_elems(&mut self, elems: Vec<usize>, refinement: HRef) -> Result<(), HRefError> {
+        if elems
+            .iter()
+            .enumerate()
+            .any(|(i, eid)| elems.iter().skip(i).any(|eid_t| eid_t == eid))
+        {
+            return Err(HRefError::DuplicateElemIds);
+        }
+
         self.execute_h_refinements(elems.iter().map(|elem_id| (*elem_id, refinement)).collect())
     }
 
     /// Map a refinement closure over all [Elem]s in the Mesh that are eligible for h-refinement
     ///
-    /// The closure takes an [Elem] and returns an `Option<[HRef]>`
+    /// Provide a closure that takes a reference to an [Elem] and returns an `Option<[HRef]>`
     /// * If the Option is `None`, the Elem is not h-refined
     /// * If it is `Some(refinement)`, the Elem is h-refined with the refinement
     ///
+    /// # Example
     /// ```
     /// use fem_2d::prelude::*;
     ///
@@ -738,7 +773,7 @@ impl Mesh {
     /// }).unwrap();
     /// assert_eq!(mesh.elems.len(), 9);
     /// ```
-    pub fn h_refine_with_filter<F>(&mut self, filt: F) -> Result<(), HRefError>
+    pub fn h_refine_with_filter<F>(&mut self, filt: F)
     where
         F: Fn(&Elem) -> Option<HRef>,
     {
@@ -751,13 +786,18 @@ impl Mesh {
                 .map(|(id, refinement)| (id, refinement.unwrap()))
                 .collect(),
         )
+        .unwrap()
     }
 
     /// Directly execute a group of [HRef]s on a list of [Elem]s
     ///
-    /// If multiple [HRef]s are provided for a single [Elem], they are combined using the addition semantics defined on [Href]
+    /// If multiple [HRef]s are provided for a single [Elem], they are combined using the addition semantics defined on [HRef]
     ///
-    /// Returns an `Err` if any of the [Elem]s are not eligible for h-refinement
+    /// # Returns an `Err` if
+    /// * any of the `elem_ids` do not exist
+    /// * any of the `elem_ids` are not eligible for h-refinement
+    ///
+    /// If any errors are encountered, none of the refinements are executed!
     ///
     /// ```
     /// use fem_2d::prelude::*;
@@ -788,14 +828,16 @@ impl Mesh {
     ) -> Result<(), HRefError> {
         let mut refinements_map: BTreeMap<usize, HRef> = BTreeMap::new();
         for (elem_id, h_ref) in refinements {
-            if let Err(err) = self.elem_is_h_refineable(elem_id) {
-                return Err(err);
+            match self.elem_is_h_refineable(elem_id) {
+                Ok(true) => {
+                    refinements_map
+                        .entry(elem_id)
+                        .and_modify(|elem_ref| *elem_ref += h_ref)
+                        .or_insert(h_ref);
+                }
+                Ok(false) => return Err(HRefError::ElemNotRefineable(elem_id)),
+                Err(err) => return Err(HRefError::from(err)),
             }
-
-            refinements_map
-                .entry(elem_id)
-                .and_modify(|elem_ref| *elem_ref += h_ref)
-                .or_insert(h_ref);
         }
 
         let mut refinement_extensions: Vec<(usize, HRef)> = Vec::new();
@@ -1159,6 +1201,10 @@ impl Mesh {
 
     /// Apply a [PRef] to all [Elem]s
     ///
+    /// Each p-refinement is constrained to fit within the [Elem]'s valid `elem_p_refinement_window`
+    ///
+    /// # Examples
+    /// basic usage
     /// ```
     /// use fem_2d::prelude::*;
     ///
@@ -1166,23 +1212,54 @@ impl Mesh {
     /// mesh.global_h_refinement(HRef::T).unwrap();
     /// mesh.global_h_refinement(HRef::T).unwrap();
     ///
-    /// mesh.global_p_refinement(PRef::from(3, 4)).unwrap();
+    /// // globally refine the mesh with [+3, +5] (where expansion orders start at [1, 1])
+    /// mesh.global_p_refinement(PRef::from(3, 5)).unwrap();
     /// for elem in mesh.elems.iter() {
     ///     assert_eq!(elem.poly_orders.ni, 4);
-    ///     assert_eq!(elem.poly_orders.nj, 5);
+    ///     assert_eq!(elem.poly_orders.nj, 6);
     /// }
     /// ```
-    pub fn global_p_refinement(&mut self, refinement: PRef) -> Result<(), PRefError> {
+    ///
+    /// positive and negative p-refinements are constrained to fit within the valid range on each [Elem]
+    /// ```
+    /// use fem_2d::prelude::*;
+    ///
+    /// let mut mesh = Mesh::unit();
+    /// mesh.global_h_refinement(HRef::T).unwrap();
+    /// mesh.set_expansion_on_elems(vec![1], [MAX_POLYNOMIAL_ORDER - 2, 2]);
+    /// mesh.set_expansion_on_elems(vec![2], [3, 5]);
+    ///
+    /// // apply a global p-refinement
+    /// mesh.global_p_refinement(PRef::from(3, -3));
+    ///
+    /// // refinements on elem 1 are constrained to fit within the valid range
+    /// assert_eq!(mesh.elems[1].poly_orders.ni, MAX_POLYNOMIAL_ORDER);
+    /// assert_eq!(mesh.elems[1].poly_orders.nj, 1);
+    ///
+    /// // refinements on elem 2 did not need to be constrained
+    /// assert_eq!(mesh.elems[2].poly_orders.ni, 6);
+    /// assert_eq!(mesh.elems[2].poly_orders.nj, 2);
+    /// ```
+    pub fn global_p_refinement(&mut self, refinement: PRef) {
         self.execute_p_refinements(
             self.elems
                 .iter()
-                .map(|elem| (elem.id, refinement))
+                .map(|elem| {
+                    let valid_window = self.elem_p_refinement_window(elem.id).unwrap();
+                    (elem.id, refinement.constrained_to(valid_window))
+                })
                 .collect(),
         )
+        .unwrap()
     }
 
-    /// Apply a [PRef] to a list of [Elem]s by their ID
+    /// Apply a [PRef] to a list of [Elem]s by their IDs
     ///
+    /// # Returns an `Err` if
+    /// * Any of the [Elem]s does not exist
+    /// * There are duplicates in the list of [Elem] IDs
+    ///
+    /// # Example
     /// ```
     /// use fem_2d::prelude::*;
     ///
@@ -1198,6 +1275,13 @@ impl Mesh {
     /// ```
     ///
     pub fn p_refine_elems(&mut self, elems: Vec<usize>, refinement: PRef) -> Result<(), PRefError> {
+        if elems
+            .iter()
+            .enumerate()
+            .any(|(i, eid)| elems.iter().skip(i).any(|eid_t| eid_t == eid))
+        {
+            return Err(PRefError::DuplicateElemIds);
+        }
         self.execute_p_refinements(elems.iter().map(|elem_id| (*elem_id, refinement)).collect())
     }
 
@@ -1205,13 +1289,14 @@ impl Mesh {
     ///
     /// The closure takes an [Elem] and returns an `Option<[PRef]>`
     /// * If the Option is `None`, the Elem is not p-refined
-    /// * If it is `Some(refinement)`, the Elem is p-refined with the refinement (constrained within the valid range via [elem_p_refinement_window])
+    /// * If it is `Some(refinement)`, the Elem is p-refined with the refinement (constrained within the valid range via `elem_p_refinement_window`)
     ///
+    /// # Example
     /// ```
     /// use fem_2d::prelude::*;
     ///
     /// let mut mesh = Mesh::unit();
-    /// mesh.h_refine_elems(vec![0], HRef::T).unwrap();
+    /// mesh.global_h_refinement(HRef::T);
     /// mesh.execute_h_refinements(vec![
     ///     (1, HRef::T),
     ///     (2, HRef::T),
@@ -1226,34 +1311,31 @@ impl Mesh {
     ///     } else {
     ///         None
     ///     }
-    /// }).unwrap();
+    /// })
     ///
+    /// // check that the isotropically h-refined elems were p-refined
     /// for cei in mesh.descendant_elems(1, false)
     ///     .unwrap()
     ///     .iter()
     ///     .chain(
     ///         mesh.descendant_elems(2, false)
-    ///         .unwrap()
-    ///         .iter()
     ///     ) {
     ///         assert_eq!(mesh.elems[*cei].poly_orders.ni, 4);
     ///         assert_eq!(mesh.elems[*cei].poly_orders.nj, 2);
     /// }
     ///
+    /// // check that the anisotropically h-refined elems were NOT p-refined
     /// for cei in mesh.descendant_elems(3, false)
     ///     .unwrap()
     ///     .iter()
     ///     .chain(
     ///         mesh.descendant_elems(4, false)
-    ///         .unwrap()
-    ///         .iter()
     ///     ) {
     ///         assert_eq!(mesh.elems[*cei].poly_orders.ni, 1);
     ///         assert_eq!(mesh.elems[*cei].poly_orders.nj, 1);
     /// }
-    ///
     /// ```
-    pub fn p_refine_with_filter<F>(&mut self, filt: F) -> Result<(), PRefError>
+    pub fn p_refine_with_filter<F>(&mut self, filt: F)
     where
         F: Fn(&Elem) -> Option<PRef>,
     {
@@ -1267,26 +1349,28 @@ impl Mesh {
                         id,
                         refinement
                             .unwrap()
-                            .constrain_within(self.elem_p_refinement_window(id).unwrap()),
+                            .constrained_to(self.elem_p_refinement_window(id).unwrap()),
                     )
                 })
                 .collect(),
         )
+        .unwrap()
     }
 
-    /// Map a refinement closure over all [Elem]s in the Mesh
+    /// Map a refinement closure over all [Elem]s in the Mesh, with direct control over refinement constraints
     ///
     /// The closure takes an [Elem] and a set of valid refinement bounds, and returns an `Option<[PRef]>`
     /// * If the Option is `None`, the Elem is not p-refined
     /// * If it is `Some(refinement)`, the Elem is p-refined with the refinement
     ///
-    /// Unlike [p_refine_with_filter], this closure is responsible for constraining the refinement to the valid range
+    /// Unlike [p_refine_with_filter], this closure is responsible for constraining the refinement to the valid range. An `Err` will be returned, and refinement will be aborted if any of the refinements do not fall within the valid range.
     ///
+    /// # Example
     /// ```
     /// use fem_2d::prelude::*;
     ///
     /// let mut mesh = Mesh::unit();
-    /// mesh.h_refine_elems(vec![0], HRef::T).unwrap();
+    /// mesh.global_h_refinement(HRef::T);
     /// mesh.execute_h_refinements(vec![
     ///     (1, HRef::T),
     ///     (2, HRef::T),
@@ -1294,9 +1378,8 @@ impl Mesh {
     ///     (4, HRef::V(None)),
     /// ]).unwrap();
     ///
-    /// // positively p-refine the elems who resulted from isotropic h-refinements S.T. the refinement orders are 5 less than the maximum allowed
-    /// // negatively p-refine the others S.T. the refinement orders are 1 less than the minimum allowed
-    ///
+    /// // positively p-refine the elems who resulted from isotropic h-refinements S.T. the refinement deltas are 5 less than the maximum allowed
+    /// // negatively p-refine the others S.T. the refinement deltas are 1 less than the minimum allowed
     /// mesh.p_refine_with_filter_bounded(|elem, bounds| {
     ///     if elem.h_levels.u >= 2 && elem.h_levels.v >= 2 {
     ///         Some(PRef::from(bounds[0][1] - 5, bounds[1][1] - 5))
@@ -1328,8 +1411,13 @@ impl Mesh {
     ///
     /// If multiple [PRef]s are provided for a single [Elem], they are combined using the addition semantics defined on [PRef]
     ///
-    /// Returns an `Err` if any of the [Elem]s does not exist
+    /// # Returns an `Err` if
+    /// * Any of the `elem_id`'s does not exist
+    /// * Any of the [PRef]s are outside the valid range for their respective [Elem]
     ///
+    /// If any errors are encountered, none of the refinements are executed! Range-validity is checked after duplicate refinements have been combined.
+    ///
+    /// # Example
     /// ```
     /// use fem_2d::prelude::*;
     ///
@@ -1362,13 +1450,20 @@ impl Mesh {
         let mut refinements_map: BTreeMap<usize, PRef> = BTreeMap::new();
         for (elem_id, p_ref) in refinements {
             if elem_id >= self.elems.len() {
-                return Err(PRefError::ElemDoesntExist(elem_id));
+                return Err(PRefError::ElemDoesNotExist(elem_id));
             }
 
             refinements_map
                 .entry(elem_id)
                 .and_modify(|elem_ref| *elem_ref += p_ref)
                 .or_insert(p_ref);
+        }
+
+        for (elem_id, refinement) in refinements_map.iter() {
+            let bounds = self.elem_p_refinement_window(*elem_id)?;
+            if !refinement.falls_within(bounds) {
+                return Err(PRefError::RefinementOutOfBounds(*elem_id));
+            }
         }
 
         for (elem_id, refinement) in refinements_map {
@@ -1471,7 +1566,7 @@ impl Mesh {
         let mut poly_orders_map: BTreeMap<usize, [u8; 2]> = BTreeMap::new();
         for (elem_id, orders) in poly_orders {
             if elem_id >= self.elems.len() {
-                return Err(PRefError::ElemDoesntExist(elem_id));
+                return Err(PRefError::ElemDoesNotExist(elem_id));
             }
             if orders[0] > MAX_POLYNOMIAL_ORDER || orders[1] > MAX_POLYNOMIAL_ORDER {
                 return Err(PRefError::ExceededMaxExpansion);
@@ -1480,7 +1575,7 @@ impl Mesh {
                 return Err(PRefError::NegExpansion);
             }
             if poly_orders_map.insert(elem_id, orders).is_some() {
-                return Err(PRefError::DoubleRefinement(elem_id));
+                return Err(PRefError::DuplicateElemIds);
             }
         }
 
@@ -1623,6 +1718,29 @@ where
     false
 }
 
+#[derive(Debug)]
+pub enum MeshAccessError {
+    ElemDoesNotExist(usize),
+    EdgeDoesNotExist(usize),
+    NodeDoesNotExist(usize),
+}
+
+impl fmt::Display for MeshAccessError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::EdgeDoesNotExist(edge_id) => {
+                write!(f, "Attempt to access non-existent edge: {}!", edge_id)
+            }
+            Self::ElemDoesNotExist(elem_id) => {
+                write!(f, "Attempt to access non-existent elem: {}!", elem_id)
+            }
+            Self::NodeDoesNotExist(node_id) => {
+                write!(f, "Attempt to access non-existent node: {}!", node_id)
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1720,27 +1838,23 @@ mod tests {
     fn proper_edge_order() {
         let mut mesh_b = Mesh::from_file("./test_input/test_mesh_b.json").unwrap();
 
-        mesh_b.global_h_refinement(HRef::T).unwrap();
+        mesh_b.global_h_refinement(HRef::T);
         let boundary_edges: Vec<bool> = mesh_b.edges.iter().map(|edge| edge.boundary).collect();
-        mesh_b
-            .h_refine_with_filter(|elem| {
-                if elem.edges.iter().any(|edge_id| boundary_edges[*edge_id]) {
-                    Some(HRef::U(None))
-                } else {
-                    None
-                }
-            })
-            .unwrap();
-        mesh_b
-            .h_refine_with_filter(|elem| {
-                if elem.nodes.contains(&4) {
-                    Some(HRef::T)
-                } else {
-                    Some(HRef::V(None))
-                }
-            })
-            .unwrap();
-        mesh_b.global_h_refinement(HRef::U(Some(1))).unwrap();
+        mesh_b.h_refine_with_filter(|elem| {
+            if elem.edges.iter().any(|edge_id| boundary_edges[*edge_id]) {
+                Some(HRef::U(None))
+            } else {
+                None
+            }
+        });
+        mesh_b.h_refine_with_filter(|elem| {
+            if elem.nodes.contains(&4) {
+                Some(HRef::T)
+            } else {
+                Some(HRef::V(None))
+            }
+        });
+        mesh_b.global_h_refinement(HRef::U(Some(1)));
 
         for elem in mesh_b.elems.iter() {
             let points = mesh_b.elem_points(elem.id).unwrap();
@@ -1826,15 +1940,13 @@ mod tests {
 
         // repeatedly refine the bottom left cell
         for _ in 0..18 {
-            mesh_c
-                .h_refine_with_filter(|elem| {
-                    if !elem.has_children() && elem.nodes[0] == 0 {
-                        Some(HRef::T)
-                    } else {
-                        None
-                    }
-                })
-                .unwrap()
+            mesh_c.h_refine_with_filter(|elem| {
+                if !elem.has_children() && elem.nodes[0] == 0 {
+                    Some(HRef::T)
+                } else {
+                    None
+                }
+            })
         }
     }
 

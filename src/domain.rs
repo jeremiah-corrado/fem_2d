@@ -218,7 +218,7 @@ impl Domain {
     /// // 2 elem-type basis specs in each direction
     /// assert_eq!(basis_specs.len(), 4);
     /// ```
-    pub fn local_basis_specs(&self, elem_id: usize) -> Result<&Vec<BasisSpec>, String> {
+    pub fn local_basis_specs(&self, elem_id: usize) -> Result<&Vec<BasisSpec>, MeshAccessError> {
         if elem_id >= self.mesh.elems.len() {
             Err(format!(
                 "Elem {} doesn't exist; Cannot retrieve BasisSpecs!",
@@ -257,7 +257,7 @@ impl Domain {
     pub fn descendant_basis_specs(
         &self,
         elem_id: usize,
-    ) -> Result<Vec<(usize, &Vec<BasisSpec>)>, String> {
+    ) -> Result<Vec<(usize, &Vec<BasisSpec>)>, MeshAccessError> {
         if elem_id >= self.mesh.elems.len() {
             Err(format!(
                 "Elem {} doesn't exist; Cannot retrieve Descendant BasisSpecs!",
@@ -303,7 +303,7 @@ impl Domain {
     pub fn ancestor_basis_specs(
         &self,
         elem_id: usize,
-    ) -> Result<Vec<(usize, &Vec<BasisSpec>)>, String> {
+    ) -> Result<Vec<(usize, &Vec<BasisSpec>)>, MeshAccessError> {
         if elem_id >= self.mesh.elems.len() {
             Err(format!(
                 "Elem {} doesn't exist; Cannot retrieve Ancestor BasisSpecs!",
@@ -649,7 +649,7 @@ mod tests {
     fn create_domain() {
         let mut mesh = Mesh::from_file("./test_input/test_mesh_a.json").unwrap();
         mesh.set_global_expansion_orders([5, 5]).unwrap();
-        mesh.global_h_refinement(HRef::T).unwrap();
+        mesh.global_h_refinement(HRef::T);
         mesh.h_refine_elems(vec![4, 5], HRef::T).unwrap();
         mesh.h_refine_elems(vec![6, 7], HRef::u()).unwrap();
         mesh.h_refine_elems(vec![8, 9], HRef::v()).unwrap();
