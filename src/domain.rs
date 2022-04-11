@@ -77,10 +77,6 @@ impl Domain {
     /// * An `Err` if the `elem` does not exist
     /// * An `Err` if the `elem` does not have a [BasisSpec] at the given `address`
     ///
-    /// # Example
-    /// ```
-    ///
-    /// ```
     pub fn get_basis_spec(&self, bs_address: BSAddress) -> Result<&BasisSpec, String> {
         if bs_address.elem_id > self.mesh.elems.len() {
             Err(format!(
@@ -213,6 +209,7 @@ impl Domain {
 
     /// Retrieve a list of [BasisSpec]s on an `Elem` by ID
     ///
+    /// # Example
     /// ```
     /// use fem_2d::prelude::*;
     /// let mut mesh = Mesh::unit();
@@ -236,8 +233,13 @@ impl Domain {
 
     /// Retrieve a list of an `Elem`s descendant [BasisSpec]s (All the [`BasisSpec`]s on its descendant `Elem`s)
     ///
-    /// Lists are returned as tuples of the form `(elem_id, [basis_specs])`
+    /// # Returns
+    /// * A vector of tuples in the form: `(desc_elem_id: usize, desc_elem_basis_specs: Vec<BasisSpec>)`. Where each tuple corresponds to one descendant `Elem`
+    /// * An error if the given `elem_id` does not exist
     ///
+    /// The [BasisSpec]s on `elem_id` itself are not included in the returned vector.
+    ///
+    /// # Example
     /// ```
     /// use fem_2d::prelude::*;
     ///
@@ -276,8 +278,13 @@ impl Domain {
 
     /// Retrieve a list of an `Elem`s ancestor [BasisSpec]s (All the [`BasisSpec`]s on its ancestor `Elem`s)
     ///
-    /// Lists are returned as tuples of the form `(elem_id, [basis_specs])`
+    /// # Returns
+    /// * A vector of tuples in the form: `(anc_elem_id: usize, anc_elem_basis_specs: Vec<BasisSpec>)`. Where each tuple corresponds to one ancestor `Elem`
+    /// * An error if the given `elem_id` does not exist
     ///
+    /// The [BasisSpec]s on `elem_id` itself are not included in the returned vector.
+    ///
+    /// # Example
     /// ```
     /// use fem_2d::prelude::*;
     ///
@@ -317,7 +324,7 @@ impl Domain {
         }
     }
 
-    // push a new `BasisSpec` onto the list, updating its ID to match its position in its elem's list
+    // Push a new `BasisSpec` onto the list, updating its ID to match its position in its elem's list
     // return its [BSAddress] composed of its element id and index
     fn push_basis_spec(&mut self, mut bs: BasisSpec, dof_id: usize) -> BSAddress {
         let elem_id = bs.elem_id;
