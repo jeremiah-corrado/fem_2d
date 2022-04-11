@@ -68,6 +68,7 @@ pub fn slepc_solve_gep(
 }
 
 #[derive(Debug, Clone)]
+/// Error type for the SlepcGEP solver
 pub enum SlepcGEPError {
     SolverNotFound,
     FailedToExecute,
