@@ -1,3 +1,4 @@
+use super::MeshAccessError;
 use super::MAX_POLYNOMIAL_ORDER;
 use crate::domain::{dof::basis_spec::BasisDir, mesh::space::ParaDir};
 use json::{object, JsonValue};
@@ -121,6 +122,15 @@ impl PRefInt {
         }
     }
 
+    pub const fn from_i8(delta: i8) -> Self {
+        match delta {
+            0 => PRefInt::None,
+            d if d > 0 => PRefInt::Increment(d as u8),
+            d if d < 0 => PRefInt::Decrement(-d as u8),
+            _ => unreachable!(),
+        }
+    }
+
     pub fn as_i8(&self) -> i8 {
         match self {
             Self::None => 0,
@@ -130,15 +140,18 @@ impl PRefInt {
     }
 
     pub fn constrain(&mut self, bounds: [i8; 2]) {
-        match self {
-            Self::Increment(delta) => {
-                *delta = std::cmp::min(*delta, bounds[1] as u8);
-            }
-            Self::Decrement(delta) => {
-                *delta = std::cmp::min(*delta, bounds[0] as u8);
-            }
-            Self::None => (),
+        let si = self.as_i8();
+
+        if si < bounds[0] {
+            *self = Self::from_i8(bounds[0]);
+        } else if si > bounds[1] {
+            *self = Self::from_i8(bounds[1]);
         }
+    }
+
+    pub fn within(&self, bounds: [i8; 2]) -> bool {
+        let si = self.as_i8();
+        si >= bounds[0] && si <= bounds[1]
     }
 }
 
@@ -193,18 +206,8 @@ impl PRef {
     /// Create a new p-refinement with the given deltas for the i and j expansion orders
     pub const fn from(delta_i: i8, delta_j: i8) -> Self {
         Self {
-            di: match delta_i {
-                0 => PRefInt::None,
-                d if d > 0 => PRefInt::Increment(d as u8),
-                d if d < 0 => PRefInt::Decrement(-d as u8),
-                _ => unreachable!(),
-            },
-            dj: match delta_j {
-                0 => PRefInt::None,
-                d if d > 0 => PRefInt::Increment(d as u8),
-                d if d < 0 => PRefInt::Decrement(-d as u8),
-                _ => unreachable!(),
-            },
+            di: PRefInt::from_i8(delta_i),
+            dj: PRefInt::from_i8(delta_j),
         }
     }
 
@@ -222,11 +225,16 @@ impl PRef {
     }
 
     /// Constrict the p-refinement to sit within a given range
-    pub fn constrain_within(mut self, [u_bounds, v_bounds]: [[i8; 2]; 2]) -> Self {
+    pub fn constrained_to(mut self, [u_bounds, v_bounds]: [[i8; 2]; 2]) -> Self {
         self.di.constrain(u_bounds);
         self.dj.constrain(v_bounds);
 
         self
+    }
+
+    /// Check if the refinement falls within the given bounds
+    pub fn falls_within(&self, [u_bounds, v_bounds]: [[i8; 2]; 2]) -> bool {
+        self.di.within(u_bounds) && self.dj.within(v_bounds)
     }
 
     fn refine_i(&self, i_current: u8) -> Result<u8, PRefError> {
@@ -254,19 +262,75 @@ impl fmt::Display for PRef {
 /// The Error Type for invalid p-refinements
 #[derive(Debug)]
 pub enum PRefError {
+    // Errors caused by internal problems with the Mesh (Should never happen)
     NegExpansion,
     ExceededMaxExpansion,
-    ElemDoesntExist(usize),
-    DoubleRefinement(usize),
+    // Public Errors
+    DuplicateElemIds,
+    ElemDoesNotExist(usize),
+    RefinementOutOfBounds(usize),
 }
 
 impl fmt::Display for PRefError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::NegExpansion => write!(f, "Negative p-Refinement will result in 0 or negative expansion; Cannot p-Refine!"),
-            Self::ExceededMaxExpansion => write!(f, "Positive p-Refinement will result in expansion order over maximum; Cannot p-Refine!"),
-            Self::ElemDoesntExist(elem_id) => write!(f, "Elem {} does not exist; Cannot apply p-Refinement!", elem_id),
-            Self::DoubleRefinement(elem_id) => write!(f, "Multiple p-refinements were specified for Elem {}; Cannot apply p-Refinements", elem_id),
+            Self::NegExpansion => write!(
+                f,
+                "Negative p-Refinement results in 0 or negative expansion order; Cannot p-Refine!"
+            ),
+            Self::ExceededMaxExpansion => write!(
+                f,
+                "Positive p-Refinement results in expansion order over maximum; Cannot p-Refine!"
+            ),
+            Self::DuplicateElemIds => write!(
+                f,
+                "Duplicate element ids in p-Refinement; Cannot apply p-Refinement!"
+            ),
+            Self::ElemDoesNotExist(elem_id) => write!(
+                f,
+                "Elem {} does not exist; Cannot apply p-Refinement!",
+                elem_id
+            ),
+            Self::RefinementOutOfBounds(elem_id) => write!(
+                f,
+                "Refinement out of bounds for Elem {}; Cannot apply p-Refinement!",
+                elem_id
+            ),
         }
+    }
+}
+
+impl From<MeshAccessError> for PRefError {
+    fn from(err: MeshAccessError) -> Self {
+        match err {
+            MeshAccessError::ElemDoesNotExist(elem_id) => Self::ElemDoesNotExist(elem_id),
+            _ => unreachable!(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn p_ref_constraints() {
+        let pr = PRef::from(4, 6);
+        let prc = pr.constrained_to([[0, 1], [-2, 5]]).as_array();
+        assert_eq!(prc[0], 1);
+        assert_eq!(prc[1], 5);
+
+        let pr_neg = PRef::from(-3, -2);
+        let prc_neg = pr_neg.constrained_to([[-2, 4], [0, 3]]).as_array();
+        assert_eq!(prc_neg[0], -2);
+        assert_eq!(prc_neg[1], 0);
+    }
+
+    #[test]
+    fn p_ref_falls_within() {
+        let pr = PRef::from(0, 10);
+        assert!(pr.falls_within([[0, 1], [-2, 10]]));
+        assert!(!pr.falls_within([[-2, -1], [3, 10]]));
+        assert!(!pr.falls_within([[-1, 1], [11, 14]]));
     }
 }

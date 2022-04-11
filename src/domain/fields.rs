@@ -2,6 +2,8 @@ use super::{dof::basis_spec::BasisDir, mesh::space::V2D, Domain};
 use crate::basis::{BasisFn, ShapeFn};
 
 use std::collections::{BTreeMap, HashMap};
+use std::error::Error;
+use std::fmt;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::time::SystemTime;
@@ -41,7 +43,8 @@ impl<'d> UniformFieldSpace<'d> {
     /// Use an eigenvector and associated [ShapeFn] to compute the X and Y fields over the [Domain]
     ///
     /// The X and Y field quantities will be stored as {vector_name}_x and {vector_name}_y respectively. The Names are returned in an array in that order.
-    ///
+    ///     
+    /// # Example
     /// ```
     /// use fem_2d::prelude::*;
     ///
@@ -61,12 +64,11 @@ impl<'d> UniformFieldSpace<'d> {
         &mut self,
         vector_name: &'static str,
         solution: Vec<f64>,
-    ) -> Result<[String; 2], String> {
+    ) -> Result<[String; 2], UniformFieldError> {
         if solution.len() != self.domain.dofs.len() {
-            Err(format!(
-                "NDofs != Solution length ({} != {}); Cannot compute xy fields over Domain",
+            Err(UniformFieldError::MismatchedSolutionSize(
                 self.domain.dofs.len(),
-                solution.len()
+                solution.len(),
             ))
         } else {
             let x_q_name = format!("{}_x", vector_name);
@@ -129,7 +131,9 @@ impl<'d> UniformFieldSpace<'d> {
     /// create a VTK file at the designated `path` (with the file `name.vtk`) including all Field Quantities
     ///
     /// These files can be plotted using [Visit](https://wci.llnl.gov/simulation/computer-codes/visit)
-    pub fn print_all_to_vtk(&self, path: impl AsRef<str>) -> std::io::Result<()> {
+    ///
+    /// Can return an IO error if the file cannot be written
+    pub fn print_all_to_vtk(&self, path: impl AsRef<str>) -> Result<(), Box<dyn Error>> {
         let all_q_names = self.quantities.keys().cloned().collect();
         self.print_quantities_to_vkt(path, all_q_names)
     }
@@ -137,11 +141,19 @@ impl<'d> UniformFieldSpace<'d> {
     /// create a VTK file at the designated `path` (with the file `name.vtk`) including a list of Field Quantities
     ///
     /// These files can be plotted using [Visit](https://wci.llnl.gov/simulation/computer-codes/visit)
+    ///
+    /// Can return an IO error if the file cannot be written, or a `UniformFieldError` if any of the quantity names are not found in the Field Space
     pub fn print_quantities_to_vkt(
         &self,
         path: impl AsRef<str>,
         quantity_names: Vec<String>,
-    ) -> std::io::Result<()> {
+    ) -> Result<(), Box<dyn Error>> {
+        for qn in quantity_names.iter() {
+            if !self.quantities.contains_key(qn) {
+                return Err(UniformFieldError::MissingQuantity(qn.clone()))?;
+            }
+        }
+
         let output_file = File::create(path.as_ref())?;
         let mut writer = BufWriter::new(&output_file);
 
@@ -215,23 +227,19 @@ impl<'d> UniformFieldSpace<'d> {
         // field values
         writeln!(writer, "POINT_DATA {}", num_points)?;
         for q_name in quantity_names {
-            match self.quantities.get(&q_name) {
-                Some(field_quant) => {
-                    field_quant.write_vtk_quantity(&mut writer)?;
-                }
-                None => println!(
-                    "Field Space does not have Quantity '{}'; cannot write to VTK!",
-                    q_name
-                ),
-            };
+            let field_quant = self.quantities.get(&q_name).unwrap();
+            field_quant.write_vtk_quantity(&mut writer)?;
         }
         writeln!(writer)?;
 
         Ok(())
     }
 
-    /// map an operation over a field quantity (`name`) and store the result in a new quantity (`result_name`)
+    /// Map an operation over a field quantity (`name`) and store the result in a new quantity (`result_name`)
     ///
+    /// Returns a `UniformFieldError` if the quantity `name` is not found in the Field Space. If `result_name` already exists, it is overwritten.
+    ///
+    /// # Example
     /// ```
     /// use fem_2d::prelude::*;
     ///
@@ -252,7 +260,7 @@ impl<'d> UniformFieldSpace<'d> {
         name: impl AsRef<str>,
         result_name: impl AsRef<str>,
         operator: F,
-    ) -> Result<(), String>
+    ) -> Result<(), UniformFieldError>
     where
         F: Fn(&f64) -> f64 + Copy,
     {
@@ -260,10 +268,7 @@ impl<'d> UniformFieldSpace<'d> {
         let q_new_key = String::from(result_name.as_ref());
 
         if !self.quantities.contains_key(&q_key) {
-            Err(format!(
-                "FieldSpace does not have quantity: {}; cannot apply operation!",
-                q_key
-            ))
+            Err(UniformFieldError::MissingQuantity(q_key))
         } else {
             let q_new = self
                 .quantities
@@ -275,8 +280,11 @@ impl<'d> UniformFieldSpace<'d> {
         }
     }
 
-    /// evaluate an expression of two field quantities and store the result in a new quantity (`result_name`)
+    /// Evaluate an expression of two field quantities and store the result in a new quantity (`result_name`)
     ///
+    /// Returns a `UniformFieldError` if either of the operand names is not found in the Field Space. If `result_name` already exists, it is overwritten.
+    ///
+    /// # Example
     /// ```
     /// use fem_2d::prelude::*;
     ///
@@ -297,7 +305,7 @@ impl<'d> UniformFieldSpace<'d> {
         operand_names: [impl AsRef<str>; 2],
         result_name: impl AsRef<str>,
         expression: F,
-    ) -> Result<(), String>
+    ) -> Result<(), UniformFieldError>
     where
         F: Fn(f64, f64) -> f64,
     {
@@ -305,11 +313,10 @@ impl<'d> UniformFieldSpace<'d> {
         let op_b = String::from(operand_names[1].as_ref());
         let q_new_key = String::from(result_name.as_ref());
 
-        if !self.quantities.contains_key(&op_a) || !self.quantities.contains_key(&op_b) {
-            Err(format!(
-                "FieldSpace does not have quantities {} and {}; cannot apply operation!",
-                op_a, op_b
-            ))
+        if !self.quantities.contains_key(&op_a) {
+            Err(UniformFieldError::MissingQuantity(op_a))
+        } else if !self.quantities.contains_key(&op_b) {
+            Err(UniformFieldError::MissingQuantity(op_b))
         } else {
             let mut q_new = FieldQuantity::new(&q_new_key);
             let q_a = self.quantities.get(&op_a).unwrap();
@@ -403,3 +410,26 @@ fn uniform_range(min: f64, max: f64, n: usize) -> Vec<f64> {
     let step = (max - min) / ((n - 1) as f64);
     (0..n).map(|i| (i as f64) * step + min).collect()
 }
+
+#[derive(Debug)]
+pub enum UniformFieldError {
+    MismatchedSolutionSize(usize, usize),
+    MissingQuantity(String),
+}
+
+impl fmt::Display for UniformFieldError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::MismatchedSolutionSize(dom_size, sol_size) => write!(
+                f,
+                "Domain size ({}) does not match solution size ({})!",
+                dom_size, sol_size
+            ),
+            Self::MissingQuantity(name) => {
+                write!(f, "Missing quantity '{}', Cannot apply operation!", name)
+            }
+        }
+    }
+}
+
+impl Error for UniformFieldError {}

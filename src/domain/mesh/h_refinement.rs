@@ -1,3 +1,4 @@
+use super::MeshAccessError;
 use super::ParaDir;
 use json::{object, JsonValue};
 use std::fmt;
@@ -281,14 +282,17 @@ impl HRefLoc {
 /// The Error Type for invalid h-refinements
 #[derive(Debug)]
 pub enum HRefError {
+    // Errors caused by internal problems with the Mesh (Should never happen)
     MinEdgeLength(usize),
     ElemHasChildren(usize),
     EdgeHasChildren(usize),
     UninitializedElem(usize),
-    ElemDoesntExist(usize),
-    DoubleRefinement(usize),
     EdgeOnEqualPoints(usize),
     BisectionIdxExceeded,
+    // Public Errors
+    ElemDoesNotExist(usize),
+    ElemNotRefineable(usize),
+    DuplicateElemIds,
 }
 
 impl fmt::Display for HRefError {
@@ -310,22 +314,34 @@ impl fmt::Display for HRefError {
                 "ElemUninit {} was not fully initialized by the conclusion of h-refinement",
                 elem_uninit_id
             ),
-            Self::ElemDoesntExist(elem_id) => write!(
+            Self::ElemDoesNotExist(elem_id) => write!(
                 f,
                 "Elem {} does not exist; cannot apply h-Refinement!",
                 elem_id
             ),
-            Self::DoubleRefinement(elem_id) => write!(
+            Self::ElemNotRefineable(elem_id) => write!(
                 f,
-                "Multiple h-refinements were specified for Elem {} in the same generation!",
-                elem_id
+                "Elem {} cannot be h-refined; it is either too small or has already been refined!",
+                elem_id,
             ),
+            Self::DuplicateElemIds => {
+                write!(f, "Duplicate element ids in h-Refinement; Cannot h-Refine!")
+            }
             Self::EdgeOnEqualPoints(elem_id) => write!(
                 f,
                 "Attempt to generate a child-Edge between two identical points over Elem {}!",
                 elem_id
             ),
             Self::BisectionIdxExceeded => write!(f, "Extended refinement index must be 0 or 1!"),
+        }
+    }
+}
+
+impl From<MeshAccessError> for HRefError {
+    fn from(err: MeshAccessError) -> Self {
+        match err {
+            MeshAccessError::ElemDoesNotExist(elem_id) => Self::ElemDoesNotExist(elem_id),
+            _ => unreachable!(),
         }
     }
 }

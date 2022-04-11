@@ -185,7 +185,9 @@ impl BasisLoc {
 #[derive(Clone, Copy, Debug)]
 /// A BasisSpec's index in an Elem's `Vec<BasisSpec>`
 pub struct BSAddress {
+    /// Index of the `Elem` that the basis spec belongs to
     pub elem_id: usize,
+    /// Index of the `BasisSpec` in the `Vec<BasisSpec>` of the `Elem`
     pub elem_idx: usize,
 }
 

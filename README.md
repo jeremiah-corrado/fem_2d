@@ -47,10 +47,10 @@ use fem_2d::prelude::*;
 let mut mesh = Mesh::from_file("./test_input/test_mesh_a.json").unwrap();
 
 // Set the polynomial expansion order to 4 in both directions on all Elems
-        mesh.set_global_expansion_orders([4, 4]).unwrap();
+mesh.set_global_expansion_orders([4, 4]).unwrap();
 
 // Isotropically refine all Elems
-mesh.global_h_refinement(HRef::t()).unwrap();
+mesh.global_h_refinement(HRef::t());
 
 // Then anisotropically refine the resultant Elems in the center of the mesh
 let cenral_node_id = mesh.elems[0].nodes[3];
@@ -60,7 +60,7 @@ mesh.h_refine_with_filter(|elem| {
     } else {
         None
     }
-}).unwrap();
+});
         
 // Construct a domain with Dirichlet boundary conditions
 let domain = Domain::from_mesh(mesh);
