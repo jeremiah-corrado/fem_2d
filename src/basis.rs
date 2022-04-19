@@ -326,14 +326,17 @@ impl<SF: ShapeFn> BasisFn<SF> {
         }
     }
 
+    /// Evaluate the u-directed basis function at some point (m, n)
     pub fn f_u(&self, [i, j]: [usize; 2], [m, n]: [usize; 2]) -> V2D {
         self.ti[m][n].u * self.u_shapes.power(i, m) * self.v_shapes.poly(j, n)
     }
 
+    /// Evaluate the v-directed basis function at some point (m, n)
     pub fn f_v(&self, [i, j]: [usize; 2], [m, n]: [usize; 2]) -> V2D {
         self.ti[m][n].v * self.u_shapes.poly(i, m) * self.v_shapes.power(j, n)
     }
 
+    /// Evaluate the first derivative of the u-directed basis with respect to another `Elem`'s parametric space
     pub fn f_u_d1(&self, [i, j]: [usize; 2], [m, n]: [usize; 2], para_scale: &V2D) -> V2D {
         self.ti[m][n].u
             * V2D::from([
@@ -343,6 +346,7 @@ impl<SF: ShapeFn> BasisFn<SF> {
             * para_scale
     }
 
+    /// Evaluate the first derivative of the v-directed basis with respect to another `Elem`'s parametric space
     pub fn f_v_d1(&self, [i, j]: [usize; 2], [m, n]: [usize; 2], para_scale: &V2D) -> V2D {
         self.ti[m][n].v
             * V2D::from([
@@ -352,6 +356,7 @@ impl<SF: ShapeFn> BasisFn<SF> {
             * para_scale
     }
 
+    /// Evaluate the second derivative of the u-directed basis with respect to another `Elem`'s parametric space
     pub fn f_u_d2(&self, [i, j]: [usize; 2], [m, n]: [usize; 2], para_scale: &V2D) -> V2D {
         self.ti[m][n].u
             * V2D::from([
@@ -362,6 +367,7 @@ impl<SF: ShapeFn> BasisFn<SF> {
             * para_scale
     }
 
+    /// Evaluate the second derivative of the v-directed basis with respect to another `Elem`'s parametric space
     pub fn f_v_d2(&self, [i, j]: [usize; 2], [m, n]: [usize; 2], para_scale: &V2D) -> V2D {
         self.ti[m][n].v
             * V2D::from([
@@ -372,6 +378,7 @@ impl<SF: ShapeFn> BasisFn<SF> {
             * para_scale
     }
 
+    /// Evaluate the gradient of the u-directed basis with respect to another `Elem`'s parametric space
     pub fn f_u_dd(&self, [i, j]: [usize; 2], [m, n]: [usize; 2], para_scale: &V2D) -> V2D {
         self.ti[m][n].u
             * self.u_shapes.power_d1(i, m)
@@ -380,6 +387,7 @@ impl<SF: ShapeFn> BasisFn<SF> {
             * para_scale[1]
     }
 
+    /// Evaluate the gradient of the v-directed basis with respect to another `Elem`'s parametric space
     pub fn f_v_dd(&self, [i, j]: [usize; 2], [m, n]: [usize; 2], para_scale: &V2D) -> V2D {
         self.ti[m][n].v
             * self.u_shapes.poly_d1(i, m)
@@ -389,11 +397,13 @@ impl<SF: ShapeFn> BasisFn<SF> {
     }
 
     #[inline]
+    /// The size of the parametric area relative to the unit-parametric area
     pub fn glq_scale(&self) -> f64 {
         self.para_scale[0] * self.para_scale[1]
     }
 
     #[inline]
+    /// The size of the parametric space relative to the unit-parametric space (along a single edge)
     pub fn edge_glq_scale(&self, edge_idx: usize) -> f64 {
         match edge_idx {
             0 | 1 => self.para_scale[0],
@@ -403,35 +413,41 @@ impl<SF: ShapeFn> BasisFn<SF> {
     }
 
     #[inline]
+    /// The scale of the u-axis relative to the unit parametric space
     pub fn u_glq_scale(&self) -> f64 {
         self.para_scale[0]
     }
 
     #[inline]
+    /// The scale of the v-axis relative to the unit parametric space
     pub fn v_glq_scale(&self) -> f64 {
         self.para_scale[1]
     }
 
     #[inline]
+    /// The scale of both axes relative to the unit parametric space
     pub fn deriv_scale(&self) -> &V2D {
         &self.para_scale
     }
 
     #[inline]
+    /// The determinant of the Jacobian at some point (m, n)
     pub fn sample_scale(&self, [m, n]: [usize; 2]) -> f64 {
         self.dt[m][n]
     }
 
+    /// Maximum of `uv_ratio` and `vu_ratio`
     pub fn max_uv_ratio(&self, [m, n]: [usize; 2]) -> f64 {
         let r0 = self.t[m][n].u[0] / self.t[m][n].v[1];
         let r1 = self.t[m][n].u[0] / self.t[m][n].v[1];
         std::cmp::max_by(r0, r1, |a, b| a.partial_cmp(b).unwrap())
     }
-
+    /// The ratio of the du/dx to dv/dy at some point (m, n)
     pub fn uv_ratio(&self, [m, n]: [usize; 2]) -> f64 {
         self.t[m][n].u[0] / self.t[m][n].v[1]
     }
 
+    /// The ratio of the dv/dy to du/dx at some point (m, n)
     pub fn vu_ratio(&self, [m, n]: [usize; 2]) -> f64 {
         self.t[m][n].v[1] / self.t[m][n].u[0]
     }
