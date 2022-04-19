@@ -244,11 +244,11 @@ fn default_ngq(max_order: usize) -> usize {
 /// Structure used to evaluate [ShapeFn]'s and their derivatives over some area
 #[derive(Clone, Debug)]
 pub struct BasisFn<SF: ShapeFn> {
-    /// Raw transformation matrices at each sample point. Describes transformation from real space to sampled parametric space.
+    /// Transformation matrices at each sample point. Describes transformation from real space to sampled parametric space
     pub t: Vec<Vec<M2D>>,
-    // Inverse of transformation matrices at each sample point.
+    // Inverse of transformation matrices at each sample point
     pub ti: Vec<Vec<M2D>>,
-    /// Determinants of the "Sampling Jacobian" at each point.
+    /// Determinants of the "Sampling Jacobian" at each point
     pub dt: Vec<Vec<f64>>,
     /// Parametric scaling factors (used to scale derivatives in parametric space as necessary)
     pub para_scale: V2D,
