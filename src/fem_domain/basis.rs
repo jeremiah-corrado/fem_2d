@@ -14,19 +14,21 @@ use std::sync::{Arc, Mutex};
 /// A 1D Higher-Order Hierarchical Shape Function Space: defined on (-1.0, +1.0)
 ///
 /// Outer products of the 1D vectors in this space are used to define 2D Basis Functions via the [BasisFn] struct
+///
+/// Two sets of shape vectors must be defined: Tangential and Normal
+/// * The tangential shapes are sampled along the axis that is tangential to the direction of the basis function
+/// * The normal shapes are sampled along the axis that is normal to the direction of the basis function
+///
+/// For example: a u-directed basis function with orders (2, 3) will sample `shape.tang(2, m) * shape.norm(3, n)`, and a v-directed basis function with orders (4, 1) will sample `shape.norm(4, m) * shape.tang(1, n)` for all points `m` and `n`
+///
+/// We also define the 1st derivative, and optionally the 2nd derivative of the shape functions in order to compute gradients of the Basis Functions.
 pub trait ShapeFn: Clone + Sync + Send + std::fmt::Debug {
     /// Define a set of shapes (or functions) over a set of points
     ///
     /// # Arguments
-    /// * `max_order` - The Order up to which the Shape Functions need to be defined (Corresponds to the `n` argument in the methods below)
+    /// * `max_order` - The Order up to which the Shape Functions must be defined (Corresponds to the `n` argument in the methods below)
     /// * `points` - The set of points to evaluate the shape functions over
-    /// * `compute_d2` - Whether to compute the second derivative of the shape function
-    ///
-    /// We define two sets of shape vectors: Tangential and Normal. The tangential shapes are sampled along the axis that is tangential to the direction of the basis function, while the normal shapes are sampled along the axis that is normal to the direction of the basis function.
-    ///
-    /// For example, a u-directed basis function with orders (2, 3) will sample `shape.tang(2, m) * shape.normal(3, n)` for all points `m` and `n`.__rust_force_expr!
-    ///
-    /// We also define the 1st derivative, and optionally the 2nd derivative of the shape functions in order to compute gradients of the Basis Functions.
+    /// * `compute_d2` - Whether to compute the second derivative of the shape functions
     ///
     fn with(max_order: usize, points: &[f64], compute_d2: bool) -> Self;
 
@@ -277,9 +279,19 @@ pub struct BasisFn<SF: ShapeFn> {
 }
 
 impl<SF: ShapeFn> BasisFn<SF> {
-    /// create a Basis Function instance defined over some Elem, and mapped over some descendant Elem
+    /// create a Basis Function instance defined over some `Elem` (and optionally mapped over some descendant `Elem`)
     ///
-    /// `raw_points` are mapped (according to GLQ rules) to match the parametric bounds of the descendant Elem
+    /// # Arguments
+    /// * `i_max` : maximum u-directed expansion order
+    /// * `j_max` : maximum v-directed expansion order
+    /// * `compute_2d` : whether or not to compute the second derivatives of the [ShapeFn]s
+    /// * `raw_u_points` : the glq points defined over (-1.0, 1.0) for the u-axis
+    /// * `raw_v_points` : the glq points defined over (-1.0, 1.0) for the v-axis
+    /// * `elem` : the element to sample over
+    /// * `desc_elem` : the descendant element to sample over. If `None`, the BasisFn is defined over the entire `elem`
+    ///
+    /// If a descendant `Elem` is provided, the `raw_points` are mapped (according to GLQ rules) to match the parametric bounds of the descendant Elem
+    ///
     pub fn mapped_over_desc(
         i_max: usize,
         j_max: usize,

@@ -162,27 +162,27 @@ pub mod kol {
             }
         }
 
-        fn power(&self, n: usize, p: usize) -> f64 {
+        fn tang(&self, n: usize, p: usize) -> f64 {
             self.pows[n][p]
         }
 
-        fn power_d1(&self, n: usize, p: usize) -> f64 {
+        fn tang_d1(&self, n: usize, p: usize) -> f64 {
             self.pows_d1[n][p]
         }
 
-        fn power_d2(&self, n: usize, p: usize) -> f64 {
+        fn tang_d2(&self, n: usize, p: usize) -> f64 {
             self.pows_d2[n][p]
         }
 
-        fn normal(&self, n: usize, p: usize) -> f64 {
+        fn norm(&self, n: usize, p: usize) -> f64 {
             self.polys[n][p]
         }
 
-        fn normal_d1(&self, n: usize, p: usize) -> f64 {
+        fn norm_d1(&self, n: usize, p: usize) -> f64 {
             self.polys_d1[n][p]
         }
 
-        fn normal_d2(&self, n: usize, p: usize) -> f64 {
+        fn norm_d2(&self, n: usize, p: usize) -> f64 {
             // coincidentally same as pows_d2
             self.pows_d2[n][p]
         }
@@ -260,23 +260,23 @@ mod max_ortho {
             }
         }
 
-        fn power(&self, n: usize, p: usize) -> f64 {
+        fn tang(&self, n: usize, p: usize) -> f64 {
             self.l_fn.l[n][p]
         }
-        fn power_d1(&self, n: usize, p: usize) -> f64 {
+        fn tang_d1(&self, n: usize, p: usize) -> f64 {
             self.l_fn.d1[n][p]
         }
-        fn power_d2(&self, n: usize, p: usize) -> f64 {
+        fn tang_d2(&self, n: usize, p: usize) -> f64 {
             self.l_fn.d2[n][p]
         }
 
-        fn poly(&self, n: usize, p: usize) -> f64 {
+        fn norm(&self, n: usize, p: usize) -> f64 {
             self.q_fn.q[n][p]
         }
-        fn poly_d1(&self, n: usize, p: usize) -> f64 {
+        fn norm_d1(&self, n: usize, p: usize) -> f64 {
             self.q_fn.d1[n][p]
         }
-        fn poly_d2(&self, n: usize, p: usize) -> f64 {
+        fn norm_d2(&self, n: usize, p: usize) -> f64 {
             self.q_fn.d2[n][p]
         }
     }
