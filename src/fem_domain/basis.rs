@@ -1,28 +1,48 @@
 /// Specific implementations of the `ShapeFn` Trait (MaxOrthoShapeFn can be added as a Feature on the Nightly Toolchain)
 pub mod shape_fns;
 
-use crate::domain::mesh::{
+use super::domain::mesh::{
     elem::Elem,
     space::{M2D, V2D},
 };
-use crate::integration::glq::{gauss_quadrature_points, scale_gauss_quad_points};
+use crate::matrix_math::integration::glq::{gauss_quadrature_points, scale_gauss_quad_points};
 
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
-/// Hierarchical Curl-Conforming Shape Function along a single direction (defined over (-1.0, +1.0)).
-/// A Custom Basis Function can be defined by implementing this Trait on your own Struct.
+/// A 1D Higher-Order Hierarchical Shape Function Space: defined on (-1.0, +1.0)
+///
+/// Outer products of the 1D vectors in this space are used to define 2D Basis Functions via the [BasisFn] struct
 pub trait ShapeFn: Clone + Sync + Send + std::fmt::Debug {
+    /// Define a set of shapes (or functions) over a set of points
+    ///
+    /// # Arguments
+    /// * `max_order` - The Order up to which the Shape Functions need to be defined (Corresponds to the `n` argument in the methods below)
+    /// * `points` - The set of points to evaluate the shape functions over
+    /// * `compute_d2` - Whether to compute the second derivative of the shape function
+    ///
+    /// We define two sets of shape vectors: Tangential and Normal. The tangential shapes are sampled along the axis that is tangential to the direction of the basis function, while the normal shapes are sampled along the axis that is normal to the direction of the basis function.
+    ///
+    /// For example, a u-directed basis function with orders (2, 3) will sample `shape.tang(2, m) * shape.normal(3, n)` for all points `m` and `n`.__rust_force_expr!
+    ///
+    /// We also define the 1st derivative, and optionally the 2nd derivative of the shape functions in order to compute gradients of the Basis Functions.
+    ///
     fn with(max_order: usize, points: &[f64], compute_d2: bool) -> Self;
 
-    fn power(&self, n: usize, p: usize) -> f64;
-    fn power_d1(&self, n: usize, p: usize) -> f64;
-    fn power_d2(&self, n: usize, p: usize) -> f64;
+    /// Sample the `n`th order tangentially orientated shape function at the given point `p`
+    fn tang(&self, n: usize, p: usize) -> f64;
+    /// Sample the 1st derivative of the `n`th order tangentially orientated shape function at the given point `p`
+    fn tang_d1(&self, n: usize, p: usize) -> f64;
+    /// Sample the 2nd derivative of the `n`th order tangentially orientated shape function at the given point `p`. This method does not have to return if `compute_d2` was set to `false`.
+    fn tang_d2(&self, n: usize, p: usize) -> f64;
 
-    fn poly(&self, n: usize, p: usize) -> f64;
-    fn poly_d1(&self, n: usize, p: usize) -> f64;
-    fn poly_d2(&self, n: usize, p: usize) -> f64;
+    /// Sample the `n`th order normally orientated shape function at the given point `p`
+    fn norm(&self, n: usize, p: usize) -> f64;
+    /// Sample the 1st derivative of the `n`th order tangentially orientated shape function at the given point `p`
+    fn norm_d1(&self, n: usize, p: usize) -> f64;
+    /// Sample the 2nd derivative of the `n`th order normally orientated shape function at the given point `p`. This method does not have to return if `compute_d2` was set to `false`.
+    fn norm_d2(&self, n: usize, p: usize) -> f64;
 }
 
 /// A utility structure used to generate and cache [BasisFn]'s during Integration
@@ -328,20 +348,20 @@ impl<SF: ShapeFn> BasisFn<SF> {
 
     /// Evaluate the u-directed basis function at some point (m, n)
     pub fn f_u(&self, [i, j]: [usize; 2], [m, n]: [usize; 2]) -> V2D {
-        self.ti[m][n].u * self.u_shapes.power(i, m) * self.v_shapes.poly(j, n)
+        self.ti[m][n].u * self.u_shapes.tang(i, m) * self.v_shapes.norm(j, n)
     }
 
     /// Evaluate the v-directed basis function at some point (m, n)
     pub fn f_v(&self, [i, j]: [usize; 2], [m, n]: [usize; 2]) -> V2D {
-        self.ti[m][n].v * self.u_shapes.poly(i, m) * self.v_shapes.power(j, n)
+        self.ti[m][n].v * self.u_shapes.norm(i, m) * self.v_shapes.tang(j, n)
     }
 
     /// Evaluate the first derivative of the u-directed basis with respect to another `Elem`'s parametric space
     pub fn f_u_d1(&self, [i, j]: [usize; 2], [m, n]: [usize; 2], para_scale: &V2D) -> V2D {
         self.ti[m][n].u
             * V2D::from([
-                self.u_shapes.power(i, m) * self.v_shapes.poly_d1(j, n),
-                self.u_shapes.power_d1(i, m) * self.v_shapes.poly(j, n),
+                self.u_shapes.tang(i, m) * self.v_shapes.norm_d1(j, n),
+                self.u_shapes.tang_d1(i, m) * self.v_shapes.norm(j, n),
             ])
             * para_scale
     }
@@ -350,8 +370,8 @@ impl<SF: ShapeFn> BasisFn<SF> {
     pub fn f_v_d1(&self, [i, j]: [usize; 2], [m, n]: [usize; 2], para_scale: &V2D) -> V2D {
         self.ti[m][n].v
             * V2D::from([
-                self.u_shapes.poly(i, m) * self.v_shapes.power_d1(j, n),
-                self.u_shapes.poly_d1(i, m) * self.v_shapes.power(j, n),
+                self.u_shapes.norm(i, m) * self.v_shapes.tang_d1(j, n),
+                self.u_shapes.norm_d1(i, m) * self.v_shapes.tang(j, n),
             ])
             * para_scale
     }
@@ -360,8 +380,8 @@ impl<SF: ShapeFn> BasisFn<SF> {
     pub fn f_u_d2(&self, [i, j]: [usize; 2], [m, n]: [usize; 2], para_scale: &V2D) -> V2D {
         self.ti[m][n].u
             * V2D::from([
-                self.u_shapes.power(i, m) * self.v_shapes.poly_d2(j, n),
-                self.u_shapes.power_d2(i, m) * self.v_shapes.poly(j, n),
+                self.u_shapes.tang(i, m) * self.v_shapes.norm_d2(j, n),
+                self.u_shapes.tang_d2(i, m) * self.v_shapes.norm(j, n),
             ])
             * para_scale
             * para_scale
@@ -371,8 +391,8 @@ impl<SF: ShapeFn> BasisFn<SF> {
     pub fn f_v_d2(&self, [i, j]: [usize; 2], [m, n]: [usize; 2], para_scale: &V2D) -> V2D {
         self.ti[m][n].v
             * V2D::from([
-                self.u_shapes.poly(i, m) * self.v_shapes.power_d2(j, n),
-                self.u_shapes.poly_d2(i, m) * self.v_shapes.power(j, n),
+                self.u_shapes.norm(i, m) * self.v_shapes.tang_d2(j, n),
+                self.u_shapes.norm_d2(i, m) * self.v_shapes.tang(j, n),
             ])
             * para_scale
             * para_scale
@@ -381,8 +401,8 @@ impl<SF: ShapeFn> BasisFn<SF> {
     /// Evaluate the gradient of the u-directed basis with respect to another `Elem`'s parametric space
     pub fn f_u_dd(&self, [i, j]: [usize; 2], [m, n]: [usize; 2], para_scale: &V2D) -> V2D {
         self.ti[m][n].u
-            * self.u_shapes.power_d1(i, m)
-            * self.v_shapes.poly_d1(j, n)
+            * self.u_shapes.tang_d1(i, m)
+            * self.v_shapes.norm_d1(j, n)
             * para_scale[0]
             * para_scale[1]
     }
@@ -390,8 +410,8 @@ impl<SF: ShapeFn> BasisFn<SF> {
     /// Evaluate the gradient of the v-directed basis with respect to another `Elem`'s parametric space
     pub fn f_v_dd(&self, [i, j]: [usize; 2], [m, n]: [usize; 2], para_scale: &V2D) -> V2D {
         self.ti[m][n].v
-            * self.u_shapes.poly_d1(i, m)
-            * self.v_shapes.power_d1(j, n)
+            * self.u_shapes.norm_d1(i, m)
+            * self.v_shapes.tang_d1(j, n)
             * para_scale[0]
             * para_scale[1]
     }

@@ -1,13 +1,13 @@
-/// Degrees of Freedom
+/// Degrees of Freedom (Groups of one or more Basis Function that can take a scalar value in the FEM solution)
 pub mod dof;
-/// Structures used to compute solution fields over a Domain
+/// Structures used to render a solution over a Domain
 pub mod fields;
-/// The internal geometric structure of a Domain
+/// The internal geometric structure of a Domain. This is modified by hp-refinements.
 pub mod mesh;
 
-use crate::basis::{BasisFnSampler, ParBasisFnSampler, ShapeFn};
-use crate::integration::Integral;
-use crate::linalg::{sparse_matrix::SparseMatrix, GEP};
+use super::basis::{BasisFnSampler, ParBasisFnSampler, ShapeFn};
+use crate::matrix_math::integration::Integral;
+use crate::matrix_math::linalg::{sparse_matrix::SparseMatrix, GEP};
 use dof::{
     basis_spec::{BSAddress, BasisDir, BasisLoc, BasisSpec},
     DoF,

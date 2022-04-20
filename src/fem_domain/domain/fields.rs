@@ -1,5 +1,5 @@
+use super::super::basis::{BasisFn, ShapeFn};
 use super::{dof::basis_spec::BasisDir, mesh::space::V2D, Domain};
-use crate::basis::{BasisFn, ShapeFn};
 
 use std::collections::{BTreeMap, HashMap};
 use std::error::Error;

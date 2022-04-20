@@ -56,21 +56,18 @@
 )]
 #![doc = include_str!("../README.md")]
 
-/// Structures and Traits for Basis Function Evaluation
-pub mod basis;
-/// Structures to define the geometric characteristics and refinement state of an FEM Domain
-pub mod domain;
-/// Structures and functions to assist in the integration of Basis Functions
-pub mod integration;
-/// Structures and functions to solve Generalized Eigenvalue Problems
-pub mod linalg;
+/// Structures do define the FEM Domain, Mesh, and Basis Space
+pub mod fem_domain;
+
+/// Structures and Functions to define and solve the FEM Problem
+pub mod matrix_math;
 
 /// Convenient Re-Exports
 pub mod prelude {
-    pub use crate::basis::shape_fns::kol::KOLShapeFn;
+    pub use crate::fem_domain::basis::shape_fns::kol::KOLShapeFn;
     #[cfg(feature = "max_ortho_basis")]
-    pub use crate::basis::shape_fns::max_ortho::MaxOrthoShapeFn;
-    pub use crate::domain::{
+    pub use crate::fem_domain::basis::shape_fns::max_ortho::MaxOrthoShapeFn;
+    pub use crate::fem_domain::domain::{
         dof::{
             basis_spec::{BSAddress, BasisSpec},
             DoF,
@@ -84,8 +81,8 @@ pub mod prelude {
         },
         Domain,
     };
-    pub use crate::integration::integrals::{curl_curl::CurlCurl, inner::L2Inner};
-    pub use crate::linalg::{
+    pub use crate::matrix_math::integration::integrals::{curl_curl::CurlCurl, inner::L2Inner};
+    pub use crate::matrix_math::linalg::{
         nalgebra_solve::nalgebra_solve_gep,
         slepc_solve::{slepc_solve_gep, SlepcGEPError},
         EigenPair, GEP,

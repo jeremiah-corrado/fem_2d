@@ -1,5 +1,5 @@
 pub mod kol {
-    use crate::basis::ShapeFn;
+    use super::super::ShapeFn;
 
     /// A simple Curl-Conforming Hierarchical Shape Function
     #[derive(Clone, Debug)]
@@ -174,15 +174,15 @@ pub mod kol {
             self.pows_d2[n][p]
         }
 
-        fn poly(&self, n: usize, p: usize) -> f64 {
+        fn normal(&self, n: usize, p: usize) -> f64 {
             self.polys[n][p]
         }
 
-        fn poly_d1(&self, n: usize, p: usize) -> f64 {
+        fn normal_d1(&self, n: usize, p: usize) -> f64 {
             self.polys_d1[n][p]
         }
 
-        fn poly_d2(&self, n: usize, p: usize) -> f64 {
+        fn normal_d2(&self, n: usize, p: usize) -> f64 {
             // coincidentally same as pows_d2
             self.pows_d2[n][p]
         }
@@ -191,7 +191,7 @@ pub mod kol {
 
 #[cfg(feature = "max_ortho_basis")]
 mod max_ortho {
-    use crate::basis::ShapeFn;
+    use super::super::ShapeFn;
 
     //https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6470651
     const EUC_NORM_COEFFS: [f64; 12] = [
@@ -243,6 +243,8 @@ mod max_ortho {
     ];
 
     /// An advanced Hierarchical Type Shape Function which maximizes orthogonality between polynomial orders
+    ///
+    /// Based on: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6470651
     #[derive(Clone, Debug)]
     pub struct MaxOrthoShapeFn {
         pub q_fn: QFunction,

@@ -1,7 +1,9 @@
 use super::glq::*;
 use super::{Integral, IntegralResult};
-use crate::basis::{BasisFn, ShapeFn};
-use crate::domain::{dof::basis_spec::BasisDir, mesh::element::Materials, mesh::space::V2D};
+use crate::fem_domain::basis::{BasisFn, ShapeFn};
+use crate::fem_domain::domain::{
+    dof::basis_spec::BasisDir, mesh::element::Materials, mesh::space::V2D,
+};
 
 /// <∇ × u, ∇ × ρ>
 pub mod curl_curl {

@@ -1,6 +1,6 @@
 use super::MeshAccessError;
 use super::MAX_POLYNOMIAL_ORDER;
-use crate::domain::{dof::basis_spec::BasisDir, mesh::space::ParaDir};
+use crate::fem_domain::domain::{dof::basis_spec::BasisDir, mesh::space::ParaDir};
 use json::{object, JsonValue};
 use std::{cmp::Ordering, fmt, ops::AddAssign};
 

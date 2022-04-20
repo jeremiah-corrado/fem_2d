@@ -1,5 +1,4 @@
-//! Specification for a BasisFn defined on Some Elem.
-//! Keeps track of the orders, direction, and associated DoF.
+/// Structures to specify Basis Functions over `Elem`s
 pub mod basis_spec;
 
 use basis_spec::BSAddress;

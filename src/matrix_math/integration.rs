@@ -1,5 +1,5 @@
-use crate::basis::{BasisFn, ShapeFn};
-use crate::domain::{dof::basis_spec::BasisDir, mesh::element::Materials};
+use crate::fem_domain::basis::{BasisFn, ShapeFn};
+use crate::fem_domain::domain::{dof::basis_spec::BasisDir, mesh::element::Materials};
 
 /// Methods to assist in Gauss-Legendre-Quadrature integration
 pub mod glq;

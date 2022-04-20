@@ -1,4 +1,4 @@
-use crate::domain::mesh::elem::Elem;
+use crate::fem_domain::domain::mesh::elem::Elem;
 use std::fmt;
 
 /// A description of a basis function

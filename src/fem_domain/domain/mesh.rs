@@ -1,8 +1,8 @@
 /// A line between two Nodes
 pub mod edge;
-/// A Finite Element in Parametric Space
+/// A Finite Element defined in Parametric Space (Keeps track of hp-refinement state)
 pub mod elem;
-/// A Finite Element in Real Space
+/// A Finite Element defined in Real Space (Keeps track of physical/geometric properties)
 pub mod element;
 /// Structures and Functions to facilitate RBS based anisotropic h-refinement
 pub mod h_refinement;
