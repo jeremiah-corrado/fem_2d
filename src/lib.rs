@@ -81,6 +81,7 @@ pub mod prelude {
         },
         Domain,
     };
+    pub use crate::matrix_math::galerkin::galerkin_sample_gep;
     pub use crate::matrix_math::integration::integrals::{curl_curl::CurlCurl, inner::L2Inner};
     pub use crate::matrix_math::linalg::{
         nalgebra_solve::nalgebra_solve_gep,
@@ -108,10 +109,10 @@ mod tests {
 
         // Fill Matrices
         let eigenproblem =
-            domain.galerkin_sample_gep_parallel::<KOLShapeFn, CurlCurl, L2Inner>(None);
+            galerkin_sample_gep::<KOLShapeFn, CurlCurl, L2Inner>(&domain, [Some(8), Some(8)]);
 
         // Solve Eigenvalue Problem
-        let solution = slepc_solve_gep(eigenproblem, 1.475).unwrap();
+        let solution = nalgebra_solve_gep(eigenproblem, 1.475).unwrap();
         println!("Found eigenvalue: {:.15}", solution.value);
 
         assert!((solution.value - 1.4745880937_f64).abs() < 1e-9);
