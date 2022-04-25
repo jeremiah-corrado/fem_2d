@@ -1,4 +1,4 @@
-use super::super::basis::{BasisFn, ShapeFn};
+use super::super::basis::{HierBasisFnSampled, HierBasisFnSpace};
 use super::{dof::basis_spec::BasisDir, mesh::space::V2D, Domain};
 
 use std::collections::{BTreeMap, HashMap};
@@ -40,7 +40,7 @@ impl<'d> UniformFieldSpace<'d> {
 
     // TODO: add option to include z-directed fields (after W-Dir & node-type Basis functions are implemented)
 
-    /// Use an eigenvector and associated [ShapeFn] to compute the X and Y fields over the [Domain]
+    /// Use an eigenvector and associated [HierBasisFnSpace] to compute the X and Y fields over the [Domain]
     ///
     /// The X and Y field quantities will be stored as {vector_name}_x and {vector_name}_y respectively. The Names are returned in an array in that order.
     ///     
@@ -60,7 +60,7 @@ impl<'d> UniformFieldSpace<'d> {
     /// assert_eq!(x_name, String::from("unit_fields_x"));
     /// assert_eq!(y_name, String::from("unit_fields_y"));
     /// ```
-    pub fn xy_fields<SF: ShapeFn>(
+    pub fn xy_fields<BSpace: HierBasisFnSpace>(
         &mut self,
         vector_name: &'static str,
         solution: Vec<f64>,
@@ -90,7 +90,7 @@ impl<'d> UniformFieldSpace<'d> {
                     .unwrap()
                     .iter()
                 {
-                    let bf: BasisFn<SF> = BasisFn::mapped_over_desc(
+                    let bf: HierBasisFnSampled<BSpace> = HierBasisFnSampled::mapped_over_desc(
                         i_max as usize,
                         j_max as usize,
                         false,

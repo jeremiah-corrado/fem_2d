@@ -3,7 +3,7 @@ use std::fmt;
 
 /// A description of a basis function
 ///
-/// This is used to describe a basis function and facilitate the construction of degrees-of-freedom. The information in this struct is also used to construct the actual `BasisFn` during Galerkin Sampling
+/// This is used to describe a basis function and facilitate the construction of degrees-of-freedom. The information in this struct is also used to construct the actual `HierBasisFn` during Galerkin Sampling
 #[derive(Clone, Debug)]
 pub struct BasisSpec {
     pub id: usize,

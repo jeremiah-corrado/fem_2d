@@ -1,6 +1,6 @@
 use super::glq::*;
 use super::{Integral, IntegralResult};
-use crate::fem_domain::basis::{BasisFn, ShapeFn};
+use crate::fem_domain::basis::{HierBasisFnSampled, HierBasisFnSpace};
 use crate::fem_domain::domain::{
     dof::basis_spec::BasisDir, mesh::element::Materials, mesh::space::V2D,
 };
@@ -9,7 +9,7 @@ use crate::fem_domain::domain::{
 pub mod curl_curl {
     use super::*;
 
-    /// The L2 Inner product of the Curl of two Basis Functions
+    /// The L2 Inner-Product of the Curl of two Hierarchical Basis Functions
     pub struct CurlCurl {
         u_weights: Vec<f64>,
         v_weights: Vec<f64>,
@@ -23,14 +23,14 @@ pub mod curl_curl {
             }
         }
 
-        fn integrate<SF: ShapeFn>(
+        fn integrate<BSpace: HierBasisFnSpace>(
             &self,
             p_dir: BasisDir,
             q_dir: BasisDir,
             p_orders: [usize; 2],
             q_orders: [usize; 2],
-            p_basis: &BasisFn<SF>,
-            q_basis: &BasisFn<SF>,
+            p_basis: &HierBasisFnSampled<BSpace>,
+            q_basis: &HierBasisFnSampled<BSpace>,
             materials: &Materials,
         ) -> IntegralResult {
             IntegralResult::Full(
@@ -91,14 +91,14 @@ pub mod curl_curl {
             )
         }
 
-        fn integrate_by_parts<SF: ShapeFn>(
+        fn integrate_by_parts<BSpace: HierBasisFnSpace>(
             &self,
             p_dir: BasisDir,
             q_dir: BasisDir,
             p_orders: [usize; 2],
             q_orders: [usize; 2],
-            p_basis: &BasisFn<SF>,
-            q_basis: &BasisFn<SF>,
+            p_basis: &HierBasisFnSampled<BSpace>,
+            q_basis: &HierBasisFnSampled<BSpace>,
             materials: &Materials,
         ) -> IntegralResult {
             let surface_term = (1.0 / materials.mu_rel.re)
@@ -247,9 +247,9 @@ pub mod curl_curl {
     ];
 
     #[inline]
-    fn max_uv_ratios<SF: ShapeFn>(
-        p_basis: &BasisFn<SF>,
-        q_basis: &BasisFn<SF>,
+    fn max_uv_ratios<BSpace: HierBasisFnSpace>(
+        p_basis: &HierBasisFnSampled<BSpace>,
+        q_basis: &HierBasisFnSampled<BSpace>,
         [m, n]: [usize; 2],
     ) -> f64 {
         ((p_basis.dt[m][n] >= q_basis.dt[m][n]) as u8) as f64 * p_basis.uv_ratio([m, n])
@@ -258,9 +258,9 @@ pub mod curl_curl {
     }
 
     #[inline]
-    fn max_vu_ratios<SF: ShapeFn>(
-        p_basis: &BasisFn<SF>,
-        q_basis: &BasisFn<SF>,
+    fn max_vu_ratios<BSpace: HierBasisFnSpace>(
+        p_basis: &HierBasisFnSampled<BSpace>,
+        q_basis: &HierBasisFnSampled<BSpace>,
         [m, n]: [usize; 2],
     ) -> f64 {
         ((p_basis.dt[m][n] >= q_basis.dt[m][n]) as u8) as f64 * p_basis.vu_ratio([m, n])
@@ -287,14 +287,14 @@ pub mod inner {
             }
         }
 
-        fn integrate<SF: ShapeFn>(
+        fn integrate<BSpace: HierBasisFnSpace>(
             &self,
             p_dir: BasisDir,
             q_dir: BasisDir,
             p_orders: [usize; 2],
             q_orders: [usize; 2],
-            p_basis: &BasisFn<SF>,
-            q_basis: &BasisFn<SF>,
+            p_basis: &HierBasisFnSampled<BSpace>,
+            q_basis: &HierBasisFnSampled<BSpace>,
             materials: &Materials,
         ) -> IntegralResult {
             IntegralResult::Full(
@@ -351,14 +351,14 @@ pub mod inner {
             )
         }
 
-        fn integrate_by_parts<SF: ShapeFn>(
+        fn integrate_by_parts<BSpace: HierBasisFnSpace>(
             &self,
             p_dir: BasisDir,
             q_dir: BasisDir,
             p_orders: [usize; 2],
             q_orders: [usize; 2],
-            p_basis: &BasisFn<SF>,
-            q_basis: &BasisFn<SF>,
+            p_basis: &HierBasisFnSampled<BSpace>,
+            q_basis: &HierBasisFnSampled<BSpace>,
             materials: &Materials,
         ) -> IntegralResult {
             IntegralResult::Full(

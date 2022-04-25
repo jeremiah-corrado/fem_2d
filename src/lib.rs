@@ -64,7 +64,7 @@ pub mod matrix_math;
 
 /// Convenient Re-Exports
 pub mod prelude {
-    pub use crate::fem_domain::basis::shape_fns::kol::KOLShapeFn;
+    pub use crate::fem_domain::basis::hierarchical_basis_fns::kol::HierPoly;
     #[cfg(feature = "max_ortho_basis")]
     pub use crate::fem_domain::basis::shape_fns::max_ortho::MaxOrthoShapeFn;
     pub use crate::fem_domain::domain::{
@@ -109,7 +109,7 @@ mod tests {
 
         // Fill Matrices
         let eigenproblem =
-            galerkin_sample_gep::<KOLShapeFn, CurlCurl, L2Inner>(&domain, [Some(8), Some(8)]);
+            galerkin_sample_gep::<HierPoly, CurlCurl, L2Inner>(&domain, [Some(8), Some(8)]);
 
         // Solve Eigenvalue Problem
         let solution = nalgebra_solve_gep(eigenproblem, 1.475).unwrap();
@@ -120,7 +120,7 @@ mod tests {
 
         let mut field_space = UniformFieldSpace::new(&domain, [8, 8]);
         let e_field_names = field_space
-            .xy_fields::<KOLShapeFn>("E", solution.normalized_eigenvector())
+            .xy_fields::<HierPoly>("E", solution.normalized_eigenvector())
             .unwrap();
         field_space
             .expression_2arg(e_field_names, "E_mag", |ex, ey| {

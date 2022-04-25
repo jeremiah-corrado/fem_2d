@@ -1,4 +1,4 @@
-use crate::fem_domain::basis::{BasisFn, ShapeFn};
+use crate::fem_domain::basis::{HierBasisFnSampled, HierBasisFnSpace};
 use crate::fem_domain::domain::{dof::basis_spec::BasisDir, mesh::element::Materials};
 
 /// Methods to assist in Gauss-Legendre-Quadrature integration
@@ -62,28 +62,28 @@ pub trait Integral: Sync + Send {
     fn with_weights(u_weights: &[f64], v_weights: &[f64]) -> Self;
 
     /// Compute an integral between [BasisFn]'s P and Q, where P and Q both have a direction ([BasisDir]) and orders `i` and `j`.
-    fn integrate<SF: ShapeFn>(
+    fn integrate<BSpace: HierBasisFnSpace>(
         &self,
         p_dir: BasisDir,
         q_dir: BasisDir,
         p_orders: [usize; 2],
         q_orders: [usize; 2],
-        p_basis: &BasisFn<SF>,
-        q_basis: &BasisFn<SF>,
+        p_basis: &HierBasisFnSampled<BSpace>,
+        q_basis: &HierBasisFnSampled<BSpace>,
         materials: &Materials,
     ) -> IntegralResult;
 
     /// Compute an integral-by-parts between [BasisFn]'s P and Q, where P and Q both have a direction ([BasisDir]) and orders `i` and `j`.
     ///
     /// This function may still return a the `Full` variant of [IntegralResult] if the solution is known to be zero along the edges.
-    fn integrate_by_parts<SF: ShapeFn>(
+    fn integrate_by_parts<BSpace: HierBasisFnSpace>(
         &self,
         p_dir: BasisDir,
         q_dir: BasisDir,
         p_orders: [usize; 2],
         q_orders: [usize; 2],
-        p_basis: &BasisFn<SF>,
-        q_basis: &BasisFn<SF>,
+        p_basis: &HierBasisFnSampled<BSpace>,
+        q_basis: &HierBasisFnSampled<BSpace>,
         materials: &Materials,
     ) -> IntegralResult;
 }

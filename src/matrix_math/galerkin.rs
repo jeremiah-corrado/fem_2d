@@ -3,7 +3,7 @@ use super::{
     linalg::{sparse_matrix::SparseMatrix, GEP},
 };
 use crate::fem_domain::{
-    basis::{BasisFnSampler, ShapeFn},
+    basis::{BasisFnSampler, HierBasisFnSpace},
     domain::Domain,
 };
 use rayon::prelude::*;
@@ -14,7 +14,9 @@ use rayon::prelude::*;
 ///
 /// * Two [Integral]s: `AI` and `BI` must be specified. These are used to populate the A and B matrices respectively
 /// * A [ShapeFn] `SF` must also be specified. This is used to evaluate the Domains [BasisSpec]s
-pub fn galerkin_sample_gep<SF: ShapeFn, AI: Integral, BI: Integral>(
+///
+/// Computations are parallelized over the Rayon Global Threadpool
+pub fn galerkin_sample_gep<SF: HierBasisFnSpace, AI: Integral, BI: Integral>(
     domain: &Domain,
     [num_u_glq, num_v_glq]: [Option<usize>; 2],
 ) -> GEP {

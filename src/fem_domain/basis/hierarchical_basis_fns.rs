@@ -1,9 +1,14 @@
 pub mod kol {
-    use super::super::ShapeFn;
+    use super::super::HierBasisFnSpace;
 
-    /// A simple Curl-Conforming Hierarchical Shape Function
+    /// A simple Curl-Conforming Hierarchical Basis Function Space
+    ///
+    /// Shape functions are composed directly from polynomials
+    ///
+    /// F_u(u, v, i, j) = u^i * P_j(v)
+    /// F_v(u, v, i, j) = P_i(u) * v^j
     #[derive(Clone, Debug)]
-    pub struct KOLShapeFn {
+    pub struct HierPoly {
         pows: Vec<Vec<f64>>,
         pows_d1: Vec<Vec<f64>>,
         pows_d2: Vec<Vec<f64>>,
@@ -11,7 +16,7 @@ pub mod kol {
         polys_d1: Vec<Vec<f64>>,
     }
 
-    impl KOLShapeFn {
+    impl HierPoly {
         fn new_with_d2(n_max: usize, points: &[f64]) -> Self {
             let mut pows = Vec::with_capacity(n_max + 1);
             let mut pows_d1 = Vec::with_capacity(n_max + 1);
@@ -81,7 +86,7 @@ pub mod kol {
                 }
             }
 
-            Self {
+            HierPoly {
                 pows,
                 pows_d1,
                 pows_d2,
@@ -143,7 +148,7 @@ pub mod kol {
                 }
             }
 
-            Self {
+            HierPoly {
                 pows,
                 pows_d1,
                 pows_d2: Vec::new(),
@@ -153,7 +158,7 @@ pub mod kol {
         }
     }
 
-    impl ShapeFn for KOLShapeFn {
+    impl HierBasisFnSpace for HierPoly {
         fn with(n_max: usize, points: &[f64], compute_2nd_deriv: bool) -> Self {
             if compute_2nd_deriv {
                 Self::new_with_d2(n_max, points)
@@ -183,7 +188,7 @@ pub mod kol {
         }
 
         fn norm_d2(&self, n: usize, p: usize) -> f64 {
-            // coincidentally same as pows_d2
+            // coincidentally same as tang_d2
             self.pows_d2[n][p]
         }
     }
@@ -191,7 +196,7 @@ pub mod kol {
 
 #[cfg(feature = "max_ortho_basis")]
 mod max_ortho {
-    use super::super::ShapeFn;
+    use super::super::HierBasisFnSpace;
 
     //https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6470651
     const EUC_NORM_COEFFS: [f64; 12] = [
@@ -251,7 +256,7 @@ mod max_ortho {
         pub l_fn: LegendrePoly,
     }
 
-    impl ShapeFn for MaxOrthoShapeFn {
+    impl HierBasisFnSpace for MaxOrthoShapeFn {
         fn with(max_order: usize, points: &[f64], compute_d2: bool) -> Self {
             let l_fn = LegendrePoly::with(max_order as u8, points, compute_d2);
             Self {
