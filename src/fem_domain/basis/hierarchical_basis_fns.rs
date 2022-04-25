@@ -1,12 +1,16 @@
-pub mod kol {
+pub mod poly {
     use super::super::HierBasisFnSpace;
 
-    /// A simple Curl-Conforming Hierarchical Basis Function Space
+    /// A Simple Curl-Conforming Hierarchical Basis Function Space:
     ///
-    /// Shape functions are composed directly from polynomials
+    /// N_i(x) = `x^i`
     ///
-    /// F_u(u, v, i, j) = u^i * P_j(v)
-    /// F_v(u, v, i, j) = P_i(u) * v^j
+    /// T_i(x) =
+    /// * `1 - x` for `i = 0`
+    /// * `1 + x` for `i = 1`
+    /// * `x^i - 1` for `i >= 2 (even)`
+    /// * `x^i - x` for `i >= 3 (odd)`
+    ///
     #[derive(Clone, Debug)]
     pub struct HierPoly {
         pows: Vec<Vec<f64>>,
@@ -167,27 +171,27 @@ pub mod kol {
             }
         }
 
-        fn tang(&self, n: usize, p: usize) -> f64 {
+        fn norm(&self, n: usize, p: usize) -> f64 {
             self.pows[n][p]
         }
 
-        fn tang_d1(&self, n: usize, p: usize) -> f64 {
+        fn norm_d1(&self, n: usize, p: usize) -> f64 {
             self.pows_d1[n][p]
         }
 
-        fn tang_d2(&self, n: usize, p: usize) -> f64 {
+        fn norm_d2(&self, n: usize, p: usize) -> f64 {
             self.pows_d2[n][p]
         }
 
-        fn norm(&self, n: usize, p: usize) -> f64 {
+        fn tang(&self, n: usize, p: usize) -> f64 {
             self.polys[n][p]
         }
 
-        fn norm_d1(&self, n: usize, p: usize) -> f64 {
+        fn tang_d1(&self, n: usize, p: usize) -> f64 {
             self.polys_d1[n][p]
         }
 
-        fn norm_d2(&self, n: usize, p: usize) -> f64 {
+        fn tang_d2(&self, n: usize, p: usize) -> f64 {
             // coincidentally same as tang_d2
             self.pows_d2[n][p]
         }
@@ -247,7 +251,9 @@ mod max_ortho {
         &get_q_weight_vector::<13>(),
     ];
 
-    /// An advanced Hierarchical Type Shape Function which maximizes orthogonality between polynomial orders
+    /// An advanced Curl-Conforming Hierarchical Basis Function Space
+    ///
+    /// The T and N functions are defined using Legendre Polynomials
     ///
     /// Based on: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6470651
     #[derive(Clone, Debug)]
@@ -265,23 +271,23 @@ mod max_ortho {
             }
         }
 
-        fn tang(&self, n: usize, p: usize) -> f64 {
+        fn norm(&self, n: usize, p: usize) -> f64 {
             self.l_fn.l[n][p]
         }
-        fn tang_d1(&self, n: usize, p: usize) -> f64 {
+        fn norm_d1(&self, n: usize, p: usize) -> f64 {
             self.l_fn.d1[n][p]
         }
-        fn tang_d2(&self, n: usize, p: usize) -> f64 {
+        fn rorm_d2(&self, n: usize, p: usize) -> f64 {
             self.l_fn.d2[n][p]
         }
 
-        fn norm(&self, n: usize, p: usize) -> f64 {
+        fn tang(&self, n: usize, p: usize) -> f64 {
             self.q_fn.q[n][p]
         }
-        fn norm_d1(&self, n: usize, p: usize) -> f64 {
+        fn tang_d1(&self, n: usize, p: usize) -> f64 {
             self.q_fn.d1[n][p]
         }
-        fn norm_d2(&self, n: usize, p: usize) -> f64 {
+        fn tang_d2(&self, n: usize, p: usize) -> f64 {
             self.q_fn.d2[n][p]
         }
     }

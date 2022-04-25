@@ -252,8 +252,9 @@ pub mod curl_curl {
         q_basis: &HierBasisFnSampled<BSpace>,
         [m, n]: [usize; 2],
     ) -> f64 {
-        ((p_basis.dt[m][n] >= q_basis.dt[m][n]) as u8) as f64 * p_basis.uv_ratio([m, n])
-            + ((p_basis.dt[m][n] < q_basis.dt[m][n]) as u8) as f64 * q_basis.uv_ratio([m, n])
+        ((p_basis.det_jac[m][n] >= q_basis.det_jac[m][n]) as u8) as f64 * p_basis.uv_ratio([m, n])
+            + ((p_basis.det_jac[m][n] < q_basis.det_jac[m][n]) as u8) as f64
+                * q_basis.uv_ratio([m, n])
         // p_basis.uv_ratio([m, n])
     }
 
@@ -263,8 +264,9 @@ pub mod curl_curl {
         q_basis: &HierBasisFnSampled<BSpace>,
         [m, n]: [usize; 2],
     ) -> f64 {
-        ((p_basis.dt[m][n] >= q_basis.dt[m][n]) as u8) as f64 * p_basis.vu_ratio([m, n])
-            + ((p_basis.dt[m][n] < q_basis.dt[m][n]) as u8) as f64 * q_basis.vu_ratio([m, n])
+        ((p_basis.det_jac[m][n] >= q_basis.det_jac[m][n]) as u8) as f64 * p_basis.vu_ratio([m, n])
+            + ((p_basis.det_jac[m][n] < q_basis.det_jac[m][n]) as u8) as f64
+                * q_basis.vu_ratio([m, n])
         // p_basis.vu_ratio([m, n])
     }
 }

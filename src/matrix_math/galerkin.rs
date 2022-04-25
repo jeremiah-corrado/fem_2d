@@ -3,7 +3,7 @@ use super::{
     linalg::{sparse_matrix::SparseMatrix, GEP},
 };
 use crate::fem_domain::{
-    basis::{BasisFnSampler, HierBasisFnSpace},
+    basis::{BasisFnSampler, HierBasisFnSampled, HierBasisFnSpace},
     domain::Domain,
 };
 use rayon::prelude::*;
@@ -13,10 +13,10 @@ use rayon::prelude::*;
 /// All pairs of overlapping Shape Functions will be integrated and stored in the matrices by their associated DoF IDs
 ///
 /// * Two [Integral]s: `AI` and `BI` must be specified. These are used to populate the A and B matrices respectively
-/// * A [ShapeFn] `SF` must also be specified. This is used to evaluate the Domains [BasisSpec]s
+/// * A [HierBasisFnSpace] `BSpace` must also be specified. This is used to evaluate the Domains [BasisSpec]s
 ///
 /// Computations are parallelized over the Rayon Global Threadpool
-pub fn galerkin_sample_gep<SF: HierBasisFnSpace, AI: Integral, BI: Integral>(
+pub fn galerkin_sample_gep<BSpace: HierBasisFnSpace, AI: Integral, BI: Integral>(
     domain: &Domain,
     [num_u_glq, num_v_glq]: [Option<usize>; 2],
 ) -> GEP {
@@ -25,7 +25,7 @@ pub fn galerkin_sample_gep<SF: HierBasisFnSpace, AI: Integral, BI: Integral>(
 
     // construct basis sampler
     let [i_max, j_max] = domain.mesh.max_expansion_orders();
-    let (bs_sampler, [u_weights, v_weights]): (BasisFnSampler<SF>, _) =
+    let (bs_sampler, [u_weights, v_weights]): (BasisFnSampler<HierBasisFnSampled<BSpace>>, _) =
         BasisFnSampler::with(i_max as usize, j_max as usize, num_u_glq, num_v_glq, false);
 
     // setup integration

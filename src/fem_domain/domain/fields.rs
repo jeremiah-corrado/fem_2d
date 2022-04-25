@@ -1,4 +1,4 @@
-use super::super::basis::{HierBasisFnSampled, HierBasisFnSpace};
+use super::super::basis::{BasisFn, HierBasisFnSampled, HierBasisFnSpace};
 use super::{dof::basis_spec::BasisDir, mesh::space::V2D, Domain};
 
 use std::collections::{BTreeMap, HashMap};
@@ -90,14 +90,12 @@ impl<'d> UniformFieldSpace<'d> {
                     .unwrap()
                     .iter()
                 {
-                    let bf: HierBasisFnSampled<BSpace> = HierBasisFnSampled::mapped_over_desc(
-                        i_max as usize,
-                        j_max as usize,
-                        false,
-                        &self.parametric_points[0],
-                        &self.parametric_points[1],
+                    let bf: HierBasisFnSampled<BSpace> = HierBasisFnSampled::defined_over(
                         &self.domain.mesh.elems[*anc_elem_id],
                         Some(shell_elem),
+                        [&self.parametric_points[0], &self.parametric_points[1]],
+                        [i_max as usize, j_max as usize],
+                        false,
                     );
 
                     for bs in self.domain.local_basis_specs(*anc_elem_id).unwrap() {

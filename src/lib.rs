@@ -64,7 +64,7 @@ pub mod matrix_math;
 
 /// Convenient Re-Exports
 pub mod prelude {
-    pub use crate::fem_domain::basis::hierarchical_basis_fns::kol::HierPoly;
+    pub use crate::fem_domain::basis::hierarchical_basis_fns::poly::HierPoly;
     #[cfg(feature = "max_ortho_basis")]
     pub use crate::fem_domain::basis::shape_fns::max_ortho::MaxOrthoShapeFn;
     pub use crate::fem_domain::domain::{
