@@ -60,7 +60,7 @@
 pub mod fem_domain;
 
 /// Structures and Functions to define and solve the FEM Problem
-pub mod matrix_math;
+pub mod fem_problem;
 
 /// Convenient Re-Exports
 pub mod prelude {
@@ -81,9 +81,9 @@ pub mod prelude {
         },
         Domain,
     };
-    pub use crate::matrix_math::galerkin::galerkin_sample_gep;
-    pub use crate::matrix_math::integration::integrals::{curl_curl::CurlCurl, inner::L2Inner};
-    pub use crate::matrix_math::linalg::{
+    pub use crate::fem_problem::galerkin::galerkin_sample_gep;
+    pub use crate::fem_problem::integration::integrals::{curl_curl::CurlCurl, inner::L2Inner};
+    pub use crate::fem_problem::linalg::{
         nalgebra_solve::nalgebra_solve_gep,
         slepc_solve::{slepc_solve_gep, SlepcGEPError},
         EigenPair, GEP,

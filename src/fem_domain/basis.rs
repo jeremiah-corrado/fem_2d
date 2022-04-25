@@ -5,7 +5,7 @@ use super::domain::mesh::{
     elem::Elem,
     space::{M2D, V2D},
 };
-use crate::matrix_math::integration::glq::{gauss_quadrature_points, scale_gauss_quad_points};
+use crate::fem_problem::integration::glq::{gauss_quadrature_points, scale_gauss_quad_points};
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};

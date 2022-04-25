@@ -3,6 +3,7 @@ use crate::fem_domain::domain::{dof::basis_spec::BasisDir, mesh::element::Materi
 
 /// Methods to assist in Gauss-Legendre-Quadrature integration
 pub mod glq;
+
 /// Specific Implementations of the `Integral` Trait
 pub mod integrals;
 
