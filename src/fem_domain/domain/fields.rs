@@ -1,4 +1,4 @@
-use super::super::basis::{BasisFn, HierBasisFnSampled, HierBasisFnSpace};
+use super::super::basis::{BasisFn, HierCurlBasisFn, HierCurlBasisFnSpace};
 use super::{dof::basis_spec::BasisDir, mesh::space::V2D, Domain};
 
 use std::collections::{BTreeMap, HashMap};
@@ -60,7 +60,7 @@ impl<'d> UniformFieldSpace<'d> {
     /// assert_eq!(x_name, String::from("unit_fields_x"));
     /// assert_eq!(y_name, String::from("unit_fields_y"));
     /// ```
-    pub fn xy_fields<BSpace: HierBasisFnSpace>(
+    pub fn xy_fields<BSpace: HierCurlBasisFnSpace>(
         &mut self,
         vector_name: &'static str,
         solution: Vec<f64>,
@@ -90,7 +90,7 @@ impl<'d> UniformFieldSpace<'d> {
                     .unwrap()
                     .iter()
                 {
-                    let bf: HierBasisFnSampled<BSpace> = HierBasisFnSampled::defined_over(
+                    let bf: HierCurlBasisFn<BSpace> = HierCurlBasisFn::defined_over(
                         &self.domain.mesh.elems[*anc_elem_id],
                         Some(shell_elem),
                         [&self.parametric_points[0], &self.parametric_points[1]],

@@ -16,7 +16,7 @@ use std::sync::{Arc, Mutex};
 ///
 /// The first (and optionally the second) derivative of the spaces must also be defined over the same set of points.
 ///
-pub trait HierBasisFnSpace: Clone + Sync + Send + std::fmt::Debug {
+pub trait HierCurlBasisFnSpace: Clone + Sync + Send + std::fmt::Debug {
     /// Define a set of shapes (or functions) over a set of points
     ///
     /// # Arguments
@@ -202,12 +202,12 @@ pub trait BasisFn {
 /// * `F_v(u, v, i, j) = T_i(u) * N_j(v) * J^-1_v(u, v)`
 /// * `F_w(u, v, i, j) = T_i(u) * T_j(v) * J_z(u, v)`   (Not Yet Implemented)
 ///
-/// Where the Functions N, and T are defined by the [HierBasisFnSpace].
+/// Where the Functions N, and T are defined by the [HierCurlBasisFnSpace].
 ///
 /// The Jacobian is defined by the [Elem]s mapping to real space (and the mapping between the [Elem]s and its descendant, in the case of sub-sampling)
 ///
 #[derive(Clone, Debug)]
-pub struct HierBasisFnSampled<BSpace: HierBasisFnSpace> {
+pub struct HierCurlBasisFn<BSpace: HierCurlBasisFnSpace> {
     /// Transformation matrices (or Jacobians) at each sample point. Describes transformation from real space to sampled parametric space
     pub jac: Vec<Vec<M2D>>,
     // Inverse of transformation matrices at each sample point
@@ -220,7 +220,7 @@ pub struct HierBasisFnSampled<BSpace: HierBasisFnSpace> {
     v_shapes: BSpace,
 }
 
-impl<BSpace: HierBasisFnSpace> HierBasisFnSampled<BSpace> {
+impl<BSpace: HierCurlBasisFnSpace> HierCurlBasisFn<BSpace> {
     /// Evaluate the u-directed basis function at some point (m, n)
     pub fn f_u(&self, [i, j]: [usize; 2], [m, n]: [usize; 2]) -> V2D {
         self.jac_inv[m][n].u * self.u_shapes.norm(i, m) * self.v_shapes.tang(j, n)
@@ -348,7 +348,7 @@ impl<BSpace: HierBasisFnSpace> HierBasisFnSampled<BSpace> {
     }
 }
 
-impl<BSpace: HierBasisFnSpace> BasisFn for HierBasisFnSampled<BSpace> {
+impl<BSpace: HierCurlBasisFnSpace> BasisFn for HierCurlBasisFn<BSpace> {
     /// Create a Basis Function instance defined over some `Elem` (and optionally mapped over some descendant `Elem`)
     ///
     /// # Arguments

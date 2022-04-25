@@ -1,5 +1,5 @@
 pub mod poly {
-    use super::super::HierBasisFnSpace;
+    use super::super::HierCurlBasisFnSpace;
 
     /// A Simple Curl-Conforming Hierarchical Basis Function Space:
     ///
@@ -162,7 +162,7 @@ pub mod poly {
         }
     }
 
-    impl HierBasisFnSpace for HierPoly {
+    impl HierCurlBasisFnSpace for HierPoly {
         fn with(n_max: usize, points: &[f64], compute_2nd_deriv: bool) -> Self {
             if compute_2nd_deriv {
                 Self::new_with_d2(n_max, points)

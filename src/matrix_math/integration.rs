@@ -1,4 +1,4 @@
-use crate::fem_domain::basis::{HierBasisFnSampled, HierBasisFnSpace};
+use crate::fem_domain::basis::{HierCurlBasisFn, HierCurlBasisFnSpace};
 use crate::fem_domain::domain::{dof::basis_spec::BasisDir, mesh::element::Materials};
 
 /// Methods to assist in Gauss-Legendre-Quadrature integration
@@ -54,36 +54,36 @@ impl IntegralResult {
 
 // TODO: make the use of &Materials generic s.t. multiple problems can leverage identical Integrals with slight variations in material parameter invocation
 
-/// A trait to describe an "integrator" which can compute 2D integrals over some function of two [BasisFn]'s
-pub trait Integral: Sync + Send {
+/// A trait to describe an "integrator" which can compute 2D integrals over some function of two Hierarchical Curl-Conforming Basis Functions
+pub trait HierCurlIntegral: Sync + Send {
     /// Assign a set of Gauss-Legendre-Quadrature weights to this integrator.
     ///
     /// The weight vectors must match the dimension of the [BasisFn]s used in later calls to `integrate` or `integrate_by_parts`
     fn with_weights(u_weights: &[f64], v_weights: &[f64]) -> Self;
 
     /// Compute an integral between [BasisFn]'s P and Q, where P and Q both have a direction ([BasisDir]) and orders `i` and `j`.
-    fn integrate<BSpace: HierBasisFnSpace>(
+    fn integrate<BSpace: HierCurlBasisFnSpace>(
         &self,
         p_dir: BasisDir,
         q_dir: BasisDir,
         p_orders: [usize; 2],
         q_orders: [usize; 2],
-        p_basis: &HierBasisFnSampled<BSpace>,
-        q_basis: &HierBasisFnSampled<BSpace>,
+        p_basis: &HierCurlBasisFn<BSpace>,
+        q_basis: &HierCurlBasisFn<BSpace>,
         materials: &Materials,
     ) -> IntegralResult;
 
     /// Compute an integral-by-parts between [BasisFn]'s P and Q, where P and Q both have a direction ([BasisDir]) and orders `i` and `j`.
     ///
     /// This function may still return a the `Full` variant of [IntegralResult] if the solution is known to be zero along the edges.
-    fn integrate_by_parts<BSpace: HierBasisFnSpace>(
+    fn integrate_by_parts<BSpace: HierCurlBasisFnSpace>(
         &self,
         p_dir: BasisDir,
         q_dir: BasisDir,
         p_orders: [usize; 2],
         q_orders: [usize; 2],
-        p_basis: &HierBasisFnSampled<BSpace>,
-        q_basis: &HierBasisFnSampled<BSpace>,
+        p_basis: &HierCurlBasisFn<BSpace>,
+        q_basis: &HierCurlBasisFn<BSpace>,
         materials: &Materials,
     ) -> IntegralResult;
 }
