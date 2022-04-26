@@ -4,7 +4,7 @@ use crate::fem_domain::domain::{dof::basis_spec::BasisDir, mesh::element::Materi
 /// Methods to assist in Gauss-Legendre-Quadrature integration
 pub mod glq;
 
-/// Specific Implementations of the [HierCurlIntegral] Trait
+/// Implementations of the [HierCurlIntegral] Trait
 pub mod integrals;
 
 /// Return type of an [HierCurlIntegral]
@@ -59,10 +59,10 @@ impl IntegralResult {
 pub trait HierCurlIntegral: Sync + Send {
     /// Assign a set of Gauss-Legendre-Quadrature weights to this integrator.
     ///
-    /// The weight vectors must match the dimension of the [BasisFn]s used in later calls to `integrate` or `integrate_by_parts`
+    /// The weight vectors must match the dimension of the [HierCurlBasisFn]s used in later calls to `integrate` or `integrate_by_parts`
     fn with_weights(u_weights: &[f64], v_weights: &[f64]) -> Self;
 
-    /// Compute an integral between [BasisFn]'s P and Q, where P and Q both have a direction ([BasisDir]) and orders `i` and `j`.
+    /// Compute an integral between [HierCurlBasisFn]'s P and Q, where P and Q both have a direction ([BasisDir]) and orders `i` and `j`.
     fn integrate<BSpace: HierCurlBasisFnSpace>(
         &self,
         p_dir: BasisDir,
@@ -74,7 +74,7 @@ pub trait HierCurlIntegral: Sync + Send {
         materials: &Materials,
     ) -> IntegralResult;
 
-    /// Compute an integral-by-parts between [BasisFn]'s P and Q, where P and Q both have a direction ([BasisDir]) and orders `i` and `j`.
+    /// Compute an integral-by-parts between [HierCurlBasisFn]'s P and Q, where P and Q both have a direction ([BasisDir]) and orders `i` and `j`.
     ///
     /// This function may still return a the `Full` variant of [IntegralResult] if the solution is known to be zero along the edges.
     fn integrate_by_parts<BSpace: HierCurlBasisFnSpace>(

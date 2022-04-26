@@ -16,8 +16,6 @@ pub const MIN_GLQ_ORDER: usize = 4;
 ///
 /// All pairs of overlapping Shape Functions will be integrated and stored in the matrices by their associated DoF IDs
 ///
-
-///
 /// Computations are parallelized over the Rayon Global Threadpool
 ///
 /// # Arguments

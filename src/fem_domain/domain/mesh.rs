@@ -1372,7 +1372,7 @@ impl Mesh {
     /// * If the Option is `None`, the Elem is not p-refined
     /// * If it is `Some(refinement)`, the Elem is p-refined with the refinement
     ///
-    /// Unlike [p_refine_with_filter], this closure is responsible for constraining the refinement to the valid range. An `Err` will be returned, and refinement will be aborted if any of the refinements do not fall within the valid range.
+    /// Unlike `p_refine_with_filter`, this closure is responsible for constraining the refinement to the valid range. An `Err` will be returned, and refinement will be aborted if any of the refinements do not fall within the valid range.
     ///
     /// # Example
     /// ```
