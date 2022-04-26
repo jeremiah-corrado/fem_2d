@@ -4,26 +4,57 @@ use super::{
 };
 use crate::fem_domain::{
     basis::{BasisFnSampler, HierCurlBasisFn, HierCurlBasisFnSpace},
-    domain::Domain,
+    domain::{ContinuityCondition, Domain},
 };
 use rayon::prelude::*;
+use std::fmt;
+
+/// Minimum number of Gauss Legendre Quadrature Points Allowed for Galerkin Sampling
+pub const MIN_GLQ_ORDER: usize = 4;
 
 /// Fill two system matrices using a [Domain]'s Basis Space as the Testing Space. Return a Generalized Eigenproblem ([GEP])
 ///
 /// All pairs of overlapping Shape Functions will be integrated and stored in the matrices by their associated DoF IDs
 ///
-/// * Two [HierCurlIntegral]s: `AI` and `BI` must be specified. These are used to populate the A and B matrices respectively
-/// * A [HierBasisFnSpace] `BSpace` must also be specified. This is used to evaluate the Domains [BasisSpec]s
+
 ///
 /// Computations are parallelized over the Rayon Global Threadpool
-pub fn galerkin_sample_gep<
+///
+/// # Arguments
+/// * `domain`: The [Domain] over which the Galerkin Sampling is to be performed
+/// * `num_u_glq`: The number of Gauss Legendre Quadrature Points in to use for integration in the u-direction. If `None`, the default is used.
+/// * `num_v_glq`: The number of Gauss Legendre Quadrature Points in to use for integration in the v-direction. If `None`, the default is used.
+/// * Two [HierCurlIntegral]s: `AI` and `BI` must be specified as Generic Arguments. These are used to populate the A and B matrices respectively
+/// * A [HierCurlBasisFnSpace] `BSpace` must also be specified as a Generic Argument. This is used to instantiate the Domains `BasisSpec`s as [HierCurlBasisFn]s
+///
+/// # Returns
+/// * An `Err` if the `Domain` was not constructed with an `H(Curl)` [ContinuityCondition]
+/// * An `Err` if the `Domain` doesn't have any Degrees of Freedom
+/// * An `Err` if the specified number of Gauss Legendre Points is too small
+/// * A [GEP], otherwise
+///
+pub fn galerkin_sample_gep_hcurl<
     BSpace: HierCurlBasisFnSpace,
     AI: HierCurlIntegral,
     BI: HierCurlIntegral,
 >(
     domain: &Domain,
     [num_u_glq, num_v_glq]: [Option<usize>; 2],
-) -> GEP {
+) -> Result<GEP, GalerkinSamplingError> {
+    // check for errors
+    if domain.cc != ContinuityCondition::HCurl {
+        return Err(GalerkinSamplingError::WrongContinuityCondition(
+            ContinuityCondition::HCurl,
+            domain.cc,
+        ));
+    }
+    if domain.dofs.is_empty() {
+        return Err(GalerkinSamplingError::EmptyDOFSet);
+    }
+    if num_u_glq.lt(&Some(MIN_GLQ_ORDER)) || num_v_glq.lt(&Some(MIN_GLQ_ORDER)) {
+        return Err(GalerkinSamplingError::InvalidGLQSettings);
+    }
+
     // construct an eigenproblem with a and b matrices
     let mut gep = GEP::new(domain.dofs.len());
 
@@ -149,5 +180,30 @@ pub fn galerkin_sample_gep<
         [local_a, local_b]
     }));
 
-    gep
+    Ok(gep)
+}
+
+/// Error Type for Galerkin Sampling Functions
+#[derive(Debug)]
+pub enum GalerkinSamplingError {
+    WrongContinuityCondition(ContinuityCondition, ContinuityCondition),
+    EmptyDOFSet,
+    InvalidGLQSettings,
+}
+
+impl fmt::Display for GalerkinSamplingError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::WrongContinuityCondition(required, received) => {
+                write!(f, "Wrong Continuity Condition on Domain (required: {}, received: {}); Cannot execute Galerkin Sampling!", required, received)
+            }
+            Self::EmptyDOFSet => write!(
+                f,
+                "No Degrees-of-Freedom Defined over Domain; Cannot execute Galerkin Sampling!"
+            ),
+            Self::InvalidGLQSettings => {
+                write!(f, "Invalid GLQ Settings (the number of GLQ points must be at least {}); Cannot execute Galerkin Sampling!", MIN_GLQ_ORDER)
+            }
+        }
+    }
 }

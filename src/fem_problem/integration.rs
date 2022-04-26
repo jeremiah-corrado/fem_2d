@@ -4,10 +4,10 @@ use crate::fem_domain::domain::{dof::basis_spec::BasisDir, mesh::element::Materi
 /// Methods to assist in Gauss-Legendre-Quadrature integration
 pub mod glq;
 
-/// Specific Implementations of the `Integral` Trait
+/// Specific Implementations of the [HierCurlIntegral] Trait
 pub mod integrals;
 
-/// Return type of an [Integral]
+/// Return type of an [HierCurlIntegral]
 pub enum IntegralResult {
     /// Overall Integral Result
     Full(f64),

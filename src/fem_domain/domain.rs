@@ -12,41 +12,150 @@ use dof::{
 use mesh::*;
 use smallvec::smallvec;
 use std::collections::BTreeMap;
+use std::fmt;
+
+/// The Continuity Condition to be enforced by the Domain. Only H(Curl) is currently supported!!!
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ContinuityCondition {
+    HCurl,
+    HDiv,
+    Discontinuous,
+}
+
+impl fmt::Display for ContinuityCondition {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::HCurl => write!(f, "H(Curl)"),
+            Self::HDiv => write!(f, "H(Div)"),
+            Self::Discontinuous => write!(f, "Discontinuous"),
+        }
+    }
+}
 
 /// High Level Description of an FEM Domain
+///
+/// This struct contains:
+/// * The [Mesh] - A discretization of the Domain of interest
+/// * A list of [DoF]s (Degrees of Freedom) - Sets of Basis Functions that can take a scalar value in the FEM solution
+/// * A list of [BasisSpec]s - The specification of each Basis Function in the Domain
+///
 pub struct Domain {
     pub mesh: Mesh,
     /// Degrees of Freedom (collections of BasisSpecs matched via Tangential Continuity)
     pub dofs: Vec<DoF>,
     /// Individual BasisSpecs sorted by their associated Elem
     pub basis_specs: Vec<Vec<BasisSpec>>,
+    /// The continuity condition enforced over the Basis Space
+    pub cc: ContinuityCondition,
 }
 
 impl Domain {
     /// Create a Domain around an empty mesh
-    pub fn blank() -> Self {
+    pub fn blank(cc: ContinuityCondition) -> Self {
         Self {
             mesh: Mesh::blank(),
             dofs: Vec::new(),
             basis_specs: Vec::new(),
+            cc,
         }
     }
 
     /// Create a Domain from a unit Mesh
-    pub fn unit() -> Self {
-        Self::from_mesh(Mesh::unit())
+    pub fn unit(cc: ContinuityCondition) -> Self {
+        Self::from_mesh(Mesh::unit(), cc)
     }
 
     /// Create a Domain from a Mesh
-    pub fn from_mesh(mesh: Mesh) -> Self {
-        let mut dom = Self {
-            mesh,
-            dofs: Vec::new(),
-            basis_specs: Vec::new(),
-        };
+    pub fn from_mesh(mut mesh: Mesh, cc: ContinuityCondition) -> Self {
+        // prepare for basis function matching
+        mesh.set_edge_activation();
+        // mesh.set_node_activation(); (TODO: this is not needed until node-type basis functions are implemented)
 
-        dom.gen_dofs();
-        dom
+        // create dof and basis_spec collections
+        let mut dof_id_tracker = IdTracker::new(0);
+        let mut basis_specs = vec![Vec::new(); mesh.elems.len()];
+        let mut dofs = Vec::new();
+
+        // Generate lists of BasisSpecs associated with Elems, Edges, and (Nodes), sorted by their IDs
+        let [elem_bs, edge_bs, _] = Self::gen_basis_specs(&mesh, cc);
+
+        // Designate all elem-type BasisSpecs located on shell Elems as DoFs
+        for (elem_id, mut elem_bs_list) in elem_bs {
+            if !mesh.elems[elem_id].has_children() {
+                basis_specs[elem_id] = Vec::with_capacity(elem_bs_list.len());
+
+                for elem_bs in elem_bs_list
+                    .drain(0..)
+                    .filter(|bs| bs.dir == BasisDir::U || bs.dir == BasisDir::V)
+                {
+                    let dof_id = dof_id_tracker.next_id();
+                    let address = Self::push_basis_spec(&mut basis_specs, elem_bs, dof_id);
+                    dofs.push(DoF::new(dof_id, smallvec![address]));
+                }
+            }
+        }
+
+        // Create DoFs from pairs of matched BasisSpecs on the active Elems associated with each Edge
+        for (edge_id, mut edge_bs_list) in edge_bs {
+            if let Some(active_elem_ids) = mesh.edges[edge_id].active_elem_pair() {
+                // only basis specs associated with the active pair of Elems need to be considered here
+                let rel_basis_specs: Vec<BasisSpec> = edge_bs_list
+                    .drain(0..)
+                    .filter(|bs| {
+                        (bs.dir == BasisDir::U || bs.dir == BasisDir::V)
+                            && active_elem_ids.contains(&bs.elem_id)
+                    })
+                    .collect();
+
+                // allocate space for the new basis specs
+                let num_expected = rel_basis_specs.len() / 2;
+                for elem_id in active_elem_ids {
+                    if basis_specs[elem_id].is_empty() {
+                        basis_specs[elem_id] = Vec::with_capacity(num_expected);
+                    } else {
+                        basis_specs[elem_id].reserve(num_expected);
+                    }
+                }
+
+                // iterate over each pair of BasisSpecs (once) and look for matches
+                let mut active_pairs: Vec<[usize; 2]> = Vec::with_capacity(num_expected);
+                for (a, bs_0) in rel_basis_specs.iter().enumerate() {
+                    for (b, bs_1) in rel_basis_specs.iter().enumerate().skip(a + 1) {
+                        if bs_0.matches_with_edge(bs_1) {
+                            active_pairs.push([a, b]);
+                            break;
+                        }
+                    }
+                }
+
+                // Store the matched BasisSpecs and create new DoFs
+                for pair in active_pairs {
+                    let dof_id = dof_id_tracker.next_id();
+                    let addresses = pair
+                        .iter()
+                        .map(|rel_idx| {
+                            // TODO: should use MaybeUninit in BasisSpec (or some other method) to avoid expensive Clone  here!
+                            Self::push_basis_spec(
+                                &mut basis_specs,
+                                rel_basis_specs[*rel_idx].clone(),
+                                dof_id,
+                            )
+                        })
+                        .collect();
+
+                    dofs.push(DoF::new(dof_id, addresses));
+                }
+            }
+        }
+
+        // TODO: implement node-type BasisSpec Matching!
+
+        Self {
+            mesh,
+            dofs,
+            basis_specs,
+            cc,
+        }
     }
 
     /// Iterate over all `Elem`s in the mesh
@@ -89,96 +198,20 @@ impl Domain {
         }
     }
 
-    // Generate Degrees of Freedom over the mesh according to the Polynomial Expansion orders on each Elem
-    fn gen_dofs(&mut self) {
-        // prepare for fresh set of DoFs and BasisSpecs
-        self.basis_specs = vec![Vec::new(); self.mesh.elems.len()];
-        self.dofs.clear();
-        self.mesh.set_edge_activation();
-        let mut dof_id_tracker = IdTracker::new(0);
-
-        // Generate lists of BasisSpecs associated with Elems, Edges, and Nodes, sorted by their IDs
-        let [elem_bs, edge_bs, _] = self.gen_basis_specs();
-
-        // Designate all elem-type BasisSpecs located on shell Elems as DoFs
-        for (elem_id, mut elem_bs_list) in elem_bs {
-            if !self.mesh.elems[elem_id].has_children() {
-                self.basis_specs[elem_id] = Vec::with_capacity(elem_bs_list.len());
-
-                for elem_bs in elem_bs_list
-                    .drain(0..)
-                    .filter(|bs| bs.dir == BasisDir::U || bs.dir == BasisDir::V)
-                {
-                    let dof_id = dof_id_tracker.next_id();
-                    let address = self.push_basis_spec(elem_bs, dof_id);
-                    self.dofs.push(DoF::new(dof_id, smallvec![address]));
-                }
-            }
-        }
-
-        // Create DoFs from pairs of matched BasisSpecs on the active Elems associated with each Edge
-        for (edge_id, mut edge_bs_list) in edge_bs {
-            if let Some(active_elem_ids) = self.mesh.edges[edge_id].active_elem_pair() {
-                // only basis specs associated with the active pair of Elems need to be considered here
-                let rel_basis_specs: Vec<BasisSpec> = edge_bs_list
-                    .drain(0..)
-                    .filter(|bs| {
-                        (bs.dir == BasisDir::U || bs.dir == BasisDir::V)
-                            && active_elem_ids.contains(&bs.elem_id)
-                    })
-                    .collect();
-
-                // allocate space for the new basis specs
-                let num_expected = rel_basis_specs.len() / 2;
-                for elem_id in active_elem_ids {
-                    if self.basis_specs[elem_id].is_empty() {
-                        self.basis_specs[elem_id] = Vec::with_capacity(num_expected);
-                    } else {
-                        self.basis_specs[elem_id].reserve(num_expected);
-                    }
-                }
-
-                // iterate over each pair of BasisSpecs (once) and look for matches
-                let mut active_pairs: Vec<[usize; 2]> = Vec::with_capacity(num_expected);
-                for (a, bs_0) in rel_basis_specs.iter().enumerate() {
-                    for (b, bs_1) in rel_basis_specs.iter().enumerate().skip(a + 1) {
-                        if bs_0.matches_with_edge(bs_1) {
-                            active_pairs.push([a, b]);
-                            break;
-                        }
-                    }
-                }
-
-                // Store the matched BasisSpecs and create new DoFs
-                for pair in active_pairs {
-                    let dof_id = dof_id_tracker.next_id();
-                    let addresses = pair
-                        .iter()
-                        .map(|rel_idx| {
-                            // TODO: should use MaybeUninit in BasisSpec (or some other method) to avoid expensive Clone  here!
-                            self.push_basis_spec(rel_basis_specs[*rel_idx].clone(), dof_id)
-                        })
-                        .collect();
-
-                    self.dofs.push(DoF::new(dof_id, addresses));
-                }
-            }
-        }
-
-        // TODO: implement node-type BasisSpec Matching!
-    }
-
-    fn gen_basis_specs(&self) -> [BTreeMap<usize, Vec<BasisSpec>>; 3] {
+    fn gen_basis_specs(
+        mesh: &Mesh,
+        cc: ContinuityCondition,
+    ) -> [BTreeMap<usize, Vec<BasisSpec>>; 3] {
         let mut elem_bs: BTreeMap<usize, Vec<BasisSpec>> = BTreeMap::new();
         let mut edge_bs: BTreeMap<usize, Vec<BasisSpec>> = BTreeMap::new();
         let mut node_bs: BTreeMap<usize, Vec<BasisSpec>> = BTreeMap::new();
 
         let mut bs_id_tracker = IdTracker::new(0);
 
-        for elem in self.elems() {
+        for elem in mesh.elems.iter() {
             for dir in [BasisDir::U, BasisDir::V, BasisDir::W] {
                 for poly_ij in elem.poly_orders.permutations(dir) {
-                    let bs = BasisSpec::new(bs_id_tracker.next_id(), poly_ij, dir, elem);
+                    let bs = BasisSpec::new(bs_id_tracker.next_id(), poly_ij, dir, elem, cc);
 
                     match bs.loc {
                         BasisLoc::ElemBs => elem_bs
@@ -320,12 +353,16 @@ impl Domain {
 
     // Push a new `BasisSpec` onto the list, updating its ID to match its position in its elem's list
     // return its [BSAddress] composed of its element id and index
-    fn push_basis_spec(&mut self, mut bs: BasisSpec, dof_id: usize) -> BSAddress {
+    fn push_basis_spec(
+        basis_specs: &mut Vec<Vec<BasisSpec>>,
+        mut bs: BasisSpec,
+        dof_id: usize,
+    ) -> BSAddress {
         let elem_id = bs.elem_id;
-        let elem_idx = self.basis_specs[elem_id].len();
+        let elem_idx = basis_specs[elem_id].len();
 
         bs.set_dof_and_idx(dof_id, elem_idx);
-        self.basis_specs[elem_id].push(bs);
+        basis_specs[elem_id].push(bs);
 
         BSAddress::new(elem_id, elem_idx)
     }
@@ -369,7 +406,7 @@ mod tests {
         mesh.p_refine_elems(vec![10, 11, 12, 13], PRef::from(2, -1))
             .unwrap();
 
-        let dom = Domain::from_mesh(mesh);
+        let dom = Domain::from_mesh(mesh, ContinuityCondition::HCurl);
         dom.local_basis_specs(0).unwrap();
         dom.descendant_basis_specs(0).unwrap();
     }

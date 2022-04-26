@@ -40,7 +40,7 @@ impl<'d> UniformFieldSpace<'d> {
 
     // TODO: add option to include z-directed fields (after W-Dir & node-type Basis functions are implemented)
 
-    /// Use an eigenvector and associated [HierBasisFnSpace] to compute the X and Y fields over the [Domain]
+    /// Use an eigenvector and associated [HierCurlBasisFnSpace] to compute the X and Y fields over the [Domain]
     ///
     /// The X and Y field quantities will be stored as {vector_name}_x and {vector_name}_y respectively. The Names are returned in an array in that order.
     ///     

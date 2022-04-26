@@ -79,9 +79,9 @@ pub mod prelude {
             p_refinement::{PRef, PRefError},
             Mesh,
         },
-        Domain,
+        ContinuityCondition, Domain,
     };
-    pub use crate::fem_problem::galerkin::galerkin_sample_gep;
+    pub use crate::fem_problem::galerkin::galerkin_sample_gep_hcurl;
     pub use crate::fem_problem::integration::integrals::{curl_curl::CurlCurl, inner::L2Inner};
     pub use crate::fem_problem::linalg::{
         nalgebra_solve::nalgebra_solve_gep,
@@ -103,13 +103,14 @@ mod tests {
         mesh.h_refine_elems(vec![6, 9, 12], HRef::T).unwrap();
 
         // Construct Domain
-        let domain = Domain::from_mesh(mesh);
+        let domain = Domain::from_mesh(mesh, ContinuityCondition::HCurl);
         let ndofs = domain.dofs.len();
         println!("Domain constructed with {} Degrees of Freedom", ndofs);
 
         // Fill Matrices
         let eigenproblem =
-            galerkin_sample_gep::<HierPoly, CurlCurl, L2Inner>(&domain, [Some(8), Some(8)]);
+            galerkin_sample_gep_hcurl::<HierPoly, CurlCurl, L2Inner>(&domain, [Some(8), Some(8)])
+                .unwrap();
 
         // Solve Eigenvalue Problem
         let solution = nalgebra_solve_gep(eigenproblem, 1.475).unwrap();

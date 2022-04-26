@@ -1,35 +1,65 @@
+use super::super::ContinuityCondition;
 use crate::fem_domain::domain::mesh::elem::Elem;
 use std::fmt;
 
-/// A description of a basis function
+/// A description of a Basis Function with expansion orders, vectorial direction, and an associated geometric component
 ///
-/// This is used to describe a basis function and facilitate the construction of degrees-of-freedom. The information in this struct is also used to construct the actual `HierBasisFn` during Galerkin Sampling
+/// This is used to describe a basis function and facilitate the construction of degrees-of-freedom. The information in this struct is also used to construct the actual `BasisFn` during numerical integration
 #[derive(Clone, Debug)]
 pub struct BasisSpec {
+    /// ID for this Basis Function in the global list of `BasisSpec`s
     pub id: usize,
+    /// Expansion order in the u-direction
     pub i: u8,
+    /// Expansion order in the v-direction
     pub j: u8,
+    /// Vectorial Direction of the Basis Function
     pub dir: BasisDir,
+    /// ID of the element over which the Basis Function is Defined
     pub elem_id: usize,
+    /// Index of this `BasisSpec` in the `Elem`s list of `BasisSpec`s
     pub elem_idx: Option<usize>,
+    /// ID of the Degree of Freedom that this Basis Function is associated with
     pub dof_id: Option<usize>,
+    /// The local Geometric Component this Basis Function is associated with
     pub loc: BasisLoc,
 }
 
 impl BasisSpec {
     /// Create a new `BasisSpec` over a given [Elem]
-    pub fn new(id: usize, [i, j]: [u8; 2], dir: BasisDir, elem: &Elem) -> Self {
-        let loc = match (i, j, dir) {
-            (2..=u8::MAX, 2..=u8::MAX, _) => BasisLoc::ElemBs,
-            (_, 0..=1, BasisDir::U) => BasisLoc::edge_bs(elem, j),
-            (0..=1, _, BasisDir::V) => BasisLoc::edge_bs(elem, i + 2),
-            (_, _, BasisDir::W) => match (i < 2, j < 2) {
-                (true, false) => BasisLoc::edge_bs(elem, i + 2),
-                (false, true) => BasisLoc::edge_bs(elem, j),
-                (true, true) => BasisLoc::node_bs(elem, i + 2 * j),
-                (false, false) => BasisLoc::ElemBs,
+    ///
+    /// # Arguments
+    /// * `id`: Location of this `BasisSpec` in the global list of `BasisSpec`s
+    /// * `i`: Expansion order in the u-direction
+    /// * `j`: Expansion order in the v-direction
+    /// * `dir`: Vectorial Direction of the Basis Function
+    /// * `elem`: The [Elem] over which this `BasisSpec` is defined
+    /// * `cc`: The [ContinuityCondition] that this `BasisSpec` should conform to
+    ///
+    /// Upon construction the `elem_idx`, and `dof_id` are set to `None`. These are to be defined during DoF construction.
+    ///
+    pub fn new(
+        id: usize,
+        [i, j]: [u8; 2],
+        dir: BasisDir,
+        elem: &Elem,
+        cc: ContinuityCondition,
+    ) -> Self {
+        // select the associated geometric component based on the continuity condition, vectorial direction, and expansion orders
+        let loc = match cc {
+            ContinuityCondition::HCurl => match (i, j, dir) {
+                (2..=u8::MAX, 2..=u8::MAX, _) => BasisLoc::ElemBs,
+                (_, 0..=1, BasisDir::U) => BasisLoc::edge_bs(elem, j),
+                (0..=1, _, BasisDir::V) => BasisLoc::edge_bs(elem, i + 2),
+                (_, _, BasisDir::W) => match (i < 2, j < 2) {
+                    (true, false) => BasisLoc::edge_bs(elem, i + 2),
+                    (false, true) => BasisLoc::edge_bs(elem, j),
+                    (true, true) => BasisLoc::node_bs(elem, i + 2 * j),
+                    (false, false) => BasisLoc::ElemBs,
+                },
+                (_, _, _) => BasisLoc::ElemBs,
             },
-            (_, _, _) => BasisLoc::ElemBs,
+            _ => unimplemented!(),
         };
 
         Self {
@@ -79,7 +109,9 @@ impl BasisSpec {
         }
     }
 
-    /// set the DoF ID and elem_idx (the position of this BasisSpec in it's Elem's Vec<BasisSpec>)
+    // TODO: Implement Node-type matching
+
+    /// Set the `dof_id` and `elem_idx` (the position of this BasisSpec in it's Elem's Vec<BasisSpec>)
     ///
     /// Panics if these indices have already been set
     pub fn set_dof_and_idx(&mut self, dof_id: usize, elem_idx: usize) {
@@ -102,7 +134,7 @@ impl BasisSpec {
         self.elem_idx = Some(elem_idx);
     }
 
-    /// Get a tuple of information needed to compute an integral over this BasisSpec
+    /// Get a tuple of information needed to compute an integral with this BasisSpec
     pub fn integration_data(&self) -> ([usize; 2], BasisDir, usize) {
         debug_assert!(
             self.dof_id.is_some(),
@@ -141,11 +173,14 @@ impl PartialEq for BasisSpec {
     }
 }
 
-/// Orientation of a Basis Function in Parametric Space
+/// Vectorial Direction of a Basis Function in Parametric Space (or which component of the vectorial solution it belongs to)
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BasisDir {
+    /// X-Directed Solution
     U,
+    /// Y-Directed Solution
     V,
+    /// Z-Directed Solution
     W,
 }
 
@@ -159,7 +194,7 @@ impl fmt::Display for BasisDir {
     }
 }
 
-/// A Descriptionn of a basis functions geometric associations within a given [Elem]
+/// A Description of a Basis Functions geometric associations within a given [Elem]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BasisLoc {
     /// The BasisSpec's location is the same as its `elem_id`
@@ -192,7 +227,7 @@ pub struct BSAddress {
 }
 
 impl BSAddress {
-    /// Create a new BSAddress from an Elem's id and an index into its `Vec<BasisSpec>`
+    /// Create a new BSAddress from an Elem's ID and an index into its `Vec<BasisSpec>`
     pub fn new(elem_id: usize, elem_idx: usize) -> Self {
         Self { elem_id, elem_idx }
     }
