@@ -48,14 +48,14 @@ impl<'d> UniformFieldSpace<'d> {
     /// ```
     /// use fem_2d::prelude::*;
     ///
-    /// let domain = Domain::unit();
+    /// let domain = Domain::unit(ContinuityCondition::HCurl);
     /// let unit_solution = vec![1.0; domain.dofs.len()];
     ///
     /// // construct a field space with a 10x10 grid on each leaf-`Elem`
     /// let mut ufs = UniformFieldSpace::new(&domain, [10, 10]);
     ///
     /// // compute the X and Y fields over the domain using the unit eigenvector
-    /// let [x_name, y_name] = ufs.xy_fields::<KOLShapeFn>("unit_fields", unit_solution).unwrap();
+    /// let [x_name, y_name] = ufs.xy_fields::<HierPoly>("unit_fields", unit_solution).unwrap();
     ///
     /// assert_eq!(x_name, String::from("unit_fields_x"));
     /// assert_eq!(y_name, String::from("unit_fields_y"));
@@ -241,14 +241,14 @@ impl<'d> UniformFieldSpace<'d> {
     /// ```
     /// use fem_2d::prelude::*;
     ///
-    /// let domain = Domain::unit();
+    /// let domain = Domain::unit(ContinuityCondition::HCurl);
     /// let unit_evec = vec![1.0; domain.dofs.len()];
     ///
     /// // construct a field space with a 10x10 grid on each leaf-`Elem`
     /// let mut ufs = UniformFieldSpace::new(&domain, [10, 10]);
     ///
     /// // compute the X and Y fields over the domain using the unit eigenvector
-    /// let [x_name, _] = ufs.xy_fields::<KOLShapeFn>("unit_fields", unit_evec).unwrap();
+    /// let [x_name, _] = ufs.xy_fields::<HierPoly>("unit_fields", unit_evec).unwrap();
     ///
     /// // take the absolute value of the X field
     /// ufs.map_to_quantity(&x_name, "X_unit_abs", |x| x.abs());
@@ -286,14 +286,14 @@ impl<'d> UniformFieldSpace<'d> {
     /// ```
     /// use fem_2d::prelude::*;
     ///
-    /// let domain = Domain::unit();
+    /// let domain = Domain::unit(ContinuityCondition::HCurl);
     /// let unit_evec = vec![1.0; domain.dofs.len()];
     ///
     /// // construct a field space with a 10x10 grid on each leaf-`Elem`
     /// let mut ufs = UniformFieldSpace::new(&domain, [10, 10]);
     ///
     /// // compute the X and Y fields over the domain using the unit eigenvector
-    /// let xy_names = ufs.xy_fields::<KOLShapeFn>("unit_fields", unit_evec).unwrap();
+    /// let xy_names = ufs.xy_fields::<HierPoly>("unit_fields", unit_evec).unwrap();
     ///
     /// // compute the magnitude of the X and Y fields
     /// ufs.expression_2arg(xy_names, "XY_Mag", |x, y| (x * x + y * y).sqrt());

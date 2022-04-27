@@ -242,7 +242,7 @@ impl Domain {
     /// let mut mesh = Mesh::unit();
     /// mesh.set_global_expansion_orders([2, 2]).unwrap();
     ///
-    /// let dom = Domain::from_mesh(mesh);
+    /// let dom = Domain::from_mesh(mesh, ContinuityCondition::HCurl);
     ///
     /// // get Elem 0's basis specs
     /// let basis_specs = dom.local_basis_specs(0).unwrap();
@@ -274,7 +274,7 @@ impl Domain {
     /// mesh.set_global_expansion_orders([2, 2]).unwrap();
     /// mesh.global_h_refinement(HRef::T);
     ///
-    /// let dom = Domain::from_mesh(mesh);
+    /// let dom = Domain::from_mesh(mesh, ContinuityCondition::HCurl);
     ///
     /// // get the basis specs from all of Elem 0's descendants
     /// let basis_specs = dom.descendant_basis_specs(0).unwrap();
@@ -320,7 +320,7 @@ impl Domain {
     /// mesh.global_h_refinement(HRef::T);
     /// mesh.h_refine_elems(vec![1], HRef::T).unwrap();
     ///
-    /// let dom = Domain::from_mesh(mesh);
+    /// let dom = Domain::from_mesh(mesh, ContinuityCondition::HCurl);
     ///
     /// // get the basis specs from elem 5's ancestors
     /// let basis_specs = dom.ancestor_basis_specs(5).unwrap();

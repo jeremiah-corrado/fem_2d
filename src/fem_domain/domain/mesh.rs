@@ -1226,7 +1226,7 @@ impl Mesh {
     /// positive and negative p-refinements are constrained to fit within the valid range on each [Elem]
     /// ```
     /// use fem_2d::prelude::*;
-    /// use fem_2d::domain::mesh::MAX_POLYNOMIAL_ORDER;
+    /// use fem_2d::fem_domain::domain::mesh::MAX_POLYNOMIAL_ORDER;
     ///
     /// let mut mesh = Mesh::unit();
     /// mesh.global_h_refinement(HRef::T);
