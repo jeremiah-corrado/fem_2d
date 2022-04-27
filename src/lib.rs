@@ -42,8 +42,44 @@ pub mod prelude {
 mod tests {
     use super::prelude::*;
 
+    fn nalg_problem() {
+        // Define Mesh
+        let mut mesh = Mesh::from_file("./test_input/test_mesh_a.json").unwrap();
+        mesh.global_p_refinement(PRef::from(2, 2));
+
+        // Construct Domain
+        let domain = Domain::from_mesh(mesh, ContinuityCondition::HCurl);
+        let ndofs = domain.dofs.len();
+        println!("Domain constructed with {} Degrees of Freedom", ndofs);
+
+        // Fill Matrices
+        let eigenproblem =
+            galerkin_sample_gep_hcurl::<HierPoly, CurlCurl, L2Inner>(&domain, [Some(8), Some(8)])
+                .unwrap();
+
+        // Solve Eigenvalue Problem
+        let solution = nalgebra_solve_gep(eigenproblem, 2.64).unwrap();
+        println!("Found eigenvalue: {:.15}", solution.value);
+
+        assert!((solution.value - 2.6479657_f64).abs() < 1e-6);
+        assert_eq!(solution.vector.len(), ndofs);
+
+        let mut field_space = UniformFieldSpace::new(&domain, [8, 8]);
+        let e_field_names = field_space
+            .xy_fields::<HierPoly>("E", solution.normalized_eigenvector())
+            .unwrap();
+        field_space
+            .expression_2arg(e_field_names, "E_mag", |ex, ey| {
+                (ex.powi(2) + ey.powi(2)).sqrt()
+            })
+            .unwrap();
+        field_space
+            .print_all_to_vtk("./test_output/mesh_b_fields.vtk")
+            .unwrap();
+    }
+
     #[test]
-    fn basic_problem() {
+    fn slepc_problem() {
         // Define Mesh
         let mut mesh = Mesh::from_file("./test_input/test_mesh_b.json").unwrap();
         mesh.global_p_refinement(PRef::from(3, 3));
