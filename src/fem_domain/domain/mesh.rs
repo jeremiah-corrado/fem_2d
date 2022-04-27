@@ -1,8 +1,8 @@
 /// A line between two Nodes
 pub mod edge;
-/// A Finite Element in Parametric Space
+/// A Finite Element defined in Parametric Space (Keeps track of hp-refinement state)
 pub mod elem;
-/// A Finite Element in Real Space
+/// A Finite Element defined in Real Space (Keeps track of physical/geometric properties)
 pub mod element;
 /// Structures and Functions to facilitate RBS based anisotropic h-refinement
 pub mod h_refinement;
@@ -1226,7 +1226,7 @@ impl Mesh {
     /// positive and negative p-refinements are constrained to fit within the valid range on each [Elem]
     /// ```
     /// use fem_2d::prelude::*;
-    /// use fem_2d::domain::mesh::MAX_POLYNOMIAL_ORDER;
+    /// use fem_2d::fem_domain::domain::mesh::MAX_POLYNOMIAL_ORDER;
     ///
     /// let mut mesh = Mesh::unit();
     /// mesh.global_h_refinement(HRef::T);
@@ -1372,7 +1372,7 @@ impl Mesh {
     /// * If the Option is `None`, the Elem is not p-refined
     /// * If it is `Some(refinement)`, the Elem is p-refined with the refinement
     ///
-    /// Unlike [p_refine_with_filter], this closure is responsible for constraining the refinement to the valid range. An `Err` will be returned, and refinement will be aborted if any of the refinements do not fall within the valid range.
+    /// Unlike `p_refine_with_filter`, this closure is responsible for constraining the refinement to the valid range. An `Err` will be returned, and refinement will be aborted if any of the refinements do not fall within the valid range.
     ///
     /// # Example
     /// ```
@@ -1808,6 +1808,8 @@ pub enum MeshAccessError {
     EdgeDoesNotExist(usize),
     NodeDoesNotExist(usize),
 }
+
+impl std::error::Error for MeshAccessError {}
 
 impl fmt::Display for MeshAccessError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

@@ -57,6 +57,8 @@ pub enum NalgebraGEPError {
     ProblemTooLarge,
 }
 
+impl std::error::Error for NalgebraGEPError {}
+
 impl std::fmt::Display for NalgebraGEPError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {

@@ -2,7 +2,7 @@ use nalgebra::{DMatrix, SymmetricEigen};
 
 /// 2D Gauss Legendre Quadrature integral of some function F defined over an m by n rectangular region.
 /// ```
-/// use fem_2d::integration::glq::*;
+/// use fem_2d::fem_problem::integration::glq::*;
 ///
 /// // define glq points over `(-1, 1)` in both directions
 /// let (u_points, u_weights) = gauss_quadrature_points(10, false);
@@ -37,7 +37,7 @@ where
 /// Intended to be used in scenarios where BasisFns are defined for By-Parts integration but the solutions on the edges are known to be zero.
 ///
 /// ```
-/// use fem_2d::integration::glq::*;
+/// use fem_2d::fem_problem::integration::glq::*;
 ///
 /// // define glq points over `[-1, 1]` in both directions
 /// let (u_points, u_weights) = gauss_quadrature_points(10, true);
@@ -78,7 +78,7 @@ where
 /// 1D integral over some function F, which is defined along one edge of a rectangular parametric region.
 ///
 /// ```
-/// use fem_2d::integration::glq::*;
+/// use fem_2d::fem_problem::integration::glq::*;
 ///
 /// // define glq points over `[-1, 1]` in both directions
 /// let (u_points, u_weights) = gauss_quadrature_points(10, true);
@@ -158,7 +158,7 @@ where
 /// Get a set of n Gauss-Legendre-Quadrature Integration points and weights
 ///
 /// ```
-/// use fem_2d::integration::glq::*;
+/// use fem_2d::fem_problem::integration::glq::*;
 ///
 /// // generate 10 GLQ points and weights over the range `(-1, 1)`
 /// let (points, weights) = gauss_quadrature_points(10, false);
@@ -224,7 +224,7 @@ pub fn gauss_quadrature_points(n: usize, include_endpoints: bool) -> (Vec<f64>, 
 /// Scale a set of Gauss-Legendre-Quadrature Integration points to fall within a specific range
 ///
 /// ```
-/// use fem_2d::integration::glq::*;
+/// use fem_2d::fem_problem::integration::glq::*;
 /// // generate 10 GLQ points and weights over the range `[-1, 1]`
 /// let (points, weights) = gauss_quadrature_points(10, true);
 ///

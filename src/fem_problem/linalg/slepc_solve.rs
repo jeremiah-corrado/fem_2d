@@ -97,11 +97,7 @@ impl std::fmt::Display for SlepcGEPError {
     }
 }
 
-impl std::error::Error for SlepcGEPError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        None
-    }
-}
+impl std::error::Error for SlepcGEPError {}
 
 fn retrieve_solution(dir: impl AsRef<str>, prefix: impl AsRef<str>) -> std::io::Result<EigenPair> {
     let evec = retrieve_eigenvector(format!("{}/tmp/{}_evec.dat", dir.as_ref(), prefix.as_ref()))?;

@@ -1,9 +1,18 @@
-pub mod kol {
-    use crate::basis::ShapeFn;
+pub mod poly {
+    use super::super::HierCurlBasisFnSpace;
 
-    /// A simple Curl-Conforming Hierarchical Shape Function
+    /// A Simple Curl-Conforming Hierarchical Basis Function Space:
+    ///
+    /// N_i(x) = `x^i`
+    ///
+    /// T_i(x) =
+    /// * `1 - x` for `i = 0`
+    /// * `1 + x` for `i = 1`
+    /// * `x^i - 1` for `i >= 2 (even)`
+    /// * `x^i - x` for `i >= 3 (odd)`
+    ///
     #[derive(Clone, Debug)]
-    pub struct KOLShapeFn {
+    pub struct HierPoly {
         pows: Vec<Vec<f64>>,
         pows_d1: Vec<Vec<f64>>,
         pows_d2: Vec<Vec<f64>>,
@@ -11,7 +20,7 @@ pub mod kol {
         polys_d1: Vec<Vec<f64>>,
     }
 
-    impl KOLShapeFn {
+    impl HierPoly {
         fn new_with_d2(n_max: usize, points: &[f64]) -> Self {
             let mut pows = Vec::with_capacity(n_max + 1);
             let mut pows_d1 = Vec::with_capacity(n_max + 1);
@@ -81,7 +90,7 @@ pub mod kol {
                 }
             }
 
-            Self {
+            HierPoly {
                 pows,
                 pows_d1,
                 pows_d2,
@@ -143,7 +152,7 @@ pub mod kol {
                 }
             }
 
-            Self {
+            HierPoly {
                 pows,
                 pows_d1,
                 pows_d2: Vec::new(),
@@ -153,7 +162,7 @@ pub mod kol {
         }
     }
 
-    impl ShapeFn for KOLShapeFn {
+    impl HierCurlBasisFnSpace for HierPoly {
         fn with(n_max: usize, points: &[f64], compute_2nd_deriv: bool) -> Self {
             if compute_2nd_deriv {
                 Self::new_with_d2(n_max, points)
@@ -162,28 +171,28 @@ pub mod kol {
             }
         }
 
-        fn power(&self, n: usize, p: usize) -> f64 {
+        fn norm(&self, n: usize, p: usize) -> f64 {
             self.pows[n][p]
         }
 
-        fn power_d1(&self, n: usize, p: usize) -> f64 {
+        fn norm_d1(&self, n: usize, p: usize) -> f64 {
             self.pows_d1[n][p]
         }
 
-        fn power_d2(&self, n: usize, p: usize) -> f64 {
+        fn norm_d2(&self, n: usize, p: usize) -> f64 {
             self.pows_d2[n][p]
         }
 
-        fn poly(&self, n: usize, p: usize) -> f64 {
+        fn tang(&self, n: usize, p: usize) -> f64 {
             self.polys[n][p]
         }
 
-        fn poly_d1(&self, n: usize, p: usize) -> f64 {
+        fn tang_d1(&self, n: usize, p: usize) -> f64 {
             self.polys_d1[n][p]
         }
 
-        fn poly_d2(&self, n: usize, p: usize) -> f64 {
-            // coincidentally same as pows_d2
+        fn tang_d2(&self, n: usize, p: usize) -> f64 {
+            // coincidentally same as tang_d2
             self.pows_d2[n][p]
         }
     }
@@ -191,7 +200,7 @@ pub mod kol {
 
 #[cfg(feature = "max_ortho_basis")]
 mod max_ortho {
-    use crate::basis::ShapeFn;
+    use super::super::HierBasisFnSpace;
 
     //https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6470651
     const EUC_NORM_COEFFS: [f64; 12] = [
@@ -242,14 +251,18 @@ mod max_ortho {
         &get_q_weight_vector::<13>(),
     ];
 
-    /// An advanced Hierarchical Type Shape Function which maximizes orthogonality between polynomial orders
+    /// An advanced Curl-Conforming Hierarchical Basis Function Space
+    ///
+    /// The T and N functions are defined using Legendre Polynomials
+    ///
+    /// Based on: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6470651
     #[derive(Clone, Debug)]
     pub struct MaxOrthoShapeFn {
         pub q_fn: QFunction,
         pub l_fn: LegendrePoly,
     }
 
-    impl ShapeFn for MaxOrthoShapeFn {
+    impl HierBasisFnSpace for MaxOrthoShapeFn {
         fn with(max_order: usize, points: &[f64], compute_d2: bool) -> Self {
             let l_fn = LegendrePoly::with(max_order as u8, points, compute_d2);
             Self {
@@ -258,23 +271,23 @@ mod max_ortho {
             }
         }
 
-        fn power(&self, n: usize, p: usize) -> f64 {
+        fn norm(&self, n: usize, p: usize) -> f64 {
             self.l_fn.l[n][p]
         }
-        fn power_d1(&self, n: usize, p: usize) -> f64 {
+        fn norm_d1(&self, n: usize, p: usize) -> f64 {
             self.l_fn.d1[n][p]
         }
-        fn power_d2(&self, n: usize, p: usize) -> f64 {
+        fn rorm_d2(&self, n: usize, p: usize) -> f64 {
             self.l_fn.d2[n][p]
         }
 
-        fn poly(&self, n: usize, p: usize) -> f64 {
+        fn tang(&self, n: usize, p: usize) -> f64 {
             self.q_fn.q[n][p]
         }
-        fn poly_d1(&self, n: usize, p: usize) -> f64 {
+        fn tang_d1(&self, n: usize, p: usize) -> f64 {
             self.q_fn.d1[n][p]
         }
-        fn poly_d2(&self, n: usize, p: usize) -> f64 {
+        fn tang_d2(&self, n: usize, p: usize) -> f64 {
             self.q_fn.d2[n][p]
         }
     }

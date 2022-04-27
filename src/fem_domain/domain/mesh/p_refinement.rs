@@ -1,6 +1,6 @@
 use super::MeshAccessError;
 use super::MAX_POLYNOMIAL_ORDER;
-use crate::domain::{dof::basis_spec::BasisDir, mesh::space::ParaDir};
+use crate::fem_domain::domain::{dof::basis_spec::BasisDir, mesh::space::ParaDir};
 use json::{object, JsonValue};
 use std::{cmp::Ordering, fmt, ops::AddAssign};
 
@@ -270,6 +270,8 @@ pub enum PRefError {
     ElemDoesNotExist(usize),
     RefinementOutOfBounds(usize),
 }
+
+impl std::error::Error for PRefError {}
 
 impl fmt::Display for PRefError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

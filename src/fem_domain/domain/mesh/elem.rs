@@ -10,7 +10,7 @@ use smallvec::SmallVec;
 use std::fmt;
 use std::sync::Arc;
 
-/// `Elem`s are the basic geometric unit in the `Mesh` in Parametric Space
+/// `Elem`s are the basic geometric unit of the `Mesh` in Parametric Space, and keep track of hp-refinement state
 ///
 /// `Elem`s are responsible for keeping track of:
 /// * Connections to neighboring `Node`s and `Edge`s
