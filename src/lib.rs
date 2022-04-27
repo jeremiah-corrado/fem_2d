@@ -42,6 +42,7 @@ pub mod prelude {
 mod tests {
     use super::prelude::*;
 
+    #[test]
     fn nalg_problem() {
         // Define Mesh
         let mut mesh = Mesh::from_file("./test_input/test_mesh_a.json").unwrap();
