@@ -1809,6 +1809,8 @@ pub enum MeshAccessError {
     NodeDoesNotExist(usize),
 }
 
+impl std::error::Error for MeshAccessError {}
+
 impl fmt::Display for MeshAccessError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {

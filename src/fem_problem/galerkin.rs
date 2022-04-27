@@ -189,6 +189,8 @@ pub enum GalerkinSamplingError {
     InvalidGLQSettings,
 }
 
+impl std::error::Error for GalerkinSamplingError {}
+
 impl fmt::Display for GalerkinSamplingError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {

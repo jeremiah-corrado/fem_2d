@@ -271,6 +271,8 @@ pub enum PRefError {
     RefinementOutOfBounds(usize),
 }
 
+impl std::error::Error for PRefError {}
+
 impl fmt::Display for PRefError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {

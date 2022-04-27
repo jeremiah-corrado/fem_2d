@@ -295,6 +295,8 @@ pub enum HRefError {
     DuplicateElemIds,
 }
 
+impl std::error::Error for HRefError {}
+
 impl fmt::Display for HRefError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {

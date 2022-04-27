@@ -40,7 +40,7 @@ The latest Documentation can be found [here](https://docs.rs/fem_2d/0.1.0/fem_2d
 Solve the Maxwell Eigenvalue Problem on a standard Waveguide and print the Electric Fields to a VTK file.
 
 This example encompasses most of the functionality of the library.
-```Rust
+```rust
 use fem_2d::prelude::*;
 
 fn solve_basic_problem() -> Result<(), Box<dyn std::error::Error>> {
@@ -62,31 +62,35 @@ fn solve_basic_problem() -> Result<(), Box<dyn std::error::Error>> {
             None
         }
     });
-            
+
     // Construct a Domain with H(curl) continuity conditions
     let domain = Domain::from_mesh(mesh, ContinuityCondition::HCurl);
     println!("Constructed Domain with {} DoFs", domain.dofs.len());
 
     // Construct a generalized eigenvalue problem for the Electric Field
-        // (in parallel using the Rayon Global ThreadPool)
-    let gep = galerkin_sample_gep_hcurl::<HierPoly, CurlCurl, L2Inner>(&domain, [Some(8), Some(8)]);
+    // (in parallel using the Rayon Global ThreadPool)
+    let gep =
+        galerkin_sample_gep_hcurl::<HierPoly, CurlCurl, L2Inner>(&domain, [Some(8), Some(8)])?;
 
     // Solve the generalized eigenvalue problem using Nalgebra's Eigen-Decomposition
-        // look for an eigenvalue close to 10.0
-    let solution = nalgebra_solve_gep(gep, 10.0).unwrap();
+    // look for an eigenvalue close to 10.0
+    let solution = nalgebra_solve_gep(gep, 10.0)?;
     println!("Found Eigenvalue: {:.15}", solution.value);
 
     // Construct a solution-field-space over the Domain with 64 samples on each "leaf" Elem
     let mut field_space = UniformFieldSpace::new(&domain, [8, 8]);
 
     // Compute the Electric Field in the X- and Y-directions (using the same ShapeFns as above)
-    let e_field_names = field_space.xy_fields::<HierPoly>("E", solution.normalized_eigenvector()).unwrap();
+    let e_field_names =
+        field_space.xy_fields::<HierPoly>("E", solution.normalized_eigenvector())?;
 
     // Compute the magnitude of the Electric Field
-    field_space.expression_2arg(e_field_names, "E_mag", |ex, ey| (ex.powi(2) + ey.powi(2)).sqrt()).unwrap();
+    field_space.expression_2arg(e_field_names, "E_mag", |ex, ey| {
+        (ex.powi(2) + ey.powi(2)).sqrt()
+    })?;
 
     // Print "E_x", "E_y" and "E_mag" to a VTK file
-    field_space.print_all_to_vtk("./test_output/electric_field_solution.vtk").unwrap();
+    field_space.print_all_to_vtk("./test_output/electric_field_solution.vtk")?;
 
     Ok(())
 }
