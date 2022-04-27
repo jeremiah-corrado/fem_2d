@@ -61,7 +61,7 @@ mod tests {
                 .unwrap();
 
         // Solve Eigenvalue Problem
-        let solution = nalgebra_solve_gep(eigenproblem, 1.475).unwrap();
+        let solution = slepc_solve_gep(eigenproblem, 1.475).unwrap();
         println!("Found eigenvalue: {:.15}", solution.value);
 
         assert!((solution.value - 1.4745880937_f64).abs() < 1e-9);
