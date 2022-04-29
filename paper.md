@@ -167,7 +167,7 @@ fn set_some_expansion_orders(mesh: &mut Mesh) -> Result<(), PRefError> {
 
 ## Problem Formulation and Solution
 
-`FEM_2D` also features a straightforward path to extending its functionality into other problem domains. The following example shows how a simplified formulation of the Maxwell Eigenvalue Problem maps to the corresponding code in the library. This is intended provide a general depiction of how one might translate a mathematical problem into an `FEM_2D` implementation. 
+The following example shows how a simplified formulation of the Maxwell Eigenvalue Problem maps to the corresponding code in the library. This is intended provide a general depiction of how one might translate a mathematical problem into an `FEM_2D` implementation. 
 
 The Maxwell eigenvalue problem has the following Continuous-Galerkin formulation for an arbitrary Domain terminated with Dirichlet boundary conditions, (constraining the solution to TE modes only):
 
@@ -179,35 +179,46 @@ a(\mathbf{u}, \phi) = \langle \nabla_t \times \mathbf{u}, \nabla_t \times \phi \
 b(\mathbf{u}, \phi) = \langle \mathbf{u}, \phi \rangle
 \end{array}\right.\end{equation}
 
-The system matrices for this example are populated using `FEM_2D`'s `galerkin_sample_gep` method, invoked with three generic arguments:
+The Generalized Eigenvalue Problem is built from a `Mesh` with the following code.
+```rust
+use fem_2d::prelude::*;
+use rayon::prelude::*;
 
-```Rust
-// Generate a domain (Ω) from a Mesh which has been refined as necessary
-let domain = Domain::from(mesh, ContinuityCondition::HCurl);
+fn problem_from_mesh(mesh: Mesh) -> Result<GEP, GalerkinSamplingError> {
+  // Setup a global thread-pool for parallelizing Galerkin Sampling
+  rayon::ThreadPoolBuilder::new().num_threads(8).build_global().unwrap();
 
-// Formulate a generalized Eigenvalue problem
- let gep = galerkin_sample_gep_hcurl::<
-    HierPoly, // basis space
-    CurlCurl, // stiffness integral
-    L2Inner   // mass integral
-  >(&domain, Some([8, 8]))?;
+  // Generate a Domain (Ω) from a Mesh with H(Curl) Continuity Conditions
+  let domain = Domain::from(mesh, ContinuityCondition::HCurl);
+
+  // Compute a Generalized Eigenvalue Problem (composed of the System Matrices A, B)
+  let gep = galerkin_sample_gep_hcurl::<
+      HierPoly, // Basis Space
+      CurlCurl, // Stiffness Integral
+      L2Inner,  // Mass Integral
+  >(&domain, Some([8, 8]))
+}
 ```
 
-The generic arguments correspond to the three lines of \autoref{eq:gen_args}
+The `Domain` structure represents the entire FEM domain, including the discretization and the basis space with which conforms to the provided continuity condition (only H(Curl) is currently implemented; however, a framework is in place for implementing H(Div) and other continuity conditions). 
 
-1. The curl-conforming basis $B$, which must implement the `ShapeFn` Trait. In this case `HierPoly` is used.
-2. The integral associated with the Stiffness Matrix (A). This argument must implement the `Integral` trait. In this case, `CurlCurl` is used.
-3. The integral associated with the Mass Matrix (B). This argument also must implement the `Integral` trait. In this case, `L2Inner` is used.
+Galerkin sampling is then executed in parallel over the Domain, generating a Generalized Eigenvalue Problem. The Domain and a Gauss-Legendre-Quadrature grid size are provided as arguments. This function may also return an Error, if the Galerkin Sampling fails due to an ill-posed problem.
 
-The eigenvalue problem can be solved for some target eigenvalue with the following code:
+The three generic arguments--designated with the turbofish (`::<>`) operator--correspond to the three lines of \autoref{eq:gen_args}. The basis space can be swapped for any other space that implements the `HierCurlBasisFnSpace` Trait. `HierPoly` is a relatively simple implementation composed of exponential functions. A more sophisticated basis space: `HierMaxOrtho` can be included using the `max_ortho_basis` Feature Flag. Custom Basis Spaces can also be created by implementing the Trait. 
 
-```Rust
+The `CurlCurl` and `L2Inner` integrals, which correspond to the Stiffness and Mass matrices respectively, can be swapped for any other structure that implements the `HierCurlIntegral` Trait. This generic interface allows users to leverage the galerkin sampling functionality against other curl-conforming problems.^[The provided functionality is obviously somewhat incomplete, as only Curl Conforming problems can be solved; however, the library's module-structure and trait-hierarchy provide a clear template for the analogous H(Div) implementation. There is also room for other galerking sampling and integration functionality associated with alternate continuity conditions.] 
+
+The Generalized Eigenvalue Problem, can them be solved using one of the available solvers:
+```rust
 // Dense solution (not recommended for large problems)
 let eigenpair = nalgebra_solve_gep(gep, target_eigenvalue).unwrap();
 
 // OR: Sparse solution (requires external Slepc solver)
 let eigenpair = slepc_solve_gep(gep, target_eigenvalue).unwrap();
 ```
+The sparse [`SLEPc`](https://slepc.upv.es/) solver requires an [external solver](https://github.com/jeremiah-corrado/slepc_gep_solver) to be downloaded and compiled. This is highly recommended for larger problems, or problems with ill-conditioned B-Matrices.
+
+Both solvers look for the eigenvalue closest to the target value. They can return errors if the solution does not converge. The eigenpair contains the eigenvalue, and eigenvector with length equal to the number of degrees of freedom in the domain.
 
 ## Field Visualization
 

@@ -200,7 +200,7 @@ pub mod poly {
 
 #[cfg(feature = "max_ortho_basis")]
 mod max_ortho {
-    use super::super::HierBasisFnSpace;
+    use super::super::HierCurlBasisFnSpace;
 
     //https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6470651
     const EUC_NORM_COEFFS: [f64; 12] = [
@@ -257,12 +257,12 @@ mod max_ortho {
     ///
     /// Based on: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6470651
     #[derive(Clone, Debug)]
-    pub struct MaxOrthoShapeFn {
+    pub struct HierMaxOrtho {
         pub q_fn: QFunction,
         pub l_fn: LegendrePoly,
     }
 
-    impl HierBasisFnSpace for MaxOrthoShapeFn {
+    impl HierCurlBasisFnSpace for HierMaxOrtho {
         fn with(max_order: usize, points: &[f64], compute_d2: bool) -> Self {
             let l_fn = LegendrePoly::with(max_order as u8, points, compute_d2);
             Self {
@@ -277,7 +277,7 @@ mod max_ortho {
         fn norm_d1(&self, n: usize, p: usize) -> f64 {
             self.l_fn.d1[n][p]
         }
-        fn rorm_d2(&self, n: usize, p: usize) -> f64 {
+        fn norm_d2(&self, n: usize, p: usize) -> f64 {
             self.l_fn.d2[n][p]
         }
 

@@ -29,7 +29,7 @@ pub mod prelude {
         },
         ContinuityCondition, Domain,
     };
-    pub use crate::fem_problem::galerkin::galerkin_sample_gep_hcurl;
+    pub use crate::fem_problem::galerkin::{galerkin_sample_gep_hcurl, GalerkinSamplingError};
     pub use crate::fem_problem::integration::integrals::{curl_curl::CurlCurl, inner::L2Inner};
     pub use crate::fem_problem::linalg::{
         nalgebra_solve::{nalgebra_solve_gep, NalgebraGEPError},
