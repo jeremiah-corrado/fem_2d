@@ -802,6 +802,7 @@ impl Mesh {
     ///
     /// If any errors are encountered, none of the refinements are executed!
     ///
+    /// # Example
     /// ```
     /// use fem_2d::prelude::*;
     ///
@@ -1262,6 +1263,7 @@ impl Mesh {
     /// # Returns an `Err` if
     /// * Any of the [Elem]s does not exist
     /// * There are duplicates in the list of [Elem] IDs
+    /// * The [PRef] is outside the valid range for any of the [Elem]s
     ///
     /// # Example
     /// ```

@@ -1,4 +1,4 @@
-use super::super::basis::{BasisFn, HierCurlBasisFn, HierCurlBasisFnSpace};
+use super::super::basis::{HierBasisFn, HierCurlBasisFn, HierCurlBasisFnSpace};
 use super::{dof::basis_spec::BasisDir, mesh::space::V2D, Domain};
 
 use std::collections::{BTreeMap, HashMap};

@@ -25,64 +25,147 @@ date: 14 February 2022
 bibliography: paper.bib
 ---
 
-# Summary
+# Introduction
 
-The Finite Element Method (FEM) is a powerful tool used to solve Partial Differential Equations (PDE)s on arbitrary geometries. As its name suggests, the method works by breaking a geometric model (a Domain) into a set of small elements, each of which assigned a set of Basis Functions. A solution is expressed in terms of a weighted superposition of all the functions in the Domain such that the PDE is satisfied along with some continuity and boundary conditions. Some common applications include the Navier-Stokes equations which characterize the behavior of fluids, Schrödinger's equation which governs the evolution of quantum systems, and Maxwell's Equations which are a macroscopic description of essentially all Electromagnetic phenomena.
+The Finite Element Method (FEM) is a powerful computation methodology used to solve Partial Differential Equations (PDE)s on arbitrary geometries. In reality, physical systems behave in a spatiotemporally continuous manner; however FEM solvers are able to model these dynamics with a high fidelity by decomposing a physical model into a finite set of elements. Each element supports a finite number of degrees of freedom, which are used to describe the behavior of the system. 
 
-The `FEM_2D` library is a powerful FEM simulation tool implemented in Rust. It was designed within the domain of Computational Electromagnetics (CEM) with a specific focus on solving Maxwell's Equations over a 2D waveguide cross-sections with very high accuracy. This problem has practical engineering applications for the design of waveguides; however, it is used here as a research tool for exploring and evaluating improvements upon FEM.
+ A solution is expressed in terms of a weighted superposition of all the functions in the Domain such that the PDE is satisfied along with some continuity and boundary conditions. Some common applications include the Navier-Stokes equations which characterize the behavior of fluids, Schrödinger's equation which governs the evolution of quantum systems, and Maxwell's Equations which are a macroscopic description of essentially all Electromagnetic phenomena. The ability to accurately and efficiently model these differential equations and others is imperative to the success of many engineering projects and scientific endeavors. 
 
-Although its initial use case was domain specific, `FEM_2D`'s functionality extends easily to other domains using an API based on Rust `Traits` (which are like C++20 `Concepts` or Java `Interfaces`). Traits are a highly expressive form of genericism which allow functions to act on any data structure so long as it implements some shared functionality. In the case of solving PDEs with FEM, that generic functionality is the ability to compute an integral over an expression of two overlapping basis functions. As such, the library's entire functionality can be leveraged against a given PDE problem by implementing FEM_2D's `Integral` trait to express the variational form of the problem of interest. 
+The `FEM_2D` library is a powerful FEM simulation tool implemented in Rust. It was designed within the domain of Computational Electromagnetics (CEM) with a specific focus on solving Maxwell's Equations over a 2D waveguide cross-sections with very high accuracy. This problem has practical engineering applications for the design of waveguides; however, it is used here as a research tool for exploring and evaluating improvements upon FEM. Particularly, this library employs the Refinement-by-Superposition (RBS) approach to $hp$-refinement. RBS is a novel and relatively unexplored generalization of the more typical Refinement-by-Replacement approach which unlocks a much simpler pathway to enforcing continuity conditions. 
+
+Although `FEM_2D` focuses on the Maxwell Eigenvalue problem, it's functionality is intended to extend easily to other domains using an API based on Rust `Traits` (which are like C++20 `Concepts` or Java `Interfaces`). Traits are a highly expressive form of genericism which allow functions to act on any data structure so long as it implements some shared set of functionality. In this case, the generic functionality is the ability to compute an integral over an expression of two overlapping basis functions. As such, the library's functionality can be leveraged against a given PDE problem by implementing FEM_2D's `Integral` trait to express the variational form of the problem of interest.
 
 `FEM_2D` has all the functionality needed to formulate and solve Generalized Eigenvalue Problems. This includes an easy-to-use Mesh API which handles Mesh instantiation  and refinement. It also includes a Domain API which defines a Generic set of Basis Functions over the Mesh while ensuring adherence to continuity and boundary conditions. Additionally, there are two Eigenvalue-Problem solvers. The first is implemented using Nalgebra [@nalgebra]: a powerful linear algebra library written in Rust. The second is an external sparse solver --for large or poorly conditioned problems-- implemented using SLEPc [@slepc] [@petsc-web-page] [@petsc-user-ref] [@petsc-efficient]. The library also has extensive functionality for generating `.vtk` files of solutions which can be plotted using external tools.
 
 # Statement of Need
-FEM_2D's primary advantage over other FEM libraries, such as the Deal.II library [@dealII93], is its highly dynamic and expressive *hp*-refinement API. Unlike many other quadrilateral-element FEM packages, `FEM_2D` supports n-irregular anisotropic *h*-refinement as well as anisotropic *p*-refinement. In other words, there are far fewer limitations on the shape, location, or orientation of new elements when adding them to the Mesh. The polynomial expansion orders of the Basis Functions associated with each element can also be modified separately in each direction. 
 
-Efficiently computing solutions over geometries with sharp edges or stark material discontinuities necessitates *hp*-refinement (whether isotropic or anisotropic). These situations tend to introduce multi-scale solution behavior which is challenging to model with pure *p*- or pure *h*-refinements, motivating combined hp-refinements [@harmon:2021]. Within the class of hp-refinements, the addition of anisotropic *hp*-refinements (over isotropic ones) presents a significantly larger capacity for solution efficiency, as small-scale behavior is targeted more directly and ineffectual Degrees of Freedom are left out of the system [@corrado:2021].
+Efficiently computing FEM solutions over geometries with sharp edges or stark material discontinuities necessitates *hp*-refinement (whether isotropic or anisotropic). These situations tend to introduce multi-scale solution behavior which is challenging to model with pure *p*- or pure *h*-refinements, motivating combined hp-refinements [@harmon:2021]. Within the class of hp-refinements, the addition of anisotropic *hp*-refinements (over isotropic ones) presents a significantly larger capacity for solution efficiency, as small-scale behavior is targeted more directly and ineffectual Degrees of Freedom are left out of the system [@corrado:2021]. Increased efficiency in terms of the number of degrees of freedom is a key factor in the speed of large scale simulations, as well as the applicability of the method to smaller scale hardware (such as running small simulations on personal computers).
 
 The theory behind this library's *h*-refinement methodology, along with some implementation details, can be found in the associated research papers [@corrado:2021], [@harmon:2021].
 
-## Examples of *hp*-Refinement:
+# Goals
 
-The following example shows a few of the *hp*-refinement methods on the `Mesh` structure and how they might be used in practice:
-```Rust
+`FEM_2D`: is intended to be the following:
+* A proof-of-concept for the RBS method and associated research
+* A high quality implementation of the RBS approach to FEM for the purpose of encouraging additional related research
+    * This could involve additions to the `FEM_2D` library to support new features or application domains
+    * It could also simply serve as a starting point, or example implementation, for new RBS based FEM software
+* A powerful solver for the 2D Maxwell Eigenvalue Problem in itself (or any other problems that are implemented by the open-source community)
+
+# Features
+
+## *hp*-Refinement API:
+
+FEM_2D's primary advantage over other FEM libraries, such as the Deal.II library [@dealII93], is its highly dynamic and expressive *hp*-refinement API. Unlike many other quadrilateral-element FEM packages, `FEM_2D` supports n-irregular anisotropic *h*-refinement as well as anisotropic *p*-refinement. In other words, there are far fewer limitations on the shape, location, or orientation of new elements when adding them to the Mesh. The polynomial expansion orders of the Basis Functions associated with each element can also be modified separately in each direction. This level of freedom would not be possible without the underlying RBS methodology. 
+
+The following example shows how some of the $h$-refinement methods may be used to modify a mesh structure. It is important to note that there are three primary $h$-refinement types which are designated by the `HRef` enum: 
+* T - isotropic: produces 4 child elements
+* U - anisotropic in the u-direction: produces 2 child elements
+* V - anisotropic in the v-direction: produces 2 child elements
+
+There are also two sub-types associated with the U and V refinements which invoke a subsequent anisotropic refinement on one of the two child elements in the opposite direction. These are constructed with `HRef::U(Some(child_index))` and `HRef::V(Some(child_index))` respectively, where `child_index` must be either 0 or 1. 
+
+It is also important to note that the `global_h_refinement` and `h_refine_with_filter` methods will only apply refinements to Elements that are eligible for $h$-refinement (i.e., they must be leaf elements and the length of each of their edges must be above a minimum threshold). Alternatively, the methods that expose more explicit control (`h_refine_elems` and `execute_h_refinements`) can return an error if one of the specified elements is not eligible for $h$-refinement. A detailed explanation of the error types is provided in the documentation.
+
+```rust
 use fem_2d::prelude::*;
-let mut mesh = Mesh::from_file("./some_mesh.json").unwrap();
+use std::error::Error;
 
-// isotopically h-refine all elements
-mesh.global_h_refinment(HRef::t()).unwrap();
+fn do_some_h_refinements(mesh_file_path: &str) -> Result<Mesh, Box<dyn Error>> {
+    let mut mesh = Mesh::from_file(mesh_file_path)?;
 
-// anisotropically p-refine all elements 
-    //(+2 in the u-direction, +4 in the v-direction)
-mesh.global_p_refinement(PRef::from(2, 4)).unwrap();
+    // isotropically h-refine all elems
+    mesh.global_h_refinement(HRef::T);
 
-// anisotropically h-refine all elements connected 
-    // to some target_node in the v-direction
-let target_node_id = 5;
+    // anisotropically h-refine all elems connected to some target node
+    let target_node_id = 5;
+    mesh.h_refine_with_filter(|elem| {
+        if elem.nodes.contains(&target_node_id) {
+            Some(HRef::u())
+        } else {
+            None
+        }
+    });
 
-mesh.h_refine_with_filter(|elem| {
-    if elem.nodes.contains(&target_node_id) {
-        Some(HRef::v())
-    } else {
-        None
-    }
-}).unwrap();
+    // anisotropically h-refine a list of elems by id
+    mesh.h_refine_elems(vec![3, 4, 8, 12], HRef::v())?;
 
-// positively p-refine all elements on the border of the mesh,
-    // and negatively p-refine all other elements
-mesh.p_refine_with_filter(|elem| {
-    if elem.edges.iter().any(|edge_id| {
-        mesh.edges[*edge_id].is_boundary()
-    }) {
-        Some(PRef::from(1, 1))
-    } else {
-        Some(Pref::from(-1, -1))
-    }
-}).unwrap();
+    // directly apply a list of refinements to the mesh
+    mesh.execute_h_refinements(vec![
+        (1, HRef::T),
+        (5, HRef::U(Some(0))),
+        (6, HRef::U(Some(1))),
+        (10, HRef::V(None)),
+    ])?;
+
+    Ok(mesh)
+}
+```
+The following example shows how some of the $p$-refinement methods may be used here, the mesh to be modified is provided as an argument rather than being loaded from a file. 
+
+$P$-refinements are constructed from the `PRef` type using a pair of `i8`'s (8-bit signed integers). As such, any element's u- and v-directed expansion orders can be modified independently in either the positive or negaitve direction.
+
+The behavior of these methods is straightforward with the slight caveat that the `global_p_refinement` and `p_refine_with_filter` methods will guard against any refinement pushing an `Elem` outside of its valid expansion order range. Specifically, refinements are clamped element-wise to ensure that the final expansion order is in the range [1, 20]. The $p$-refinement methods that can return an error (those followed by a `?` in the example) do not exhibit this behavior. This is in keeping with the design of the $h$-refinement API in the sense that methods with less explicit control are safer, while the more explicit methods allow for failure. 
+
+```rust
+use fem_2d::prelude::*;
+
+fn do_some_p_refinements(mesh: &mut Mesh) -> Result<(), PRefError> {
+    // isotropically p-refine all elems (with a magnitude 2 refinement)
+    mesh.global_p_refinement(PRef::from(2, 2));
+
+    // positively p-refine all "leaf" elems (with a magnitude 1 refinement)
+    // negatively p-refine all other elems (with a magnitude -1 refinement)
+    mesh.p_refine_with_filter(|elem| {
+        if elem.has_children() {
+            Some(PRef::from(-1, -1))
+        } else {
+            Some(PRef::from(1, 1))
+        }
+    });
+
+    // anisotropically p-refine a list of elems by id
+    mesh.p_refine_elems(vec![3, 4, 8, 12], PRef::from(4, 2))?;
+
+    // directly apply a list of refinements to the mesh
+    mesh.execute_p_refinements(vec![
+        (1, PRef::from(3, 2)),
+        (5, PRef::from(0, 1)),
+        (6, PRef::from(-1, -1)),
+        (10, PRef::from(4, -2)),
+    ])?;
+
+    Ok(())
+}
+```
+
+
+The `Mesh` data structure also has an alternative set of methods to modify expansion orders by setting them directly rather than additively. These methods can be very useful in scenarios where it does not matter what the current expansion orders are, and an element needs to have a specific expansion order which is either known beforehand or computed ad-hoc. The following example juxtaposes some of the functionality with the traditional $p$-refinement API.
+
+Here, both methods can return an error, as it is possible to specify an invalid set of expansion orders. These methods take a length-two array of `u8`'s (8-bit unsigned integers), and thus preemptively remove the possibility of setting negative expansion orders, however, they still Err on expansion orders that are zero or too large. 
+```rust
+use fem_2d::prelude::*;
+
+fn set_some_expansion_orders(mesh: &mut Mesh) -> Result<(), PRefError> {
+    // set the expansion order on all elems to (3, 3)
+    mesh.set_global_expansion_orders([3, 3])?;
+
+    // set the expansion orders to (4, 4) on all "leaf" elems
+    // set the expansion orders to (2, 2) on all other elems
+    mesh.set_expansions_with_filter(|elem| {
+        if elem.has_children() {
+            Some([2, 2])
+        } else {
+            Some([4, 4])
+        }
+    })?;
+
+    Ok(())
+}
 
 ```
 
-## Example of Problem Definition
+## Problem Formulation and Solution
 
 `FEM_2D` also features a straightforward path to extending its functionality into other problem domains. The following example shows how a simplified formulation of the Maxwell Eigenvalue Problem maps to the corresponding code in the library. This is intended provide a general depiction of how one might translate a mathematical problem into an `FEM_2D` implementation. 
 
@@ -100,15 +183,19 @@ The system matrices for this example are populated using `FEM_2D`'s `galerkin_sa
 
 ```Rust
 // Generate a domain (Ω) from a Mesh which has been refined as necessary
-let domain = Domain::from(mesh);
+let domain = Domain::from(mesh, ContinuityCondition::HCurl);
 
 // Formulate a generalized Eigenvalue problem
-let gep = domain.galerkin_sample_gep::<KOLShapeFn, CurlCurl, L2Inner>(None);
+ let gep = galerkin_sample_gep_hcurl::<
+    HierPoly, 
+    CurlCurl, 
+    L2Inner
+  >(&domain,[Some(8), Some(8)])?;
 ```
 
 The generic arguments correspond to the three lines of \autoref{eq:gen_args}
 
-1. The curl-conforming basis $B$, which must implement the `ShapeFn` Trait. In this case `KOLShapeFn` is used.
+1. The curl-conforming basis $B$, which must implement the `ShapeFn` Trait. In this case `HierPoly` is used.
 2. The integral associated with the Stiffness Matrix (A). This argument must implement the `Integral` trait. In this case, `CurlCurl` is used.
 3. The integral associated with the Mass Matrix (B). This argument also must implement the `Integral` trait. In this case, `L2Inner` is used.
 
@@ -116,14 +203,12 @@ The eigenvalue problem can be solved for some target eigenvalue with the followi
 
 ```Rust
 // Dense solution (not recommended for large problems)
-let solution = nalgebra_solve_gep(gep, target_eigenvalue).unwrap();
+let eigenpair = nalgebra_solve_gep(gep, target_eigenvalue).unwrap();
 
 // OR: Sparse solution (requires external Slepc solver)
-let solution = slepc_solve_gep(gep, target_eigenvalue).unwrap();
+let eigenpair = slepc_solve_gep(gep, target_eigenvalue).unwrap();
 ```
 
-In summary, `FEM_2D` is useful for solving any generalized eigenvalue problem using FEM, simply by creating a custom implementation of the `Integral` trait. A custom Basis set can also be used by implementing the `ShapeFn` trait. Both Traits are described in detail in the crates.io documentation.
-
-Additionally, the library has important ancillary functionality, such as solution plotting, and mesh plotting. 
+## Field Visualization
 
 # References
