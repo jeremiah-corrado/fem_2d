@@ -20,8 +20,7 @@ pub const MIN_GLQ_ORDER: usize = 4;
 ///
 /// # Arguments
 /// * `domain`: The [Domain] over which the Galerkin Sampling is to be performed
-/// * `num_u_glq`: The number of Gauss Legendre Quadrature Points in to use for integration in the u-direction. If `None`, the default is used.
-/// * `num_v_glq`: The number of Gauss Legendre Quadrature Points in to use for integration in the v-direction. If `None`, the default is used.
+/// * `glq_grid_dim`: The number of Gauss Legendre Quadrature Points in to use for integration along each direction. If `None`, the default values are used.
 /// * Two [HierCurlIntegral]s: `AI` and `BI` must be specified as Generic Arguments. These are used to populate the A and B matrices respectively
 /// * A [HierCurlBasisFnSpace] `BSpace` must also be specified as a Generic Argument. This is used to instantiate the Domains `BasisSpec`s as [HierCurlBasisFn]s
 ///
@@ -37,7 +36,7 @@ pub fn galerkin_sample_gep_hcurl<
     BI: HierCurlIntegral,
 >(
     domain: &Domain,
-    [num_u_glq, num_v_glq]: [Option<usize>; 2],
+    glq_grid_dim: Option<[usize; 2]>,
 ) -> Result<GEP, GalerkinSamplingError> {
     // check for errors
     if domain.cc != ContinuityCondition::HCurl {
@@ -49,9 +48,15 @@ pub fn galerkin_sample_gep_hcurl<
     if domain.dofs.is_empty() {
         return Err(GalerkinSamplingError::EmptyDOFSet);
     }
-    if num_u_glq.lt(&Some(MIN_GLQ_ORDER)) || num_v_glq.lt(&Some(MIN_GLQ_ORDER)) {
-        return Err(GalerkinSamplingError::InvalidGLQSettings);
-    }
+    let [num_glq_u, num_glq_v] = match glq_grid_dim {
+        Some([u_dim, v_dim]) => {
+            if u_dim < MIN_GLQ_ORDER || v_dim < MIN_GLQ_ORDER {
+                return Err(GalerkinSamplingError::InvalidGLQSettings);
+            }
+            [Some(u_dim), Some(v_dim)]
+        }
+        None => [None; 2],
+    };
 
     // construct an eigenproblem with a and b matrices
     let mut gep = GEP::new(domain.dofs.len());
@@ -59,7 +64,7 @@ pub fn galerkin_sample_gep_hcurl<
     // construct basis sampler
     let [i_max, j_max] = domain.mesh.max_expansion_orders();
     let (bs_sampler, [u_weights, v_weights]): (BasisFnSampler<HierCurlBasisFn<BSpace>>, _) =
-        BasisFnSampler::with(i_max as usize, j_max as usize, num_u_glq, num_v_glq, false);
+        BasisFnSampler::with(i_max as usize, j_max as usize, num_glq_u, num_glq_v, false);
 
     // setup integration
     let a_integrator = AI::with_weights(&u_weights, &v_weights);

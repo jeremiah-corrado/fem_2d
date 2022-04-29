@@ -55,7 +55,7 @@ mod tests {
 
         // Fill Matrices
         let eigenproblem =
-            galerkin_sample_gep_hcurl::<HierPoly, CurlCurl, L2Inner>(&domain, [Some(8), Some(8)])
+            galerkin_sample_gep_hcurl::<HierPoly, CurlCurl, L2Inner>(&domain, Some([8, 8]))
                 .unwrap();
 
         // Solve Eigenvalue Problem
@@ -94,7 +94,7 @@ mod tests {
 
         // Fill Matrices
         let eigenproblem =
-            galerkin_sample_gep_hcurl::<HierPoly, CurlCurl, L2Inner>(&domain, [Some(8), Some(8)])
+            galerkin_sample_gep_hcurl::<HierPoly, CurlCurl, L2Inner>(&domain, Some([8, 8]))
                 .unwrap();
 
         // Solve Eigenvalue Problem

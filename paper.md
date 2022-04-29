@@ -59,9 +59,9 @@ The theory behind this library's *h*-refinement methodology, along with some imp
 FEM_2D's primary advantage over other FEM libraries, such as the Deal.II library [@dealII93], is its highly dynamic and expressive *hp*-refinement API. Unlike many other quadrilateral-element FEM packages, `FEM_2D` supports n-irregular anisotropic *h*-refinement as well as anisotropic *p*-refinement. In other words, there are far fewer limitations on the shape, location, or orientation of new elements when adding them to the Mesh. The polynomial expansion orders of the Basis Functions associated with each element can also be modified separately in each direction. This level of freedom would not be possible without the underlying RBS methodology. 
 
 The following example shows how some of the $h$-refinement methods may be used to modify a mesh structure. It is important to note that there are three primary $h$-refinement types which are designated by the `HRef` enum: 
-* T - isotropic: produces 4 child elements
-* U - anisotropic in the u-direction: produces 2 child elements
-* V - anisotropic in the v-direction: produces 2 child elements
+- T - isotropic: produces 4 child elements
+- U - anisotropic in the u-direction: produces 2 child elements
+- V - anisotropic in the v-direction: produces 2 child elements
 
 There are also two sub-types associated with the U and V refinements which invoke a subsequent anisotropic refinement on one of the two child elements in the opposite direction. These are constructed with `HRef::U(Some(child_index))` and `HRef::V(Some(child_index))` respectively, where `child_index` must be either 0 or 1. 
 
@@ -187,10 +187,10 @@ let domain = Domain::from(mesh, ContinuityCondition::HCurl);
 
 // Formulate a generalized Eigenvalue problem
  let gep = galerkin_sample_gep_hcurl::<
-    HierPoly, 
-    CurlCurl, 
-    L2Inner
-  >(&domain,[Some(8), Some(8)])?;
+    HierPoly, // basis space
+    CurlCurl, // stiffness integral
+    L2Inner   // mass integral
+  >(&domain, Some([8, 8]))?;
 ```
 
 The generic arguments correspond to the three lines of \autoref{eq:gen_args}

@@ -70,7 +70,7 @@ fn solve_basic_problem() -> Result<(), Box<dyn std::error::Error>> {
     // Construct a generalized eigenvalue problem for the Electric Field
     // (in parallel using the Rayon Global ThreadPool)
     let gep =
-        galerkin_sample_gep_hcurl::<HierPoly, CurlCurl, L2Inner>(&domain, [Some(8), Some(8)])?;
+        galerkin_sample_gep_hcurl::<HierPoly, CurlCurl, L2Inner>(&domain, Some([8, 8]))?;
 
     // Solve the generalized eigenvalue problem using Nalgebra's Eigen-Decomposition
     // look for an eigenvalue close to 10.0
