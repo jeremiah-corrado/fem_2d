@@ -43,17 +43,7 @@ Efficiently computing FEM solutions over geometries with sharp edges or stark ma
 
 For research purposes, it is also important that the implementation is straightforward and easy to understand. This way, other researchers can quickly read the code to validate the methodology itself or they can use it as a starting point for additional investigation and software development. This is yet another benefit of the RBS approach, as it greatly simplifies the enforcement of continuity conditions, which is typically the most challenging aspect of an *h*-refinement implementation over quadrilateral or hexahedral elements. 
 
-Thus, we conclude that `FEM_2D`'s RBS implementation gives it a distinct advantage over other FEM libraries such as Deal.II [@dealII93]; specificity as a research package. The succinctness of the continuity enforcement algorithm removes much of the difficulty of implementing new features, and the generic Trait-Based interface makes it easy to explore extensions into other problem domains. 
-
-# Project Goals
-
-`FEM_2D`: is intended to be the following:
-
-* A proof-of-concept for the RBS method and associated research
-* A high quality implementation of the RBS approach to FEM for the purpose of encouraging additional related research
-    * This could involve additions to the `FEM_2D` library to support new features or application domains
-    * It could also simply serve as a starting point, or example implementation, for new RBS based FEM software
-* A powerful solver for the 2D Maxwell Eigenvalue Problem in itself (or any other problems that are implemented by the open-source community)
+Thus, we conclude that `FEM_2D`'s RBS implementation gives it a distinct advantage over other FEM libraries such as Deal.II [@dealII93]; specificity as a research package. The succinctness of the continuity enforcement algorithm removes much of the difficulty of implementing new features. This is a major barrier to entry for contributing to larger and more complex packages. Additionally, the generic Trait-Based interface makes it easy to explore extensions into other problem domains. 
 
 # Features
 
@@ -105,9 +95,7 @@ fn do_some_h_refinements(mesh_file_path: &str) -> Result<Mesh, Box<dyn Error>> {
     Ok(mesh)
 }
 ```
-The following example shows how some of the $p$-refinement methods may be used. Here, the `Mesh` is provided as an argument rather than being loaded from a file. 
-
-$P$-refinements are constructed from the `PRef` Type using a pair of `i8`'s (8-bit signed integers). As such, any element's u- and v-directed expansion orders can be modified independently in either the positive or negaitve direction.
+The following example shows how some of the $p$-refinement methods may be used. Here, the `Mesh` is provided as an argument rather than being loaded from a file. The $p$-refinements are constructed from the `PRef` Type using a pair of `i8`'s (8-bit signed integers). As such, any element's u- and v-directed expansion orders can be modified independently in either the positive or negative direction.
 
 The behavior of these methods is straightforward with the slight caveat that the `global_p_refinement` and `p_refine_with_filter` methods will guard against any refinement pushing an element outside of its valid expansion order range. Specifically, refinements are clamped element-wise to ensure that the final expansion order is in the range [1, 20]. The $p$-refinement methods that can return an error (those followed by a `?` in the example) do not exhibit this behavior. This is in keeping with the design of the $h$-refinement API in the sense that methods with less explicit control are safer, while the more explicit methods allow for failure. 
 
@@ -142,7 +130,6 @@ fn do_some_p_refinements(mesh: &mut Mesh) -> Result<(), PRefError> {
     Ok(())
 }
 ```
-
 
 The `Mesh` data structure also has an alternative set of methods to modify expansion orders by setting them directly rather than additively. These methods can be very useful in scenarios where it does not matter what the current expansion orders are, and an element needs to have a specific expansion order which is either known beforehand or computed ad-hoc. The following example juxtaposes some of the functionality with the traditional $p$-refinement API.
 
@@ -195,7 +182,7 @@ fn problem_from_mesh(mesh: Mesh) -> Result<GEP, GalerkinSamplingError> {
   // Generate a Domain (Ω) from a Mesh with H(Curl) Continuity Conditions
   let domain = Domain::from(mesh, ContinuityCondition::HCurl);
 
-  // Compute a Generalized Eigenvalue Problem (composed of the System Matrices A, B)
+  // Compute a Generalized Eigenvalue Problem
   let gep = galerkin_sample_gep_hcurl::<
       HierPoly, // Basis Space
       CurlCurl, // Stiffness Integral
@@ -210,7 +197,7 @@ Galerkin sampling is then executed in parallel over the Domain, generating a Gen
 
 The three generic arguments -- designated with the turbofish operator (`::<>`) -- correspond to the three lines of \autoref{eq:gen_args}. The basis space can be swapped for any other space that implements the `HierCurlBasisFnSpace` Trait. `HierPoly` is a relatively simple implementation composed of exponential functions. A more sophisticated basis space: `HierMaxOrtho` can be included using the `max_ortho_basis` Feature Flag. Custom Basis Spaces can also be created by implementing the same Trait. 
 
-The `CurlCurl` and `L2Inner` integrals, which correspond to the Stiffness and Mass matrices respectively, can be swapped for any other structure that implements the `HierCurlIntegral` Trait. This generic interface allows users to leverage the galerkin sampling functionality against other curl-conforming problems.^[The provided functionality is obviously somewhat incomplete, as only Curl Conforming problems can be solved; however, the library's module-structure and trait-hierarchy provide a clear template for the analogous H(Div) implementation. There is also room for other galerking sampling and integration functionality associated with alternate continuity conditions. These methods, structures, and traits should require minimal changes to the `Domain` structure, and no changes to the `Mesh` structure.] 
+The `CurlCurl` and `L2Inner` integrals, which correspond to the Stiffness and Mass matrices respectively, can be swapped for any other structure that implements the `HierCurlIntegral` Trait. This generic interface allows users to leverage the galerkin sampling functionality against other curl-conforming problems.^[The provided functionality is obviously somewhat incomplete, as only Curl Conforming problems can be solved; however, the library's module-structure and trait-hierarchy provide a clear template for the analogous H(Div) implementation. There is also room for other galerking sampling and integration functionality associated with alternate continuity conditions. These methods, structures, and traits should require minimal additions to the `Domain` structure, and no changes to the `Mesh` structure.] 
 
 The Generalized Eigenvalue Problem, can then be solved using one of the available solvers:
 ```rust
@@ -220,9 +207,9 @@ let eigenpair = nalgebra_solve_gep(gep, target_eigenvalue).unwrap();
 // OR: Sparse solution (requires external Slepc solver)
 let eigenpair = slepc_solve_gep(gep, target_eigenvalue).unwrap();
 ```
-The dense solver, implemented using Nalgebra [@nalgebra], converts the sparse matrices in the eigenproblem structure into dense matrices. This is an expensive operation, and should be avoided for large problems. The sparse solver, implemented using Slepc [@slepc] [@petsc-web-page] [@petsc-user-ref] [@petsc-efficient], is a direct interface to a generalized eigensolver. This is a relatively fast operation, but requires an [external solver](https://github.com/jeremiah-corrado/slepc_gep_solver) to be installed and compiled. The sparse solver also avoids inverting the B-matrix, which is numerically advantageous for ill-conditioned problems.
+The dense solver, implemented using Nalgebra [@nalgebra], converts the sparse matrices in the eigenproblem structure into dense matrices. This is an expensive operation, and should be avoided for large problems. The sparse solver, implemented using Slepc [@slepc] [@petsc-web-page] [@petsc-user-ref] [@petsc-efficient], is a direct interface to a generalized eigensolver. This is a relatively fast operation, but requires an [external solver](https://github.com/jeremiah-corrado/slepc_gep_solver) to be installed and compiled. It also avoids directly inverting the B-matrix, which is numerically advantageous for ill-conditioned problems.
 
-Both solvers look for the eigenvalue closest to the provided `target_eigenvalue`. They can return errors if the solution does not converge. Upon success, the returned eigenpair contains the eigenvalue and eigenvector with a length equal to the number of degrees of freedom in the domain.
+Both solvers look for the eigenvalue closest to the provided `target_eigenvalue`. They can return errors if the solution does not converge. Upon success, the returned eigenpair contains the eigenvalue and eigenvector with length equal to the number of degrees of freedom in the domain.
 
 ## Field Visualization
 
@@ -232,12 +219,16 @@ With a final solution, we can compute a solution-field over the domain using the
 use fem_2d::prelude::*;
 use std::error::Error;
 
-fn compute_solution_fields(eigenpair: EigenPair, domain: &Domain) -> Result<(), Box<dyn Error>> {
-    // build a solution field space with a 16x16 grid of points on each leaf elem
+fn compute_solution_fields(
+    eigenpair: EigenPair, 
+    domain: &Domain
+) -> Result<(), Box<dyn Error>> {
+    // build a solution field space 
     let mut field_space = UniformFieldSpace::new(domain, [16, 16]);
 
     // compute the x and y directed electric fields
-    let [ex_name, ey_name] = field_space.xy_fields::<HierPoly>("E", eigenpair.vector)?;
+    let [ex_name, ey_name] = 
+        field_space.xy_fields::<HierPoly>("E", eigenpair.vector)?;
 
     // compute the magnitude of the electric field
     field_space.expression_2arg([ex_name, ey_name], "E_mag", |ex, ey| {
@@ -248,7 +239,7 @@ fn compute_solution_fields(eigenpair: EigenPair, domain: &Domain) -> Result<(), 
     field_space.print_all_to_vtk("path/to/file.vtk")
 }
 ```
-Here, we are using a `UniformFieldSpace` to define our solution space over the domain. This structure defines a grid of points, such that the density is uniform across leaf-elements. As such, their parent elements will have a larger density because the leaf-element point grids are projected "downwards" onto their ancestor elements. 
+Here, we are using a `UniformFieldSpace` to define our solution space over the domain. This structure defines a grid of points, such that the density is uniform across leaf-elements.^[There is also a need for an implementation with densities proportional to the size of the elements. This would be useful for generating images of the fields, as the overall point-density would be globally uniform across the domain] Here, we use a 16x16 grid. The parent elements will have a larger density because the leaf-element point grids are projected "downwards" onto their ancestor elements. So, in this case, an element that has four children (who are leafs) would evaluate its local solution using a 32x32 point grid such that the points align with the grids on its descendants.
 
 We then use the same basis space as before, and the `EigenPair` from our solver to compute the fields. The `UniformFieldSpace` keeps track of solution components by name in a HashTable of Strings. The following line references these components to compute the magnitude of the electric field using a two-argument expression. This solution component is stored in the provided name `"E_mag"`.
 
