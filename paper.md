@@ -231,20 +231,24 @@ fn compute_solution_fields(
         field_space.xy_fields::<HierPoly>("E", eigenpair.vector)?;
 
     // compute the magnitude of the electric field
-    field_space.expression_2arg([ex_name, ey_name], "E_mag", |ex, ey| {
+    field_space.expression_2arg([&ex_name, &ey_name], "E_mag", |ex, ey| {
         (ex.powi(2) + ey.powi(2)).sqrt()
     })?;
 
-    // print E_x, E_y, and E_mag to a VTK file
+    // compute the absolute value of the x and y directed electric fields
+    field_space.map_to_quantity(ex_name, "E_x_abs", |e| e.abs())?;
+    field_space.map_to_quantity(ey_name, "E_y_abs", |e| e.abs())?;
+
+    // print E_x, E_y, E_x_abs, E_y_abs, and E_mag to a VTK file
     field_space.print_all_to_vtk("path/to/file.vtk")
 }
 ```
-Here, we are using a `UniformFieldSpace` to define our solution space over the domain. This structure defines a grid of points, such that the density is uniform across leaf-elements.^[There is also a need for an implementation with densities proportional to the size of the elements. This would be useful for generating images of the fields, as the overall point-density would be globally uniform across the domain] Here, we use a 16x16 grid. The parent elements will have a larger density because the leaf-element point grids are projected "downwards" onto their ancestor elements. So, in this case, an element that has four children (who are leafs) would evaluate its local solution using a 32x32 point grid such that the points align with the grids on its descendants.
+Here, we are using a `UniformFieldSpace` to define our solution space over the domain. This structure defines a grid of points, such that the density is uniform across leaf-elements.^[There is also a need for an implementation with densities proportional to the size of the elements. This would be useful for generating images of the fields, as the overall point-density would be globally uniform across the domain] Here, we use a 16x16 grid. The parent elements will have a larger density because the leaf-element point grids are projected "downwards" onto their ancestor elements. So, in this case, an element that has four children (who are all leafs) would evaluate its local solution using a 32x32 point grid such that the points align with the grids on its descendants.
 
-We then use the same basis space as before, and the `EigenPair` from our solver to compute the fields. The `UniformFieldSpace` keeps track of solution components by name in a HashTable of Strings. The following line references these components to compute the magnitude of the electric field using a two-argument expression. This solution component is stored in the provided name `"E_mag"`.
+We then use the same basis space as before, and the `EigenPair` from our solver to compute the fields. The `UniformFieldSpace` keeps track of solution components by name in a HashTable of Strings. The following line references these components to compute the magnitude of the electric field using a two-argument expression. This solution component is stored in the provided name `"E_mag"`. We also compute the absolute value of both components.
 
 Finally, the solution components are printed to a VTK file for plotting. Multiple external tools are available to generate high-quality plots from the VTK data. \autoref{fig:emag} shows an electric field magnitude generated using `FEM_2D` and [VISIT](https://wci.llnl.gov/simulation/computer-codes/visit).
 
-![Example of an Electric Field Magnitude of an Eigenfunction \label{fig:emag}](./rm_figs/e_mag_1.jpeg)
+![Example of an Electric Field Magnitude of an Eigenfunction \label{fig:emag}](./rm_figs/e_mag_9.jpeg)
 
 # References
