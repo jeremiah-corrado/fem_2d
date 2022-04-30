@@ -31,11 +31,11 @@ The Finite Element Method (FEM) is a powerful computation framework used to solv
 
 Some common PDE's include the Navier-Stokes equations which characterize the behavior of fluids, Schrödinger's equation which governs the evolution of quantum systems, and Maxwell's Equations which are a macroscopic description of essentially all Electromagnetic phenomena. The ability to accurately and efficiently model these differential equations and others is imperative to the success of many engineering projects and scientific endeavors. Most of the technology that engineers are interested in developing has far exceeded the reach of direct mathematical analysis, and thus computational tools such as FEM are used ubiquitously to drive technological development forward.
 
-As such, innovations in FEM have a direct impact on myriad engineering disciplines. The more efficient, accurate, and feature rich, we can make simulation tools, the more beneficial they will be to industrial and scientific applications. This is the motivation force behind academic work within the field of FEM. The `FEM_2D` library is a Rust package that aims to enable further research into a particular FEM innovation called Refinement-by-Superposition (RBS). The related research papers [@corrado:2021], [@harmon:2021] explore benefits of RBS using the 2D Maxwell Eigenvalue Problem as a proving ground.
+As such, innovations in FEM have a direct impact on essentially all engineering disciplines. The more efficient, accurate, and feature rich, we can make simulation tools, the more beneficial they will be to industrial and scientific applications. This is the motivation force behind academic work within the field of FEM. The `FEM_2D` library is a Rust package that aims to enable further research into a particular FEM innovation called Refinement-by-Superposition (RBS). The related research papers [@corrado:2021], [@harmon:2021] explore benefits of RBS using the 2D Maxwell Eigenvalue Problem as a proving ground.
 
 Although `FEM_2D` focuses on the Maxwell Eigenvalue problem specifically, it's functionality is intended to extend easily to other domains using a generic interface over basis function evaluation and integration. The module-structure of the library is also designed to be open to new features. 
 
-On top of the central Mesh and refinement functionality, `FEM_2D` is supported by a rich set of surrounding features. This includes two eigensolvers: a Dense solver which is entirely native to Rust, and a sparse solver implemented using an external C++ library. There is also a solution plotting API, and an [external Mesh plotting tool](https://github.com/jeremiah-corrado/fem_2d_mesh_plot) to assist in future research work based on RBS. 
+In addition to the centrally important *hp*-refinement functionality, `FEM_2D` is supported by a rich set of surrounding features. This includes two eigensolvers: a dense solver which is entirely native to Rust, and a sparse solver implemented using an external C++ library. There is also a solution plotting API, and an [external Mesh plotting tool](https://github.com/jeremiah-corrado/fem_2d_mesh_plot) to assist in future research work based on the `FEM_2D` Library. 
 
 # Statement of Need
 
@@ -43,7 +43,7 @@ Efficiently computing FEM solutions over geometries with sharp edges or stark ma
 
 For research purposes, it is also important that the implementation is straightforward and easy to understand. This way, other researchers can quickly read the code to validate the methodology itself or they can use it as a starting point for additional investigation and software development. This is yet another benefit of the RBS approach, as it greatly simplifies the enforcement of continuity conditions, which is typically the most challenging aspect of an *h*-refinement implementation over quadrilateral or hexahedral elements. 
 
-Thus, we conclude that `FEM_2D`'s RBS implementation gives it a distinct advantage over other FEM libraries such as Deal.II [@dealII93]; specificity as a research package. The succinctness of the continuity enforcement algorithm removes much of the difficulty of implementing new features. This is a major barrier to entry for contributing to larger and more complex packages. Additionally, the generic Trait-Based interface makes it easy to explore extensions into other problem domains. 
+Thus, we conclude that `FEM_2D`'s RBS implementation gives it a distinct advantage over other FEM libraries such as Deal.II [@dealII93]; specificity as a research package. The succinctness of the continuity enforcement algorithm removes much of the difficulty of implementing new features. This is a major barrier to entry for contributing to larger and more complex packages. Additionally, the generic Trait-Based interface makes it easy to leverage the advanced *hp*-refinement API against other domains of computational physics. 
 
 # Features
 
@@ -131,9 +131,9 @@ fn do_some_p_refinements(mesh: &mut Mesh) -> Result<(), PRefError> {
 }
 ```
 
-The `Mesh` data structure also has an alternative set of methods to modify expansion orders by setting them directly rather than additively. These methods can be very useful in scenarios where it does not matter what the current expansion orders are, and an element needs to have a specific expansion order which is either known beforehand or computed ad-hoc. The following example juxtaposes some of the functionality with the traditional $p$-refinement API.
+The `Mesh` data structure also has an alternative set of methods to modify expansion orders by setting them directly rather than additively. These methods can be very useful in scenarios where the current expansion orders are irrelevant, and elements require a specific expansion order which is either known beforehand or computed ad-hoc. The following example juxtaposes some of the functionality with the above $p$-refinement API.
 
-Here, both methods can return an error, as it is possible to specify an invalid set of expansion orders. These methods take a length-two array of `u8`'s (8-bit unsigned integers), and thus preemptively remove the possibility of setting negative expansion orders, however, they still Err on expansion orders that are zero or too large. 
+Here, both methods can return an error, as it is possible to specify an invalid expansion order. These methods take a length-two array of `u8`'s (8-bit unsigned integers), and thus preemptively remove the possibility of setting negative expansion orders, however, they still Err on expansion orders that are zero or too large. 
 ```rust
 use fem_2d::prelude::*;
 
@@ -193,7 +193,7 @@ fn problem_from_mesh(mesh: Mesh) -> Result<GEP, GalerkinSamplingError> {
 
 The `Domain` structure represents the entire FEM domain, including the discretization and the basis space which conforms to the provided continuity condition (only H(Curl) is currently implemented; however, a framework is in place for implementing H(Div) and other continuity conditions). 
 
-Galerkin sampling is then executed in parallel over the Domain, generating a Generalized Eigenvalue Problem. The Domain and a Gauss-Legendre-Quadrature grid size are provided as arguments. This function may also return an Error, if the Galerkin Sampling fails due to an ill-posed problem.
+Galerkin sampling is then executed in parallel over the Domain, yielding a Generalized Eigenvalue Problem composed of two sparse matrices. The Domain and a Gauss-Legendre-Quadrature grid size are provided as arguments. This function may also return an Error, if the Galerkin Sampling fails due to an ill-posed problem.
 
 The three generic arguments -- designated with the turbofish operator (`::<>`) -- correspond to the three lines of \autoref{eq:gen_args}. The basis space can be swapped for any other space that implements the `HierCurlBasisFnSpace` Trait. `HierPoly` is a relatively simple implementation composed of exponential functions. A more sophisticated basis space: `HierMaxOrtho` can be included using the `max_ortho_basis` Feature Flag. Custom Basis Spaces can also be created by implementing the same Trait. 
 
@@ -207,13 +207,13 @@ let eigenpair = nalgebra_solve_gep(gep, target_eigenvalue).unwrap();
 // OR: Sparse solution (requires external Slepc solver)
 let eigenpair = slepc_solve_gep(gep, target_eigenvalue).unwrap();
 ```
-The dense solver, implemented using Nalgebra [@nalgebra], converts the sparse matrices in the eigenproblem structure into dense matrices. This is an expensive operation, and should be avoided for large problems. The sparse solver, implemented using Slepc [@slepc] [@petsc-web-page] [@petsc-user-ref] [@petsc-efficient], is a direct interface to a generalized eigensolver. This is a relatively fast operation, but requires an [external solver](https://github.com/jeremiah-corrado/slepc_gep_solver) to be installed and compiled. It also avoids directly inverting the B-matrix, which is numerically advantageous for ill-conditioned problems.
+The dense solver, implemented using Nalgebra [@nalgebra], converts the eigenproblem's sparse matrices into dense matrices. This is an expensive operation, and should be avoided for large problems. The sparse solver, implemented using Slepc [@slepc] [@petsc-web-page] [@petsc-user-ref] [@petsc-efficient], is a direct interface to a generalized eigensolver. This is a relatively fast operation, but requires an [external solver](https://github.com/jeremiah-corrado/slepc_gep_solver) to be installed and compiled. It also avoids directly inverting the B-matrix, which is numerically advantageous for ill-conditioned problems.
 
 Both solvers look for the eigenvalue closest to the provided `target_eigenvalue`. They can return errors if the solution does not converge. Upon success, the returned eigenpair contains the eigenvalue and eigenvector with length equal to the number of degrees of freedom in the domain.
 
 ## Field Visualization
 
-With a final solution, we can compute a solution-field over the domain using the Fields API. The following example shows how the X- and Y-directed electric fields can be computed from a solution over a waveguide domain. 
+The Fields API allows us to compute a solution-field with an eigenvector and associated domain. It also allows functions of field solutions to be computed. The following example shows how electric field solutions are generated and exported to a VTK file.
 
 ```rust
 use fem_2d::prelude::*;
@@ -243,11 +243,13 @@ fn compute_solution_fields(
     field_space.print_all_to_vtk("path/to/file.vtk")
 }
 ```
-Here, we are using a `UniformFieldSpace` to define our solution space over the domain. This structure defines a grid of points, such that the density is uniform across leaf-elements.^[There is also a need for an implementation with densities proportional to the size of the elements. This would be useful for generating images of the fields, as the overall point-density would be globally uniform across the domain] Here, we use a 16x16 grid. The parent elements will have a larger density because the leaf-element point grids are projected "downwards" onto their ancestor elements. So, in this case, an element that has four children (who are all leafs) would evaluate its local solution using a 32x32 point grid such that the points align with the grids on its descendants.
+Here, we are using a `UniformFieldSpace` to define our solution space over the domain. This structure defines a grid of points, such that the density is uniform across leaf-elements.^[There is also a need for an implementation with densities proportional to the size of the elements. This would be useful for generating images of the fields, as the overall point-density would be globally uniform across the domain.] Here, we use a 16x16 grid. The parent elements will have a larger density because the leaf-element's points are projected "downwards" onto their ancestors. So, in this case, an element that has four children (who are all leafs) would evaluate its local solution using a 32x32 point grid such that the points align with the grids on its descendants.
 
-We then use the same basis space as before, and the `EigenPair` from our solver to compute the fields. The `UniformFieldSpace` keeps track of solution components by name in a HashTable of Strings. The following line references these components to compute the magnitude of the electric field using a two-argument expression. This solution component is stored in the provided name `"E_mag"`. We also compute the absolute value of both components.
+On the following line, we compute the X- and Y-directed fields using the eigenvector (and the same basis-space as before). The `UniformFieldSpace` maintains an internal table of solution components designated by name. The names for the fields are returned.
 
-Finally, the solution components are printed to a VTK file for plotting. Multiple external tools are available to generate high-quality plots from the VTK data. \autoref{fig:emag} shows an electric field magnitude generated using `FEM_2D` and [VISIT](https://wci.llnl.gov/simulation/computer-codes/visit).
+The following line uses the X- and Y-components to compute the magnitude of the electric field using a two-argument expression. This solution component is stored in the provided name `"E_mag"`. We also compute the absolute value of both components.
+
+Finally, the fields are exported to a VTK file for plotting. Multiple external tools are available to generate high-quality plots from the VTK data. \autoref{fig:emag} shows an electric field magnitude generated using `FEM_2D` and [VISIT](https://wci.llnl.gov/simulation/computer-codes/visit).
 
 ![Example of an Electric Field Magnitude of an Eigenfunction \label{fig:emag}](./rm_figs/e_mag_9.jpeg)
 
