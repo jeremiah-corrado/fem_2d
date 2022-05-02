@@ -642,6 +642,7 @@ impl Mesh {
         if elem_id >= self.elems.len() {
             Err(MeshAccessError::ElemDoesNotExist(elem_id))
         } else {
+            // Important: if new restrictions are ever put on h-refinement, they should be included here S.T. the other h-refinement methods include the new restrictions
             let elem = &self.elems[elem_id];
             Ok(!elem.has_children()
                 && elem
@@ -691,6 +692,10 @@ impl Mesh {
 
     /// Apply an [HRef] to all [Elem]s in the Mesh that are eligible for h-refinement
     ///
+    /// The `elem_is_h_refineable` method is used to determine eligibility. Ineligible [Elem]s will be skipped without notification.
+    ///
+    /// For more direct control, use `h_refine_elems` or `execute_h_refinements`.
+    ///
     /// # Example
     /// ```
     /// use fem_2d::prelude::*;
@@ -710,9 +715,14 @@ impl Mesh {
             self.elems
                 .iter()
                 .filter(|elem| self.elem_is_h_refineable(elem.id).unwrap())
-                .map(|shell_elem| (shell_elem.id, refinement))
+                .map(|refineable_elem| (refineable_elem.id, refinement))
                 .collect(),
         )
+        /* unwrap() assumptions:
+         * h-refineability is properly checked by `elem_is_h_refineable`
+         * h-refineable Elems are allowed to be h-refined with any h-refinement variant without causing an error
+         * `execute_h_refinements` only executes the provided h-refinements
+         */
         .unwrap()
     }
 
@@ -789,6 +799,11 @@ impl Mesh {
                 .map(|(id, refinement)| (id, refinement.unwrap()))
                 .collect(),
         )
+        /* unwrap() assumptions:
+         * h-refineability is properly checked by `elem_is_h_refineable`
+         * h-refineable Elems are allowed to be h-refined with any h-refinement variant without causing an error
+         * `execute_h_refinements` only executes the provided h-refinements
+         */
         .unwrap()
     }
 
@@ -1205,7 +1220,9 @@ impl Mesh {
 
     /// Apply a [PRef] to all [Elem]s
     ///
-    /// Each p-refinement is constrained to fit within the [Elem]'s valid `elem_p_refinement_window`
+    /// The p-refinement is constrained to fit within each [Elem]'s valid `elem_p_refinement_window`. As such, smaller magnitude p-refinements may be applied to [Elem]s whose expansion orders are close to the border of the valid range.
+    ///
+    /// For more direct control, use `p_refine_elems`, `p_refine_with_filter_bounded`, or `execute_p_refinements`.
     ///
     /// # Examples
     /// basic usage
@@ -1255,6 +1272,11 @@ impl Mesh {
                 })
                 .collect(),
         )
+        /* unwrap() assumptions:
+         * `elem_p_refinement_window` will always return the valid range for the given Elem
+         * `PRef::constrained_to` will always clamp the refinement such that the Elem's expansion orders will fall within the valid range
+         * `execute_p_refinements` only executes the provided p-refinements
+         */
         .unwrap()
     }
 
@@ -1301,6 +1323,8 @@ impl Mesh {
     /// The closure takes an [Elem] and returns an `Option<[PRef]>`
     /// * If the Option is `None`, the Elem is not p-refined
     /// * If it is `Some(refinement)`, the Elem is p-refined with the refinement (constrained within the valid range via `elem_p_refinement_window`)
+    ///
+    /// For more direct control over p-refinement clamping, use `p_refine_with_filter_bounded`
     ///
     /// # Example
     /// ```
@@ -1365,6 +1389,11 @@ impl Mesh {
                 })
                 .collect(),
         )
+        /* unwrap() assumptions:
+         * `elem_p_refinement_window` will always return the valid range for the given Elem
+         * `PRef::constrained_to` will always clamp the refinement such that the Elem's expansion orders will fall within the valid range
+         * `execute_p_refinements` only executes the provided p-refinements
+         */
         .unwrap()
     }
 
