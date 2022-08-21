@@ -6,11 +6,8 @@ A Rust library for 2D Finite Element Method computations, featuring:
   - Isotropic & Anisotropic *h*-refinements (with support for n-irregularity)
   - Isotropic & Anisotropic *p*-refinements 
 - Generic shape function evaluation
-  - You can use one of the two built in sets of Shape Functions
+  - You can use one of the two built in sets of H(curl) conforming Shape Functions
   - Or you can define your own by implementing the `ShapeFn` Trait
-- Generic eigenvalue Problem construction
-  - You can use the built in Integrals (for the Maxwell Eigenvalue Problem)
-  - Or you can define your own problem by implementing the `Integral` Trait
 - Two Eigensolvers
   - Sparse: Using an external Slepc Solver (code and installation instructions found [here](https://github.com/jeremiah-corrado/slepc_gep_solver))
   - Dense: Using [Nalgebra](https://nalgebra.org/docs/user_guide/decompositions_and_lapack#eigendecomposition-of-a-hermitian-matrix)'s Eigen-Decomposition (not recommended for large or ill-conditioned problems)
@@ -33,13 +30,13 @@ Please include one or more of the following citations in any academic or commerc
 
 ## Documentation
 
-The latest Documentation can be found [here](https://docs.rs/fem_2d/0.1.0/fem_2d/)
+The latest Documentation can be found [here](https://docs.rs/fem_2d/0.2.1/fem_2d/)
 
 ## Example
 
 Solve the Maxwell Eigenvalue Problem on a standard Waveguide and print the Electric Fields to a VTK file.
 
-This example encompasses most of the functionality of the library.
+This example encompasses most of the functionality of the library:
 ```rust
 use fem_2d::prelude::*;
 
@@ -69,8 +66,11 @@ fn solve_basic_problem() -> Result<(), Box<dyn std::error::Error>> {
 
     // Construct a generalized eigenvalue problem for the Electric Field
     // (in parallel using the Rayon Global ThreadPool)
-    let gep =
-        galerkin_sample_gep_hcurl::<HierPoly, CurlCurl, L2Inner>(&domain, Some([8, 8]))?;
+    let gep = galerkin_sample_gep_hcurl::<
+        HierPoly, 
+        CurlCurl, 
+        L2Inner
+    >(&domain, Some([8, 8]))?;
 
     // Solve the generalized eigenvalue problem using Nalgebra's Eigen-Decomposition
     // look for an eigenvalue close to 10.0
@@ -81,8 +81,8 @@ fn solve_basic_problem() -> Result<(), Box<dyn std::error::Error>> {
     let mut field_space = UniformFieldSpace::new(&domain, [8, 8]);
 
     // Compute the Electric Field in the X- and Y-directions (using the same ShapeFns as above)
-    let e_field_names =
-        field_space.xy_fields::<HierPoly>("E", solution.normalized_eigenvector())?;
+    let e_field_names = field_space.xy_fields::<HierPoly>
+        ("E", solution.normalized_eigenvector())?;
 
     // Compute the magnitude of the Electric Field
     field_space.expression_2arg(e_field_names, "E_mag", |ex, ey| {
