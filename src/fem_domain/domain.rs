@@ -240,7 +240,7 @@ impl Domain {
     /// ```
     /// use fem_2d::prelude::*;
     /// let mut mesh = Mesh::unit();
-    /// mesh.set_global_expansion_orders([2, 2]).unwrap();
+    /// mesh.set_global_expansion_orders(Orders::new_unwrapped(2, 2));
     ///
     /// let dom = Domain::from_mesh(mesh, ContinuityCondition::HCurl);
     ///
@@ -271,7 +271,7 @@ impl Domain {
     /// use fem_2d::prelude::*;
     ///
     /// let mut mesh = Mesh::unit();
-    /// mesh.set_global_expansion_orders([2, 2]).unwrap();
+    /// mesh.set_global_expansion_orders(Orders::new_unwrapped(2, 2));
     /// mesh.global_h_refinement(HRef::T);
     ///
     /// let dom = Domain::from_mesh(mesh, ContinuityCondition::HCurl);
@@ -316,7 +316,7 @@ impl Domain {
     /// use fem_2d::prelude::*;
     ///
     /// let mut mesh = Mesh::unit();
-    /// mesh.set_global_expansion_orders([2, 2]);
+    /// mesh.set_global_expansion_orders(Orders::new_unwrapped(2, 2));
     /// mesh.global_h_refinement(HRef::T);
     /// mesh.h_refine_elems(vec![1], HRef::T).unwrap();
     ///
@@ -393,12 +393,12 @@ impl IdTracker {
 mod tests {
     use super::*;
     use mesh::h_refinement::HRef;
-    use mesh::p_refinement::PRef;
+    use mesh::p_refinement::{PRef, Orders};
 
     #[test]
     fn create_domain() {
         let mut mesh = Mesh::from_file("./test_input/test_mesh_a.json").unwrap();
-        mesh.set_global_expansion_orders([5, 5]).unwrap();
+        mesh.set_global_expansion_orders(Orders::try_new(5, 5).unwrap());
         mesh.global_h_refinement(HRef::T);
         mesh.h_refine_elems(vec![4, 5], HRef::T).unwrap();
         mesh.h_refine_elems(vec![6, 7], HRef::u()).unwrap();

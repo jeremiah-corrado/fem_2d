@@ -42,9 +42,13 @@ impl Default for V2D {
 impl fmt::Display for V2D {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Some(precision) = f.precision() {
-            write!(f, "({:.*}, {:.*})", precision, self.inner[0], precision, self.inner[1])
+            write!(
+                f,
+                "({:.*}, {:.*})",
+                precision, self.inner[0], precision, self.inner[1]
+            )
         } else {
-            write!(f, "[{}, {}]", self.inner[0], self.inner[1])  
+            write!(f, "[{}, {}]", self.inner[0], self.inner[1])
         }
     }
 }
@@ -180,7 +184,11 @@ impl Mul<V2D> for M2D {
 impl fmt::Display for M2D {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Some(precision) = f.precision() {
-            write!(f, "u: {:.*}, v: {:.*}", precision, self.u, precision, self.v)
+            write!(
+                f,
+                "u: {:.*}, v: {:.*}",
+                precision, self.u, precision, self.v
+            )
         } else {
             write!(f, "u: {}, v: {}", self.u, self.v)
         }
