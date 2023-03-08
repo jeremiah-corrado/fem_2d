@@ -283,7 +283,7 @@ impl Orders {
     /// Attempt to construct a new set of expansion `Orders`
     ///
     /// emits a compile error if either value is outside the valid range
-    pub fn new_unwrapped(i: u8, j: u8) -> Self {
+    pub fn new(i: u8, j: u8) -> Self {
         if i > MAX_POLYNOMIAL_ORDER || j > MAX_POLYNOMIAL_ORDER || i < 1 || j < 1 {
             panic!("Expansion orders outside valid range ({}, {})", i, j);
         }

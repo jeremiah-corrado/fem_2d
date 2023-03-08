@@ -612,10 +612,10 @@ impl Mesh {
     /// let mut mesh = Mesh::unit();
     /// mesh.h_refine_elems(vec![0], HRef::T).unwrap();
     /// mesh.set_expansion_orders(vec![
-    ///     (1, Orders::new_unwrapped(1, 1)),
-    ///     (2, Orders::new_unwrapped(3, 3)),
-    ///     (3, Orders::new_unwrapped(2, 7)),
-    ///     (4, Orders::new_unwrapped(4, 1)),
+    ///     (1, Orders::new(1, 1)),
+    ///     (2, Orders::new(3, 3)),
+    ///     (3, Orders::new(2, 7)),
+    ///     (4, Orders::new(4, 1)),
     /// ]).unwrap();
     ///
     /// let [max_u_order, max_v_order] = mesh.max_expansion_orders();
@@ -1525,7 +1525,7 @@ impl Mesh {
     /// mesh.global_h_refinement(HRef::T);
     /// mesh.global_h_refinement(HRef::T);
     ///
-    /// mesh.set_global_expansion_orders(Orders::new_unwrapped(4, 5));
+    /// mesh.set_global_expansion_orders(Orders::new(4, 5));
     /// for elem in mesh.elems.iter() {
     ///     assert_eq!(elem.poly_orders.ni, 4);
     ///     assert_eq!(elem.poly_orders.nj, 5);
@@ -1551,7 +1551,7 @@ impl Mesh {
     /// assert_eq!(mesh.elems[0].poly_orders.nj, 1);
     ///
     /// // set expansion orders to `[6, 3]`
-    /// mesh.set_expansion_on_elems(vec![0], Orders::new_unwrapped(6, 3)).unwrap();
+    /// mesh.set_expansion_on_elems(vec![0], Orders::new(6, 3)).unwrap();
     ///
     /// // check that the expansion orders have been updated properly
     /// assert_eq!(mesh.elems[0].poly_orders.ni, 6);
@@ -1583,7 +1583,7 @@ impl Mesh {
     /// // modify the expansion orders on the elems that have been h-refined
     /// mesh.set_expansions_with_filter(|elem| {
     ///    if elem.has_children() {
-    ///         Some(Orders::new_unwrapped(4, 3))
+    ///         Some(Orders::new(4, 3))
     ///    } else {
     ///         None
     ///    }
@@ -1626,20 +1626,20 @@ impl Mesh {
     /// let mut mesh = Mesh::unit();
     ///
     /// // set elem 0's expansion orders to `[2, 2]`
-    /// mesh.set_expansion_orders(vec![ (0, Orders::new_unwrapped(2, 2)) ]).unwrap();
+    /// mesh.set_expansion_orders(vec![ (0, Orders::new(2, 2)) ]).unwrap();
     /// assert_eq!(mesh.elems[0].poly_orders.ni, 2);
     /// assert_eq!(mesh.elems[0].poly_orders.nj, 2);
     ///
     /// // duplicate elem_id error
     /// assert!(mesh.set_expansion_orders(vec![
-    ///     (0, Orders::new_unwrapped(2, 1)),
-    ///     (0, Orders::new_unwrapped(1, 2)),
+    ///     (0, Orders::new(2, 1)),
+    ///     (0, Orders::new(1, 2)),
     /// ]).is_err());
     ///
     /// // non-existent elem_id error
     /// assert!(mesh.set_expansion_orders(vec![
-    ///     (0, Orders::new_unwrapped(2, 2)),
-    ///     (7, Orders::new_unwrapped(2, 2)),
+    ///     (0, Orders::new(2, 2)),
+    ///     (7, Orders::new(2, 2)),
     /// ]).is_err());
     /// ```
     ///
@@ -2048,7 +2048,7 @@ mod tests {
     #[should_panic]
     fn neg_p_refinement_i() {
         let mut mesh_c = Mesh::from_file("./test_input/test_mesh_c.json").unwrap();
-        mesh_c.set_global_expansion_orders(Orders::new_unwrapped(3, 3));
+        mesh_c.set_global_expansion_orders(Orders::new(3, 3));
         mesh_c.p_refine_elems(vec![0], PRef::from(-3, 1)).unwrap();
     }
 
@@ -2056,7 +2056,7 @@ mod tests {
     #[should_panic]
     fn neg_p_refinement_j() {
         let mut mesh_c = Mesh::from_file("./test_input/test_mesh_c.json").unwrap();
-        mesh_c.set_global_expansion_orders(Orders::new_unwrapped(3, 3));
+        mesh_c.set_global_expansion_orders(Orders::new(3, 3));
 
         mesh_c.p_refine_elems(vec![0], PRef::from(1, -3)).unwrap();
     }

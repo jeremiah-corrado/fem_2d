@@ -240,7 +240,7 @@ impl Domain {
     /// ```
     /// use fem_2d::prelude::*;
     /// let mut mesh = Mesh::unit();
-    /// mesh.set_global_expansion_orders(Orders::new_unwrapped(2, 2));
+    /// mesh.set_global_expansion_orders(Orders::new(2, 2));
     ///
     /// let dom = Domain::from_mesh(mesh, ContinuityCondition::HCurl);
     ///
@@ -271,7 +271,7 @@ impl Domain {
     /// use fem_2d::prelude::*;
     ///
     /// let mut mesh = Mesh::unit();
-    /// mesh.set_global_expansion_orders(Orders::new_unwrapped(2, 2));
+    /// mesh.set_global_expansion_orders(Orders::new(2, 2));
     /// mesh.global_h_refinement(HRef::T);
     ///
     /// let dom = Domain::from_mesh(mesh, ContinuityCondition::HCurl);
@@ -316,7 +316,7 @@ impl Domain {
     /// use fem_2d::prelude::*;
     ///
     /// let mut mesh = Mesh::unit();
-    /// mesh.set_global_expansion_orders(Orders::new_unwrapped(2, 2));
+    /// mesh.set_global_expansion_orders(Orders::new(2, 2));
     /// mesh.global_h_refinement(HRef::T);
     /// mesh.h_refine_elems(vec![1], HRef::T).unwrap();
     ///

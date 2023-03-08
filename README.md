@@ -45,7 +45,7 @@ fn solve_basic_problem() -> Result<(), Box<dyn std::error::Error>> {
     let mut mesh = Mesh::from_file("./test_input/test_mesh_a.json")?;
 
     // Set the polynomial expansion order to 4 in both directions on all Elems
-    mesh.set_global_expansion_orders(Orders::new_unwrapped(4, 4));
+    mesh.set_global_expansion_orders(Orders::new(4, 4));
 
     // Isotropically refine all Elems
     mesh.global_h_refinement(HRef::t());

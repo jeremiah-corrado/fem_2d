@@ -144,7 +144,7 @@ fn do_some_p_refinements(mesh: &mut Mesh) -> Result<(), PRefError> {
 
 The `Mesh` data structure also has an alternative set of methods to modify expansion orders by setting them directly rather than additively. These methods can be very useful in scenarios where the current expansion orders are irrelevant, and elements require a specific expansion order which is either known beforehand or computed ad-hoc. The following shows how this API may be used in practice.
 
-Here, both methods take an `Orders` object that specifies the expansion order in the `u` and `v` directions. In the first method, `try_new` is used to construct an `Orders`. This can fail if the expansion order specified is either `0` or greater than the maximum allowed expansion order: `MAX_POLYNOMIAL_ORDER`. The second interface takes a closure which creates an `Option<Orders>` for each element (in this example, the closure uses `new_unwrapped` which will panic when provided with invalid expansion orders).
+Here, both methods take an `Orders` object that specifies the expansion order in the `u` and `v` directions. In the first method, `try_new` is used to construct an `Orders`. This can fail if the expansion order specified is either `0` or greater than the maximum allowed expansion order: `MAX_POLYNOMIAL_ORDER`. The second interface takes a closure which creates an `Option<Orders>` for each element (in this example, the closure uses `Orders::new` which will panic when provided with invalid expansion orders).
 ```rust
 use fem_2d::prelude::*;
 
@@ -157,9 +157,9 @@ fn set_some_expansion_orders(mesh: &mut Mesh, order: u8) -> Result<(), PRefError
     // leave all other elems unchanged
     mesh.set_expansions_with_filter(|elem| {
         if !elem.has_children() {
-            Some(Orders::new_unwrapped(4, 4))
+            Some(Orders::new(4, 4))
         } else if elem.parent_id().is_none() {
-            Some(Orders::new_unwrapped(2, 2))
+            Some(Orders::new(2, 2))
         } else {
             None
         }
