@@ -259,6 +259,49 @@ impl fmt::Display for PRef {
     }
 }
 
+/// A pair of expansion orders for an `Elem`
+///
+/// Used to directly set an `Elem`'s expansion order rather than using a `PRef` to modify it
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Orders {
+    i: u8,
+    j: u8,
+}
+
+impl Orders {
+    /// Attempt to construct a new set of expansion `Orders`
+    ///
+    /// Returns a `PRefError` if either value is outside the valid range
+    pub fn try_new(i: u8, j: u8) -> Result<Self, PRefError> {
+        if i > MAX_POLYNOMIAL_ORDER || j > MAX_POLYNOMIAL_ORDER || i < 1 || j < 1 {
+            Err(PRefError::InvalidExpansionOrders(i, j))
+        } else {
+            Ok(Self { i, j })
+        }
+    }
+
+    /// Attempt to construct a new set of expansion `Orders`
+    ///
+    /// emits a compile error if either value is outside the valid range
+    pub fn new(i: u8, j: u8) -> Self {
+        if i > MAX_POLYNOMIAL_ORDER || j > MAX_POLYNOMIAL_ORDER || i < 1 || j < 1 {
+            panic!("Expansion orders outside valid range ({}, {})", i, j);
+        }
+        Self { i, j }
+    }
+
+    // Convert the `Orders` into an array of values `[i, j]`
+    pub fn to_array(self) -> [u8; 2] {
+        [self.i, self.j]
+    }
+}
+
+impl fmt::Display for Orders {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Orders (i: {}, j: {})", self.i, self.j)
+    }
+}
+
 /// The Error Type for invalid p-refinements
 #[derive(Debug)]
 pub enum PRefError {
@@ -269,6 +312,7 @@ pub enum PRefError {
     DuplicateElemIds,
     ElemDoesNotExist(usize),
     RefinementOutOfBounds(usize),
+    InvalidExpansionOrders(u8, u8),
 }
 
 impl std::error::Error for PRefError {}
@@ -298,6 +342,12 @@ impl fmt::Display for PRefError {
                 "Refinement out of bounds for Elem {}; Cannot apply p-Refinement!",
                 elem_id
             ),
+            Self::InvalidExpansionOrders(i, j) => write!(
+                f,
+                "Invalid expansion orders: ({}, {})",
+                i,
+                j
+            )
         }
     }
 }

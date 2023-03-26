@@ -4,7 +4,7 @@ A Rust library for 2D Finite Element Method computations, featuring:
 
 - Highly flexible *hp*-Refinement
   - Isotropic & Anisotropic *h*-refinements (with support for n-irregularity)
-  - Isotropic & Anisotropic *p*-refinements 
+  - Isotropic & Anisotropic *p*-refinements
 - Generic shape function evaluation
   - You can use one of the two built in sets of H(curl) conforming Shape Functions
   - Or you can define your own by implementing the `ShapeFn` Trait
@@ -24,7 +24,7 @@ fem_2d = "0.1.0"
 ```
 
 Please include one or more of the following citations in any academic or commercial work based on this repository:
-* Corrado, Jeremiah; Harmon, Jake; Notaros, Branislav; Ilic, Milan M. (2022): FEM_2D: A Rust Package for 2D Finite Element Method Computations with Extensive Support for hp-refinement. TechRxiv. Preprint. [https://doi.org/10.36227/techrxiv.19166339.v1](https://doi.org/10.36227/techrxiv.19166339.v1) 
+* Corrado, Jeremiah; Harmon, Jake; Notaros, Branislav; Ilic, Milan M. (2022): FEM_2D: A Rust Package for 2D Finite Element Method Computations with Extensive Support for hp-refinement. TechRxiv. Preprint. [https://doi.org/10.36227/techrxiv.19166339.v1](https://doi.org/10.36227/techrxiv.19166339.v1)
 * Corrado, Jeremiah; Harmon, Jake; Notaros, Branislav (2021): A Refinement-by-Superposition Approach to Fully Anisotropic hp-Refinement for Improved Efficiency in CEM. TechRxiv. Preprint. [https://doi.org/10.36227/techrxiv.16695163.v1](https://doi.org/10.36227/techrxiv.16695163.v1)
 * Harmon, Jake; Corrado, Jeremiah; Notaros, Branislav (2021): A Refinement-by-Superposition hp-Method for H(curl)- and H(div)-Conforming Discretizations. TechRxiv. Preprint. [https://doi.org/10.36227/techrxiv.14807895.v1](https://doi.org/10.36227/techrxiv.14807895.v1)
 
@@ -45,7 +45,7 @@ fn solve_basic_problem() -> Result<(), Box<dyn std::error::Error>> {
     let mut mesh = Mesh::from_file("./test_input/test_mesh_a.json")?;
 
     // Set the polynomial expansion order to 4 in both directions on all Elems
-    mesh.set_global_expansion_orders([4, 4])?;
+    mesh.set_global_expansion_orders(Orders::new(4, 4));
 
     // Isotropically refine all Elems
     mesh.global_h_refinement(HRef::t());
@@ -67,8 +67,8 @@ fn solve_basic_problem() -> Result<(), Box<dyn std::error::Error>> {
     // Construct a generalized eigenvalue problem for the Electric Field
     // (in parallel using the Rayon Global ThreadPool)
     let gep = galerkin_sample_gep_hcurl::<
-        HierPoly, 
-        CurlCurl, 
+        HierPoly,
+        CurlCurl,
         L2Inner
     >(&domain, Some([8, 8]))?;
 
@@ -111,7 +111,7 @@ Three types of h-refinement are supported:
 These are designated as an Enum: `HRef`, located in the `h_refinements` module. They can be executed by constructing a refinement as follows:
 ```Rust
 let h_iso = HRef::T;
-let h_aniso_u = HRef::U(None); 
+let h_aniso_u = HRef::U(None);
 let h_aniso_v = HRef::V(None);
 ```
 ...and applying it to an element or group of elements using one of the many *h*-refinement methods on `Mesh`.
@@ -135,9 +135,9 @@ let u_plus_1_v_minus_3 = PRef::from(1, -3);
 
 ## JSON Mesh Files
 
-fem_2d uses `.json` files to import and export Mesh layouts. 
+fem_2d uses `.json` files to import and export Mesh layouts.
 
-* The input format is simplified and describes the geometry of the problem only. 
+* The input format is simplified and describes the geometry of the problem only.
 * The output format describes the Mesh in it's refined state which is usefull for debugging and observing the refinement state.
 
 ### Input Mesh Files
@@ -208,5 +208,4 @@ Contributions, questions, and bug-reports are welcome! Any pull requests, issues
 
 More details about how to contribute to this project can be found [here](https://github.com/jeremiah-corrado/fem_2d/blob/main/rm_figs/contributing.md).
 
-Questions and bug-reports should be directed to the Issues tab. 
-
+Questions and bug-reports should be directed to the Issues tab.

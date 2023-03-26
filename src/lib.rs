@@ -24,7 +24,7 @@ pub mod prelude {
         mesh::{
             elem::Elem,
             h_refinement::{HRef, HRefError},
-            p_refinement::{PRef, PRefError},
+            p_refinement::{PRef, Orders, PRefError},
             Mesh,
         },
         ContinuityCondition, Domain,

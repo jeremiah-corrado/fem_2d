@@ -144,27 +144,29 @@ fn do_some_p_refinements(mesh: &mut Mesh) -> Result<(), PRefError> {
 
 The `Mesh` data structure also has an alternative set of methods to modify expansion orders by setting them directly rather than additively. These methods can be very useful in scenarios where the current expansion orders are irrelevant, and elements require a specific expansion order which is either known beforehand or computed ad-hoc. The following shows how this API may be used in practice.
 
-Here, both methods can return an error, as it is possible to specify an invalid expansion order. These methods take a length-two array of `u8`'s (8-bit unsigned integers), and thus preemptively remove the possibility of setting negative expansion orders, however, they still Err on expansion orders that are zero or too large.
+Here, both methods take an `Orders` object that specifies the expansion order in the `u` and `v` directions. In the first method, `try_new` is used to construct an `Orders`. This can fail if the expansion order specified is either `0` or greater than the maximum allowed expansion order: `MAX_POLYNOMIAL_ORDER`. The second interface takes a closure which creates an `Option<Orders>` for each element (in this example, the closure uses `Orders::new` which will panic when provided with invalid expansion orders).
 ```rust
 use fem_2d::prelude::*;
 
-fn set_some_expansion_orders(mesh: &mut Mesh) -> Result<(), PRefError> {
-    // set the expansion order on all elems to (3, 3)
-    mesh.set_global_expansion_orders([3, 3])?;
+fn set_some_expansion_orders(mesh: &mut Mesh, order: u8) -> Result<(), PRefError> {
+    // set the expansion order on all elems to 'order'
+    mesh.set_global_expansion_orders(Orders::try_new(order, order)?);
 
     // set the expansion orders to (4, 4) on all "leaf" elems
-    // set the expansion orders to (2, 2) on all other elems
+    // set the expansion orders to (2, 2) on all base layer elems
+    // leave all other elems unchanged
     mesh.set_expansions_with_filter(|elem| {
-        if elem.has_children() {
-            Some([2, 2])
+        if !elem.has_children() {
+            Some(Orders::new(4, 4))
+        } else if elem.parent_id().is_none() {
+            Some(Orders::new(2, 2))
         } else {
-            Some([4, 4])
+            None
         }
-    })?;
+    });
 
     Ok(())
 }
-
 ```
 
 ## Problem Formulation and Solution
