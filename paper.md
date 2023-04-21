@@ -17,9 +17,9 @@ authors:
   - name: Branislav M. Notaroš
     affiliation: 1
 affiliations:
- - name: "Colorado State University; Department of Electrical and Computer Engineering"
+ - name: "Department of Electrical and Computer Engineering, Colorado State University, USA"
    index: 1
- - name: "University of Belgrade; School of Electrical Engineering"
+ - name: "School of Electrical Engineering, University of Belgrade, Serbia"
    index: 2
 date: 14 February 2022
 bibliography: paper.bib
@@ -27,13 +27,13 @@ bibliography: paper.bib
 
 # Introduction
 
-The Finite Element Method (FEM) is a powerful computation framework used to solve Partial Differential Equations (PDE) on arbitrary geometries. In reality, physical systems behave in a continuous manner (both in space and time); however FEM solvers are able to model these dynamics with a high fidelity by decomposing a physical model into a finite set of elements. Each element supports a finite number of degrees of freedom, which are used to describe the behavior of the system. This way, other mathematical tools, such as linear solvers, can be used to compute highly accurate approximations of the continuous dynamics. Solutions are constructed such that the PDE is satisfied along with some boundary conditions (on the border of the domain) and some continuity conditions (between neighboring elements).
+The Finite Element Method (FEM) is a powerful computation framework used to solve Partial Differential Equations (PDEs) on arbitrary geometries. While physical systems behave in a continuous manner (both in space and time), FEM solvers are able to model these dynamics with a high fidelity by decomposing a physical model into a finite set of elements. Each element supports a finite number of degrees of freedom, which are used to describe the behavior of the system. This way, other mathematical tools, such as linear solvers, can be used to compute highly accurate approximations of the continuous dynamics. Solutions are constructed such that the PDE is satisfied along with some boundary conditions (on the border of the domain) and some continuity conditions (between neighboring elements).
 
 Some common PDEs include the Navier-Stokes equations, which characterize the behavior of fluids, Schrödinger's equation, which governs the evolution of quantum systems, and Maxwell's Equations, which are a macroscopic description of essentially all electromagnetic phenomena. The ability to accurately and efficiently model these differential equations and others is imperative to the success of many engineering projects and scientific endeavors. Most of the technology that engineers are interested in developing has far exceeded the reach of direct mathematical analysis, and thus computational tools such as FEM are used ubiquitously to drive technological development forward.
 
-As such, innovations in FEM have a direct impact on essentially all engineering disciplines. The more efficient, accurate, and feature rich, we can make simulation tools, the more beneficial they will be to industrial and scientific applications. This is the motivation force behind academic work within the field of FEM. The `FEM_2D` library is a Rust package that aims to enable further research into a particular FEM innovation called Refinement-by-Superposition (RBS). The related research papers [@corrado:2021; @harmon:2021] explore benefits of RBS using the 2D Maxwell Eigenvalue Problem as an experimental test case.
+As such, innovations in FEM have a direct impact on essentially all engineering disciplines. The more efficient, accurate, and feature-rich we can make simulation tools, the more beneficial they will be to industrial and scientific applications. This is the motivation behind academic work in the field of FEM. The `FEM_2D` library is a Rust package that aims to enable further research into a particular FEM innovation called Refinement-by-Superposition (RBS). The related research papers [@corrado:2021; @harmon:2021] explore benefits of RBS using the 2D Maxwell Eigenvalue Problem as an experimental test case.
 
-FEM codes based on RBS differ from more traditional FEM codes in two primary ways: (1) The discretization data structure supports a set of hierarchical tree's of elements (a "forest" data structure) rather than a "flat" set of elements. `FEM_2D`'s `Mesh` data structure aims to expose a wide array of functionality for instantiating and manipulating a tree of elements both with *h*- and *p*-refinements. (2) The integration API, used to populate the system matrices, supports inter-layer integration that can handle integrals of overlapping basis functions defined on different layers of element trees. In traditional implementations, integrals are computed strictly on individual elements. `FEM_2D` contains all the necessary integration functionality to solve the Maxwell Eigenvalue Problem or other H(curl) conforming problems.
+FEM codes based on RBS differ from more traditional FEM codes in two primary ways: (1) The discretization data structure supports a set of hierarchical trees of elements (a "forest" data structure) rather than a "flat" set of elements. `FEM_2D`'s `Mesh` data structure aims to expose a wide array of functionality for instantiating and manipulating a tree of elements both with *h*- and *p*-refinements. (2) The integration API, used to populate the system matrices, supports inter-layer integration that can handle integrals of overlapping basis functions defined on different layers of element trees. In traditional implementations, integrals are computed strictly on individual elements. `FEM_2D` contains all the necessary integration functionality to solve the Maxwell Eigenvalue Problem or other H(curl) conforming problems.
 
 In addition to the centrally important *hp*-refinement functionality, `FEM_2D` is supported by a rich set of surrounding features. This includes two eigensolvers: a dense solver that is entirely native to Rust, and a sparse solver implemented using an external C++ library. There is also a solution plotting API, and an [external Mesh plotting tool](https://github.com/jeremiah-corrado/fem_2d_mesh_plot) to assist in future research work based on the `FEM_2D` Library.
 
@@ -43,9 +43,9 @@ In some application domains such as high-frequency structure analysis, efficient
 
 Within the class of *hp*-refinements, the addition of anisotropic *hp*-refinements (over isotropic ones) presents a larger capacity for solution efficiency, as small-scale behavior can be targeted more directly and ineffectual Degrees of Freedom (DoFs) can be left out of the system [@corrado:2021]. In other words, these directionally specific refinements can reduce the introduction of superfluous entropy into the system by directly targeting inaccuracies that are specific to only one direction. The resultant improvement in per-DoF efficiency can be used to reduce the memory requirements for a given solution accuracy or to increase the accuracy achievable with a given amount of memory. Thus, providing a feature-rich anisotropic *hp*-refinement API is an additional goal of the `FEM_2D` library.
 
-`FEM_2D` aims to expose some similar features to other FEM libraries such as Deal.II [@dealII93] or MFEM [@mfem] that are designed to be general purpose frameworks for implementing FEM codes. Although it is not nearly as feature-rich as these libraries, `FEM_2D`'s *hp*-refinement API aims to provide the basic functionality needed to iteratively solve challenging 2D FEM problems as described in the associated work [@harmon:2021; @corrado:2021; @corrado:2022]. These features will be discussed in detail in the following sections. Additionally, `FEM_2D` differs from other common FEM libraries in that its *h*-refinement functionality is built on a Refinement by Superposition (RBS) framework, whereas most FEM libraries with support for *h*-refinement use Refinement by Replacement (RBR).
+`FEM_2D` aims to expose some features similar to those in other FEM libraries such as Deal.II [@dealII93] and MFEM [@mfem] that are designed to be general purpose frameworks for implementing FEM codes. Although it is not nearly as feature-rich as these libraries, `FEM_2D`'s *hp*-refinement API aims to provide the basic functionality needed to iteratively solve challenging 2D FEM problems as described in the associated work [@harmon:2021; @corrado:2021; @corrado:2022]. These features will be discussed in detail in the following sections. Additionally, `FEM_2D` differs from other common FEM libraries in that its *h*-refinement functionality is built on a Refinement by Superposition (RBS) framework, whereas most FEM libraries with support for *h*-refinement use Refinement by Replacement (RBR).
 
-For research purposes, it can also be helpful to design software libraries that are straightforward to use and understand. As such, we note that `FEM_2D` is available on Rust's package manager Cargo, making it straightforward to download, compile and run using only a few commands. It can also be included as a dependency in any Rust project to develop new code on top of the library. Additionally, the RBS approach that underpins `FEM_2D` lends itself to a desirable level of simplicity with respect to its *h*-refinement implementation. This is because RBS is designed such that continuity conditions between neighboring elements are enforced by construction — no explicit handling of hanging nodes is required. As such some of the typical difficulties with implementing *h*-refinements over quadrilateral elements for H(curl) or H(div) conforming boundary conditions are avoided entirely. Our hope is that the straightforward nature of the RBS approach will allow other researchers to easily contribute to `FEM_2D`, or to use it as a starting point for software development in adjacent research.
+For research purposes, it can also be helpful to design software libraries that are straightforward to use and understand. As such, we note that `FEM_2D` is available on Rust's package manager Cargo, making it straightforward to download, compile, and run using only a few commands. It can also be included as a dependency in any Rust project in order to develop new code on top of the library. Additionally, the RBS approach that underpins `FEM_2D` lends itself to a desirable level of simplicity with respect to its *h*-refinement implementation. This is because RBS is designed such that continuity conditions between neighboring elements are enforced by construction: no explicit handling of hanging nodes is required. As such, some of the typical difficulties with implementing *h*-refinements over quadrilateral elements for H(curl) or H(div) conforming boundary conditions are avoided entirely. Our hope is that the straightforward nature of the RBS approach will allow other researchers to easily contribute to `FEM_2D`, or to use it as a starting point for software development in adjacent research.
 
 # Features
 
@@ -55,17 +55,17 @@ For research purposes, it can also be helpful to design software libraries that 
 
 ### *h*-refinement:
 
-It is important to note that there are three primary *h*-refinement types which are designated by the `HRef` enum:
+It is important to note that there are three primary *h*-refinement types that are designated by the `HRef` enum:
 
 * T - isotropic: produces 4 child elements
 * U - anisotropic in the u-direction: produces 2 child elements
 * V - anisotropic in the v-direction: produces 2 child elements
 
-There are also two sub-types associated with the U and V refinements which invoke a subsequent anisotropic refinement on one of the two child elements in the opposite direction. These are constructed by passing an additional optional index to the relevant constructors: `HRef::U(Some(child_index))` and `HRef::V(Some(child_index))`, where `child_index` must be either 0 or 1.
+There are also two sub-types associated with the U and V refinements that invoke a subsequent anisotropic refinement on one of the two child elements in the opposite direction. These are constructed by passing an additional optional index to the relevant constructors: `HRef::U(Some(child_index))` and `HRef::V(Some(child_index))`, where `child_index` must be either 0 or 1.
 
 Note that `u` and `v` represent the parametric `x` and `y` dimensions. Curvilinear elements are not yet supported; thus these symbols can generally be considered to by synonymous with `x` and `y` respectively.
 
-It is also important to note that the `global_h_refinement` and `h_refine_with_filter` methods will only apply refinements to Elements that are eligible for *h*-refinement (i.e., they must be leaf elements and the length of each of their edges must be above a minimum threshold). Alternatively, the methods that expose more explicit control (`h_refine_elems` and `execute_h_refinements`) can return an error if one of the specified elements is not eligible for *h*-refinement. A detailed explanation of the possible error types is provided in the [documentation](https://docs.rs/fem_2d/latest/fem_2d/fem_domain/domain/mesh/h_refinement/enum.HRefError.html).
+It is also important to note that the `global_h_refinement` and `h_refine_with_filter` methods will only apply refinements to elements that are eligible for *h*-refinement (i.e., they must be leaf elements and the length of each of their edges must be above a minimum threshold). Alternatively, the methods that expose more explicit control (`h_refine_elems` and `execute_h_refinements`) can return an error if one of the specified elements is not eligible for *h*-refinement. A detailed explanation of the possible error types is provided in the [documentation](https://docs.rs/fem_2d/latest/fem_2d/fem_domain/domain/mesh/h_refinement/enum.HRefError.html).
 
 The following example depicts a variety of *h*-refinement methods that could be used to manipulate a `Mesh` data structure:
 
@@ -175,11 +175,11 @@ The following example shows how a simplified formulation of the Maxwell Eigenval
 
 The Maxwell eigenvalue problem has the following Continuous-Galerkin formulation for an arbitrary Domain terminated with Dirichlet boundary conditions, (constraining the solution to TE modes only):
 
->Find a solution: \begin{equation} \label{eq:solution} \quad \text{U} = \{{\mathbf{u}}, \lambda \} \in B_{hp} \times \Bbb{R} \quad \end{equation} which satisfies:
+>Find a solution: \begin{equation} \label{eq:solution} \quad \text{U} = \{{\mathbf{u}}, \lambda \} \in B_{hp} \times \mathbb{R} \quad \end{equation} which satisfies:
 > \begin{equation} \label{eq:formulation} b(\mathbf{u}, \phi) = \lambda a(\mathbf{u}, \phi) \quad \forall \phi \in B_{hp} \end{equation}
 >\begin{equation} \label{eq:gen_args} \text{where: } \left\{\begin{array}{l}
-B_{hp} \subset H_0(\text{curl}; \Omega) \cr
-a(\mathbf{u}, \phi) = \langle \nabla_t \times \mathbf{u}, \nabla_t \times \phi \rangle \cr
+B_{hp} \subset H_0(\text{curl}; \Omega) \\
+a(\mathbf{u}, \phi) = \langle \nabla_t \times \mathbf{u}, \nabla_t \times \phi \rangle \\
 b(\mathbf{u}, \phi) = \langle \mathbf{u}, \phi \rangle
 \end{array}\right.\end{equation}
 
@@ -204,13 +204,13 @@ fn problem_from_mesh(mesh: Mesh) -> Result<GEP, GalerkinSamplingError> {
 }
 ```
 
-The `Domain` structure represents the entire FEM domain, including the discretization and the basis space which conforms to the provided continuity condition (only H(curl) is currently implemented; however, a framework is in place for implementing H(div) and other continuity conditions).
+The `Domain` structure represents the entire FEM domain, including the discretization and the basis space that conforms to the provided continuity condition. (Only H(curl) is currently implemented but a framework is in place for implementing H(div) and other continuity conditions.)
 
 Galerkin sampling is then executed in parallel over the Domain, yielding a Generalized Eigenvalue Problem composed of two sparse matrices. The Domain and a Gauss-Legendre-Quadrature grid size are provided as arguments. This function may also return an Error if the Galerkin Sampling fails due to an ill-posed problem.
 
 The three generic arguments -- designated with the turbofish operator (`::<>`) -- correspond to the three lines of \autoref{eq:gen_args}. The basis space can be swapped for any other space that implements the `HierCurlBasisFnSpace` Trait. `HierPoly` is a relatively simple implementation composed of products of polynomial functions. A more sophisticated basis space: `HierMaxOrtho` can be included using the `max_ortho_basis` Feature Flag. Custom Basis Spaces can also be created by implementing the same Trait.
 
-The `CurlCurl` and `L2Inner` integrals, which correspond to the Stiffness and Mass matrices respectively, can be swapped for any other structure that implements the `HierCurlIntegral` Trait. This generic interface allows users to leverage the Galerkin Sampling functionality against other curl-conforming problems.^[The provided functionality is obviously somewhat incomplete, as only Curl Conforming problems can be solved; however, the library's module-structure and trait-hierarchy provide a clear template for the analogous H(div) implementation. There is also room for other galerking sampling and integration functionality associated with alternate continuity conditions. These methods, structures, and traits would require additions to the `Domain` structure, and few changes to the `Mesh` structure if any.]
+The `CurlCurl` and `L2Inner` integrals, which correspond to the Stiffness and Mass matrices respectively, can be swapped for any other structure that implements the `HierCurlIntegral` Trait. This generic interface allows users to leverage the Galerkin Sampling functionality against other curl-conforming problems.^[The provided functionality is obviously somewhat incomplete, as only Curl Conforming problems can be solved; however, the library's module-structure and trait-hierarchy provide a clear template for the analogous H(div) implementation. There is also room for other Galerkin sampling and integration functionality associated with alternate continuity conditions. These methods, structures, and traits would require additions to the `Domain` structure, and few changes to the `Mesh` structure if any.]
 
 The Generalized Eigenvalue Problem, can then be solved using one of the available solvers:
 ```rust
